@@ -17,6 +17,7 @@ Open **[START_HERE.html](START_HERE.html)**. No installation is needed to read i
 |---|---|
 | Upload through the GitHub website | [GitHub UI guide](docs/GITHUB_WEB_UPLOAD.md) |
 | See a local demo, rehearse a deployment or deploy an approved canary | [Step-by-step Hardhat guide and troubleshooting](docs/HARDHAT_DEPLOYMENT.md) |
+| Verify the source and operate every public function through Etherscan | [Bilingual Etherscan guide](docs/ETHERSCAN_GUIDE.md); open **Etherscan** in the built website for copy-ready values |
 | Understand exactly where contact data goes | [Privacy policy and implementation boundary](PRIVACY.md) |
 | Review conditions, regulatory exposure and legal release requirements | [Bilingual public notice](frontend/legal.html), [operator/counsel review](docs/LEGAL_RELEASE_REVIEW.md) |
 | Issue one complimentary ticket | [French operator guide](docs/OPERATOR_GUIDE_FR.md) |
@@ -59,6 +60,8 @@ Deploy from a separate disposable wallet. The expected initial root holder suppl
 The admin can create/duplicate benefits, change windows/categories/capacities/descriptors, open/close/archive, grant in bounded batches, make explicit exceptions, revoke/reinstate/reassign and pause self-claims. History is not erased. The key is **entitlement + membership node**, not wallet. A transfer does not create a second self-claim.
 
 Full privileges means the management operations exposed by this immutable code—not a proxy upgrade, arbitrary future protocol compatibility, member-asset custody, or automatic Eventbrite cancellation. Expiry/parent control or loss of the root name can affect administration. No hidden recovery admin is provided.
+
+All **52 public functions** (33 reads and 19 writes) are covered by the Etherscan helper and checked against the compiled production ABI. The helper prepares public parameters, including hashes, UTC seconds and batches, without connecting a wallet or submitting transactions. Etherscan operates the deployed registry; website configuration and private receipt handling remain separate. `npm run export:etherscan` produces exact Standard JSON verification input under `dist/etherscan/`, also available as the `etherscan-verification-not-deployed` Linux CI artifact. Source verification and parameter preparation do not grant mainnet clearance.
 
 ### Member experience
 
