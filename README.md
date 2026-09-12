@@ -27,7 +27,7 @@ This is a **source release candidate**, not an independently audited or mainnet-
 
 The contract version is **2.1.1**, preserved byte-for-byte from the previous source candidate. Repository version is **2.3.0-rc.1**. The new privacy-preserving request schema is **`AGIClubTicketRequest/3`**. Old request formats are rejected rather than silently upgraded.
 
-A genuine npm lockfile could not be generated in this build environment. The included manual GitHub workflow generates one on a network-enabled runner; **review and commit that real lock, then run the non-deploying CI**. The supplied frontend is source, not an already-qualified `dist/site` build. Do not publish it as a live claim service before the gates pass.
+A genuine npm-generated `package-lock.json` is committed, including the pinned ethers 6.17.0 dependency and tmp 0.2.7 override. Use `npm ci` for reproducible installation, then run the non-deploying CI. The supplied frontend is source; build `dist/site` and complete the release gates before publishing a live claim service. Reports under `evidence/` describe the original source delivery; current execution reports are generated under `qualification/` and attached to GitHub Actions runs.
 
 ### Architecture
 
@@ -68,11 +68,8 @@ The copy button clears the page's contact fields and application references afte
 ### Build on a network-enabled machine
 
 ```bash
-# Only while a lock is absent: generate, review, then commit it.
-npm run bootstrap:lock
+# Verify and install the committed lock.
 npm run check:lock
-
-# Thereafter, use the reviewed lock for every clean installation.
 npm ci --ignore-scripts --no-audit --no-fund
 npm audit --audit-level=high
 npm run qualify

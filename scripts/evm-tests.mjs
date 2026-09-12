@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {network, artifacts as hhArtifacts} from 'hardhat';
 import {sourceDigest} from './source-digest.mjs';
+import {revertData} from '../test/revert-data.mjs';
 const report={version:'2.1.1',status:'NOT_EXECUTED',at:new Date().toISOString(),scope:'LOCAL HARDHAT + MOCK ENS/WRAPPERS. NOT mainnet-fork, Safe or real-wallet qualification',results:[]};
 let rpc,provider,ethers,connection;
 fs.mkdirSync('qualification',{recursive:true});
@@ -11,7 +12,8 @@ async function run(name,fn){try{await fn();report.results.push({name,status:'PAS
 try{
  ({ethers}=await import('ethers'));connection=await network.create();
  assert.equal(connection.networkName,'hardhat','This suite must only run against the in-process hardhat network');
- rpc=connection.provider;provider=new ethers.BrowserProvider(rpc);provider.pollingInterval=10;
+ // The local EVM mines synchronously; cached reads can describe the previous state.
+ rpc=connection.provider;provider=new ethers.BrowserProvider(rpc,undefined,{cacheTimeout:-1});provider.pollingInterval=10;
  assert.equal((await provider.getNetwork()).chainId,31337n);
  report.sourceSha256=sourceDigest().sourceSha256;
  const artifactCache={};
@@ -25,7 +27,7 @@ try{
  const ens=await deploy('QualificationENS'),wrapper=await deploy('QualificationWrapper');
  await tx(ens.setOwner(root,aa));await tx(ens.setOwner(node,ma));
  const c=await deploy('AGIClubEntitlementRegistry',[await ens.getAddress(),[await wrapper.getAddress()]]);
- async function reject(call,errorName,args){let caught;try{await call();}catch(e){caught=e;}assert(caught,'expected '+errorName+'; call succeeded');let data=caught.data||caught.info?.error?.data?.result;assert(typeof data==='string','missing Solidity revert data; transport errors are NOT acceptable rejection evidence');const decoded=c.interface.parseError(data);assert.equal(decoded?.name,errorName);if(args)assert.deepEqual([...decoded.args],args);}
+ async function reject(call,errorName,args){let caught;try{await call();}catch(e){caught=e;}assert(caught,'expected '+errorName+'; call succeeded');const decoded=c.interface.parseError(revertData(caught));assert.equal(decoded?.name,errorName);if(args)assert.deepEqual([...decoded.args],args);}
  const bad=(method,args,error,who=member,errorArgs)=>reject(()=>c.connect(who).getFunction(method).staticCall(...args),error,errorArgs);
  await run('Deployer is not administrator; root hash agrees with ethers',async()=>{assert.equal(await c.admin(),aa);assert.equal(await c.isAdmin(da),false);assert.equal(await c.CLUB_AGI_ETH_NODE(),root);});
  await run('Every administrative entry point rejects non-holder with decoded NotClubAdmin',async()=>{
@@ -75,7 +77,7 @@ try{
   await tx(new ethers.Contract(E,artifact('QualificationENS').abi,deployer).setOwner(root,aa));
   const a=artifact('AGIClubEntitlementRegistryMainnet');let caught;
   try{await provider.call({from:da,data:a.bytecode});}catch(e){caught=e;}
-  assert(caught,'Mainnet constructor must reject');const data=caught.data||caught.info?.error?.data?.result;
+  assert(caught,'Mainnet constructor must reject');const data=revertData(caught);
   assert.equal(new ethers.Interface(a.abi).parseError(data)?.name,'EthereumMainnetRequired');
  });
  report.passed=report.results.filter(x=>x.status==='PASS').length;report.failed=report.results.filter(x=>x.status==='FAIL').length;report.status=report.failed?'FAIL':'PASS';

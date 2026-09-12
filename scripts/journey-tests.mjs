@@ -8,7 +8,8 @@ const r={status:'NOT_EXECUTED',scope:'ISOLATED EVM MODEL, genuine ethers signatu
 try {
  connection=await network.create();assert.equal(connection.networkName,'isolatedMainnetModel');
  const raw=connection.provider;await raw.request({method:'hardhat_metadata',params:[]});
- provider=new ethers.BrowserProvider(raw);provider.pollingInterval=10;assert.equal((await provider.getNetwork()).chainId,1n);
+ // Read each newly mined local block instead of reusing ethers' short-lived cache.
+ provider=new ethers.BrowserProvider(raw,undefined,{cacheTimeout:-1});provider.pollingInterval=10;assert.equal((await provider.getNetwork()).chainId,1n);
  const[deployer,admin,member,attacker]=await Promise.all([0,1,2,3].map(i=>provider.getSigner(i)));
  const ensMock=await deploy(artifacts,deployer,'QualificationENS'),wrapperMock=await deploy(artifacts,deployer,'QualificationWrapper');
  await raw.request({method:'hardhat_setCode',params:[ENS,await provider.getCode(await ensMock.getAddress())]});

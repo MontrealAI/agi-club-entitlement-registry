@@ -1,6 +1,7 @@
 /** Genuine built-site asset/demo smoke test via Chrome DevTools. No wallet qualification. */
 import fs from 'node:fs';import os from 'node:os';import path from 'node:path';import {spawn} from 'node:child_process';import assert from 'node:assert/strict';
 import {siteServer} from './serve.mjs';import {sourceDigest} from './source-digest.mjs';
+const expectedEthersVersion=JSON.parse(fs.readFileSync(new URL('../package.json',import.meta.url),'utf8')).dependencies.ethers;
 const report={status:'NOT_EXECUTED',scope:'HTTP-hosted built site + real ethers; demo and layout only, NO wallet/network/production claims',checks:[]};let server,child,ws,tmp;
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 try{
@@ -18,7 +19,7 @@ try{
  const evaluate=async expression=>{const r=await command('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});if(r.exceptionDetails)throw Error(r.exceptionDetails.text);return r.result.value;};
  for(const page of ['index','member','admin','verify','privacy']){
   await command('Page.navigate',{url:base+'/'+page+'.html'});await sleep(1400);
-  if(['member','admin','verify'].includes(page))assert.equal(await evaluate('window.ethers?.version'),'6.15.0','Genuine ethers asset did not load');
+  if(['member','admin','verify'].includes(page))assert.equal(await evaluate('window.ethers?.version'),expectedEthersVersion,'Genuine ethers asset did not load at the declared version');
   if(await evaluate('!!document.getElementById("demo")')){await evaluate('document.getElementById("demo").click()');await sleep(150);assert(await evaluate('document.body.innerText.toLowerCase().includes("démo") || document.body.innerText.toLowerCase().includes("fictif")'));}
   for(const width of [1280,390]){await command('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:false});await sleep(100);assert(await evaluate('document.documentElement.scrollWidth <= innerWidth+2'),'Horizontal overflow: '+page+' '+width);report.checks.push({page,width,status:'PASS'});}
  }

@@ -22,7 +22,7 @@
     "solc": "0.8.37"
   },
   "overrides": {
-  "tmp": "0.2.7"
+    "tmp": "0.2.7"
   },
   "scripts": {
     "bootstrap:lock": "node scripts/bootstrap-lock.mjs",

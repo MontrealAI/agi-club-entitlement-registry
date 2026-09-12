@@ -11,13 +11,13 @@ node --version
 npm --version
 ```
 
-Open a terminal in the extracted repository folder. You do not need a global Hardhat installation. All tool versions are in `package.json`: Hardhat 3.16.0, ethers 6.15.0 and solc 0.8.37, with the explorer-verification plugin pinned too. Do not run `npm update` as part of a deployment.
+Open a terminal in the extracted repository folder. You do not need a global Hardhat installation. All tool versions are in `package.json`: Hardhat 3.16.0, ethers 6.17.0 and solc 0.8.37, with the explorer-verification plugin pinned too. Do not run `npm update` as part of a deployment.
 
 On Windows, use PowerShell; on macOS/Linux, use Terminal. Commands below run from the repository root. Paths containing spaces should be quoted.
 
 ## B. Resolve and lock dependencies once
 
-If no reviewed lockfile has been committed:
+The repository includes a genuine npm-generated `package-lock.json`. For a normal checkout, skip bootstrap and proceed to the clean installation below. Only if starting a new source extraction without a reviewed lockfile:
 
 ```bash
 npm run bootstrap:lock
