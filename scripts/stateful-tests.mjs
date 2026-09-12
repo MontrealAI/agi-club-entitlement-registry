@@ -70,25 +70,36 @@ try {
     const blankRecord = () => ({claimant: zero, first: 0, last: 0, revoked: 0, revision: 0, status: 0});
 
     async function invariants() {
-      assert.equal(await c.admin(), authority(), 'ENS authority');
-      assert.equal(await c.isAdmin(addresses[0]), false, 'Disposable deployer must never gain a role');
-      assert.equal(await c.paused(), model.paused);
-      assert.deepEqual([...await c.entitlementIdsPage(0, 100)], ids, 'Stable entitlement index');
+      // No writes run during a snapshot. Read independent views together to
+      // avoid paying the provider's scheduling delay for every individual view,
+      // especially on Windows, while retaining every per-step invariant.
+      const [admin, deployerIsAdmin, paused, indexedIds, balance, memberships] = await Promise.all([
+        c.admin(), c.isAdmin(addresses[0]), c.paused(), c.entitlementIdsPage(0, 100),
+        provider.getBalance(await c.getAddress()), Promise.all(labels.map(label => c.membershipInfo(label))),
+      ]);
+      assert.equal(admin, authority(), 'ENS authority');
+      assert.equal(deployerIsAdmin, false, 'Disposable deployer must never gain a role');
+      assert.equal(paused, model.paused);
+      assert.deepEqual([...indexedIds], ids, 'Stable entitlement index');
       for (let j = 0; j < ids.length; j++) {
         const e = model.entitlements[j], id = ids[j], count = active(e);
+        const [entitlement, nodeCount, indexedNodes, remaining, records] = await Promise.all([
+          c.entitlement(id), c.claimNodeCount(id), c.claimNodesPage(id, 0, 100), c.remainingCapacity(id),
+          Promise.all(nodes.map(node => Promise.all([c.claimRecord(id, node), c.claimantOf(id, node)]))),
+        ]);
         assert(e.capacity === 0 || count <= e.capacity, 'Model capacity invariant');
-        assert.deepEqual([...await c.entitlement(id)], [category, ethers.ZeroHash, BigInt(e.capacity), BigInt(count), BigInt(e.records.size), 0n, 0n, BigInt(e.state), true]);
-        assert.equal(await c.claimNodeCount(id), BigInt(e.records.size));
-        assert.deepEqual([...await c.claimNodesPage(id, 0, 100)], e.order.map(i => nodes[i]), 'One indexed record per membership; order survives corrections');
-        assert.deepEqual([...await c.remainingCapacity(id)], [e.capacity !== 0, BigInt(e.capacity ? e.capacity - count : 0)]);
+        assert.deepEqual([...entitlement], [category, ethers.ZeroHash, BigInt(e.capacity), BigInt(count), BigInt(e.records.size), 0n, 0n, BigInt(e.state), true]);
+        assert.equal(nodeCount, BigInt(e.records.size));
+        assert.deepEqual([...indexedNodes], e.order.map(i => nodes[i]), 'One indexed record per membership; order survives corrections');
+        assert.deepEqual([...remaining], [e.capacity !== 0, BigInt(e.capacity ? e.capacity - count : 0)]);
         for (let i = 0; i < labels.length; i++) {
           const r = e.records.get(i) || blankRecord();
-          assert.deepEqual([...await c.claimRecord(id, nodes[i])], [r.claimant, BigInt(r.first), BigInt(r.last), BigInt(r.revoked), BigInt(r.revision), BigInt(r.status)], 'Claim history ' + j + '/' + i);
-          assert.equal(await c.claimantOf(id, nodes[i]), r.status === 1 ? r.claimant : zero);
+          assert.deepEqual([...records[i][0]], [r.claimant, BigInt(r.first), BigInt(r.last), BigInt(r.revoked), BigInt(r.revision), BigInt(r.status)], 'Claim history ' + j + '/' + i);
+          assert.equal(records[i][1], r.status === 1 ? r.claimant : zero);
         }
       }
-      for (let i = 0; i < labels.length; i++) assert.equal((await c.membershipInfo(labels[i]))[1], owner(i));
-      assert.equal(await provider.getBalance(await c.getAddress()), 0n);
+      for (let i = 0; i < labels.length; i++) assert.equal(memberships[i][1], owner(i));
+      assert.equal(balance, 0n);
       result.invariantChecks++;
     }
 
