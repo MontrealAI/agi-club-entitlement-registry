@@ -1,0 +1,49 @@
+name: 01 — Generate dependency lock (manual)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: lock-bootstrap-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  candidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4, resolved 2026-09-11
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - name: Generate candidate lock from npm — never silently overwrite
+        run: npm run bootstrap:lock
+      - name: Verify lock structure
+        run: npm run check:lock
+      - name: Demonstrate clean dependency installation
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Record dependency audit for human review
+        id: audit
+        continue-on-error: true
+        run: npm audit --json > qualification/dependency-audit.json
+      - name: Compute candidate fingerprint
+        run: npm run fingerprint
+      - name: Explain next step
+        run: |
+          echo '## Candidate lock, not a release approval' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Download dependency-lock-candidate below. Review package-lock.json and the audit. Upload only the lock to the repository root in a new commit. Then check workflow 02.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Audit step outcome: ${{ steps.audit.outcome }}. A generated lock does not certify dependency safety or authorize deployment.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Preserve candidate and failures
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: dependency-lock-candidate
+          path: |
+            package-lock.json
+            qualification/lock-bootstrap.json
+            qualification/lock-bootstrap.log
+            qualification/dependency-audit.json
+            qualification/SOURCE_DIGEST.json
+          if-no-files-found: error
+          retention-days: 14
