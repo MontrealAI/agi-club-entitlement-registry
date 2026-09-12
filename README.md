@@ -1,5 +1,5 @@
 # ∞ AGI CLUB — ENTITLEMENT REGISTRY
-## Static Privacy Edition · 2.4.0-rc.2
+## Static Privacy Edition · 2.4.0-rc.3
 
 **VERIFY MEMBERSHIP → CLAIM ENTITLEMENT → PROVE CLAIM**
 
@@ -41,7 +41,7 @@ This is a **source release candidate**, not an independently audited or mainnet-
 
 Production preparation also requires a completed deployment-specific `legalReview`, bound to the reviewed source and private report bytes. Public notices preserve mandatory rights and the MIT license; they do not establish an exemption, eliminate liability or replace qualified counsel's review of the actual operator, membership offering and privacy operations. The member acknowledgement stays in memory only.
 
-The contract version is **2.1.1**, preserved byte-for-byte from the previous source candidate. Repository version is **2.4.0-rc.2**. The new privacy-preserving request schema is **`AGIClubEntitlementRequest/4`**. Old `/3` ticket requests and earlier formats are rejected. Update the member page and verifier together, then sign a new `/4` request for the existing claim; no new claim transaction is needed.
+The contract version is **2.1.1**, preserved byte-for-byte from the previous source candidate. Repository version is **2.4.0-rc.3**. The new privacy-preserving request schema is **`AGIClubEntitlementRequest/4`**. Old `/3` ticket requests and earlier formats are rejected. Update the member page and verifier together, then sign a new `/4` request for the existing claim; no new claim transaction is needed.
 
 A genuine npm-generated `package-lock.json` is committed, including the pinned ethers 6.17.0 dependency and tmp 0.2.7 override. Use `npm ci` for reproducible installation, then run the non-deploying CI. The supplied frontend is source; build `dist/site` and complete the release gates before publishing a live claim service. Reports under `evidence/` describe the original source delivery; current execution reports are generated under `qualification/` and attached to GitHub Actions runs.
 
@@ -56,6 +56,8 @@ Members verify membership and claim a chosen benefit on Ethereum. **That step re
 The production subclass fixes the canonical ENS Registry and NameWrapper. Every privileged call resolves the holder of `club.agi.eth`; the deployer has no separate authority. Ownership is not the ENS address-resolution record. A Safe must execute the administrative transaction itself; an individual signer is not automatically the contract administrator.
 
 Deploy from a separate disposable wallet. The expected initial root holder supplied by the operator is `0xa9eD0539c2fbc5C6BC15a2E168bd9BCd07c01201`, prefilled as `EXPECTED_ADMIN` in `.env.example`. Deployment checks must confirm that address against canonical ENS. The production constructor needs no owner argument or post-deployment handover; ENS ownership determines administration from the beginning and after transfers. The deployment plan rejects using the root administrator as the disposable deployer.
+
+Treat that deployer as compromised: give it no ENS approvals, parent-name control or Safe roles, and expose only the reviewed gas budget. Before accepting its deployment, `npm run inspect:mainnet` verifies the exact finalized creation transaction as well as runtime and ENS authority. A matching runtime alone cannot prove safe initialization. See the [compromised-deployer model](docs/SECURITY_MODEL.md#compromised-disposable-deployer) and the [English](docs/UBUNTU_MAINNET_EN.md) / [French](docs/UBUNTU_MAINNET_FR.md) Ubuntu steps.
 
 The admin can create/duplicate benefits, change windows/categories/capacities/descriptors, open/close/archive, grant in bounded batches, make explicit exceptions, revoke/reinstate/reassign and pause self-claims. History is not erased. The key is **entitlement + membership node**, not wallet. A transfer does not create a second self-claim.
 

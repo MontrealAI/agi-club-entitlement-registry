@@ -9,7 +9,7 @@
 ## 2. Empty mainnet registry deployment
 
 - [ ] Clean npm installation and advisory review pass.
-- [ ] All eight qualification stages pass on unchanged source, including compiler/export, EVM/stateful/practical scenarios, genuine ethers journeys and bilingual browser/privacy checks.
+- [ ] All eight qualification stages pass on unchanged source, including compiler/export, EVM/stateful/practical scenarios, hostile-deployer checks, genuine ethers journeys and bilingual browser/privacy checks.
 - [ ] Production constructor starts with zero benefits; no benefit is created by deployment or prefilled in creation forms.
 - [ ] Canonical ENS mainnet fork passes at a pinned finalized block on representative real memberships.
 - [ ] Independent security findings resolved against the exact code, compiler and lock.
@@ -18,7 +18,8 @@
 - [ ] Private request, explicit copy/email handoff and verification are staged with fictitious data; the copied email and verified result show the same full AGI Club subname. No first offering needs to be selected.
 - [ ] `.local/external-evidence.json` states `deploymentScope: "EMPTY_REGISTRY_ONLY"` and contains the four completed, source-bound reports. `npm run release:gate` passes its evidence checks.
 - [ ] Current root holder reviews and signs the exact `AGIClubDeploymentPlan/2`, fee ceiling and expiry, authorizing only empty contract creation.
-- [ ] Broadcast once; preserve recovery checkpoint, inspect transaction, finalized runtime and ENS authority; verify exact source on Etherscan before retiring the disposable deployer.
+- [ ] Treat the disposable deployer as compromised; independently exclude ENS approvals, parent-name control, Safe roles and access to root keys. Limit its exposed funds to the reviewed gas budget.
+- [ ] Broadcast once; preserve recovery checkpoint. Independently run `inspect:mainnet` against reviewed creation/runtime hashes: exact sender, nonce, creation bytecode, receipt/address, planned fees and finalized inclusion must pass along with runtime and ENS authority. Verify exact source on Etherscan before retiring the disposable deployer.
 
 **Stopping here with an empty, verified registry is supported.** No benefit fulfillment report is required for this stage. No event, service, category, quota or first offer is assumed.
 

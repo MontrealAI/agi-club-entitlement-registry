@@ -87,6 +87,8 @@ Inspect `qualification/DEPLOYMENT_GATE.json`. **`BLOCKED` means stop:** complete
 
 Follow [Hardhat sections G–H](HARDHAT_DEPLOYMENT.md#g-prepare-an-unsigned-empty-registry-plan) for the explicit budget, disposable deployer address and encrypted keystore, unsigned plan, root-holder signature and one-time broadcast. Neither a gas budget nor a deployer address is prefilled. Never export the root wallet's seed or private key.
 
+Treat the deployer as compromised: no ENS approvals, parent-name control, Safe roles or access to root keys. Its funded ETH remains exposed to anyone holding its key. The local signed-plan checks cannot prevent that person from bypassing the helper. Keep the plan and broadcast checkpoint for independent verification.
+
 `npm run prepare:mainnet` sends no transaction. The only documented production broadcast command is `npm run deploy:mainnet`, with its explicit one-time acknowledgement and signed approval. Do not deploy the configurable test core, run test scripts against mainnet, or enter constructor arguments for `AGIClubEntitlementRegistryMainnet`.
 
 If broadcasting is interrupted, preserve `.local/deployment-broadcast.json` and follow the read-only recovery instructions in section H. An RPC timeout is not permission to send again.
@@ -94,6 +96,8 @@ If broadcasting is interrupted, preserve `.local/deployment-broadcast.json` and 
 ## 5. Verify now; select your first offering later
 
 Follow [Hardhat section I](HARDHAT_DEPLOYMENT.md#i-verify-before-member-access) for finalized inspection, Etherscan source verification and the reviewed contract/hash/HTTPS-origin configuration. Publish only the built public site when that site is ready; the source repository and private deployment folder are not website assets.
+
+Run `npm run inspect:mainnet` from a trusted independent checkout/device and provider. It must verify the exact finalized creation transaction as well as runtime and ENS authority. Check `creationVerified: true` and `finalityVerified: true` in the successful current report. Identical runtime can come from an unsafe constructor; an Etherscan badge and `isAdmin(deployer) = false` alone do not prove safe initialization or absence of indirect ENS/Safe permissions. Section I explains recovery when the plan or checkpoint is unavailable.
 
 After writing the public configuration, rerun `npm run qualify` and review the new source fingerprint before acceptance on the final host. A correctly configured registry remains eligible for qualification; incomplete settings or an insecure origin must fail.
 

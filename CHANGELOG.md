@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.4.0-rc.3 — Compromised deployer
+
+- Preserve the production constructor and ENS authority model: deployment grants no role, recovery path or initial benefit. Exercise every privileged function against a hostile deployer, including root rotation and ENS failure.
+- Authenticate the exact finalized creation transaction in post-deployment inspection. Runtime identity alone could accept a different constructor with unauthorized initial storage. Bind sender, nonce, creation bytes, receipt/address and canonical inclusion to independent reviewed records; enforce transaction type and fee bounds when the reviewed plan is present.
+- Preserve prior inspection reports and mark new attempts incomplete before checking. Document independent recovery, compromised-key funding exposure and indirect ENS/Safe permission exclusions in English and French.
+- Contract 2.1.1, private request /4, empty-deployment plan /2 and the blank initial catalogue remain unchanged. This candidate supplies no live mainnet permission audit or deployment authorization.
+
 ## 2.4.0-rc.2 — Immutable scope and empty deployment
 
 - Qualify practical allocation models against the unchanged production constructor: capacity reuse, curated grants, recurring IDs, bundles, reservations, access semantics, descriptor edits, transfers, migration and mined atomic batch rollback. Document native rules and permanent limits in English and French before deployment.
