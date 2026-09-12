@@ -6,6 +6,8 @@ The admin regressions execute the actual `frontend/app.js` with a minimal DOM an
 
 Wallet-session regressions execute the actual admin/member handler bodies with simulated DOM, provider and transaction boundaries. They reject actions after failed contract verification, reconnects, stale approvals and membership edits during pending reads; positive controls preserve verified actions and initial wallet permission/network-switch flows. These tests make no real wallet or transaction calls. Genuine browser loading and the private receipt flow remain covered by the browser qualification suite.
 
+Receipt regressions mutate caller-owned inputs during simulated asynchronous verification and advance the clock to the expiry boundary. They check that recipient, signature, policy and verified payload stay consistent. CLI input tests split a signed UTF-8 receipt at every byte boundary, enforce the input byte limit, and reject invalid encoding/JSON using non-sensitive error codes. The receipt format is unchanged.
+
 `npm run test:evm`: real Hardhat EVM, compiled contracts and local ENS/wrapper mocks.
 
 `npm run test:journey`: isolated chain-ID-1 model, actual ethers adapter, real WebCrypto recipient binding. No real ENS ownership, finality, mail or Eventbrite.
