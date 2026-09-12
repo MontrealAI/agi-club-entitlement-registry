@@ -16,7 +16,7 @@ Open **[START_HERE.html](START_HERE.html)**. No installation is needed to read i
 | I want to… | Read this |
 |---|---|
 | Upload through the GitHub website | [GitHub UI guide](docs/GITHUB_WEB_UPLOAD.md) |
-| Compile, test and deploy using Hardhat | [Hardhat guide](docs/HARDHAT_DEPLOYMENT.md) |
+| See a local demo, rehearse a deployment or deploy an approved canary | [Step-by-step Hardhat guide and troubleshooting](docs/HARDHAT_DEPLOYMENT.md) |
 | Understand exactly where contact data goes | [Privacy policy and implementation boundary](PRIVACY.md) |
 | Issue one complimentary ticket | [French operator guide](docs/OPERATOR_GUIDE_FR.md) |
 | Evaluate readiness | [Release checklist](docs/RELEASE_CHECKLIST.md), [actual evidence](evidence/RELEASE_STATUS.json) |
@@ -67,6 +67,18 @@ The copy button clears the page's contact fields and application references afte
 
 ### Build on a network-enabled machine
 
+For your first preview, use Node **22.x (22.16.0+)** and npm **10.x**, open a terminal in the repository folder, and run one command at a time:
+
+```bash
+npm ci --ignore-scripts --no-audit --no-fund
+npm run build:site
+npm run serve
+```
+
+Open **http://127.0.0.1:8080** and choose **Membres → Explorer sans wallet → Vérifier**. No funded wallet or RPC key is needed for this demonstration. Keep the terminal open; Ctrl+C stops the preview. This first preview is separate from the qualification below.
+
+Before deployment:
+
 ```bash
 # Verify and install the committed lock.
 npm run check:lock
@@ -75,7 +87,7 @@ npm audit --audit-level=high
 npm run qualify
 ```
 
-Node 22.16.0 or a compatible later Node 22, npm 10. The compiler/tool versions are pinned in `package.json`. Linux browser tests need Chrome/Chromium and OpenSSL. `npm run test:offline` works without downloaded packages using explicitly labelled test-only crypto/chain fixtures; it is not production-library qualification.
+Node 22.16.0 or a compatible later Node 22, npm 10. The compiler/tool versions are pinned in `package.json`. Offline tests also need Python 3 (`python3` on macOS/Linux, `python` on Windows); full browser qualification needs Chrome/Chromium and OpenSSL. `npm run test:offline` works without downloaded packages using explicitly labelled test-only crypto/chain fixtures; it is not production-library qualification.
 
 ```bash
 npm run node          # Terminal 1: local chain only

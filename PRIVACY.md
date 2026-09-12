@@ -30,6 +30,10 @@ No name/email/receipt is written through localStorage, sessionStorage, IndexedDB
 
 The static member page explicitly releases private references and empties inputs on clear, successful clipboard handoff, navigation/pagehide, pageshow including cache restoration, account/network changes and after 10 minutes of inactivity. Contact edits invalidate the old packet and an in-flight signature's epoch. Autocomplete and spellcheck are disabled as hints.
 
+The organizer's verifier follows the same no-persistence boundary for pasted receipts and displayed recipients. It clears both on request, navigation/cache restoration, wallet changes and after ten minutes without an input or verification click. Completing a delayed verification does not restart that deadline or overwrite a newer receipt. Clearing during a wallet permission prompt prevents the old receipt from starting verification afterward. Errors use fixed application messages; provider text is never copied into the interface. The verifier offers no receipt download or history.
+
+Qualification exercises both pages in a real browser with fictitious receipts and simulated wallets. It checks cookie/local/session/IndexedDB/cache/service-worker state, traps storage/file/logging attempts, inspects wallet and network calls, and verifies clear/reload behavior. The separate local EVM journey inspects actual claim calldata and logs and checks that receipt verification sends no transaction. These scopes do not establish the behavior of an unreviewed hosting platform, browser extension or real wallet.
+
 **JavaScript cannot guarantee physical erasure of RAM, browser crash dumps, swap, backups, screenshots, keyboard services, extensions, browser autofill or device clipboard history.** The operating system/mail application can persist copies after user-directed handoff. Do not promise “completely private” or that nobody besides the organizer sees the address.
 
 ## No unnecessary disclosure

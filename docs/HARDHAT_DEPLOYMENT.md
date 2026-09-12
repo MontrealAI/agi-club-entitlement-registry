@@ -1,6 +1,17 @@
 # Hardhat — from source to an explicitly approved deployment
 
-**Read `evidence/RELEASE_STATUS.json` first.** No deployed registry or private key is included. The contract intended for Ethereum mainnet is **`AGIClubEntitlementRegistryMainnet`**, not the dependency-injected core or qualification mocks.
+Start with a local preview. You need no funded wallet, RPC account, deployment key or member contact data for it. The contract intended for Ethereum mainnet is **`AGIClubEntitlementRegistryMainnet`**; the local rehearsal deliberately uses test contracts.
+
+| Your goal | Follow | Expected result |
+|---|---|---|
+| See the interface on your computer | A → B installation → D | Local demonstration at `http://127.0.0.1:8080` |
+| Test the contracts with free local test ETH | A → B → C | `.local/local-rehearsal.json`; chain 31337 only |
+| Qualify a production candidate | A → B qualification → E → F | Evidence for the exact source; no broadcast |
+| Deploy an approved limited canary | G → H → I → J | Root-approved deployment, verified identity, then a real member rehearsal |
+
+**Run commands one at a time, from the repository folder. Continue only when the current command succeeds.** Keep a long-running local server in its own terminal; stop it with **Ctrl+C**.
+
+Current automated results are attached to the [GitHub Actions runs](https://github.com/MontrealAI/agi-club-entitlement-registry/actions). Download the matching `local-qualification-linux` artifact to inspect `LOCAL_RELEASE.json` and its logs. `evidence/RELEASE_STATUS.json` describes the original source delivery; it is not a live CI dashboard. Automated qualification does not grant mainnet or public-launch authorization.
 
 ## A. Prepare your computer
 
@@ -15,6 +26,25 @@ Open a terminal in the extracted repository folder. You do not need a global Har
 
 On Windows, use PowerShell; on macOS/Linux, use Terminal. Commands below run from the repository root. Paths containing spaces should be quoted.
 
+If you use Git, obtain the existing project with:
+
+```bash
+git clone https://github.com/MontrealAI/agi-club-entitlement-registry.git
+cd agi-club-entitlement-registry
+```
+
+Alternatively, use GitHub **Code → Download ZIP**, extract it, and open a terminal inside the extracted folder containing `package.json`. Hardhat configuration is already supplied; use that project directly.
+
+| Prerequisite | Check | Used for |
+|---|---|---|
+| Node **22.16.0 or newer within 22.x** | `node --version` | All project commands; Node 24 is outside this repository's declared engine range |
+| npm **10.x** | `npm --version` | Reproducible installation from the committed lock |
+| Python 3 | macOS/Linux: `python3 --version`; Windows: `python --version` | Configurator and offline configuration tests |
+| Chrome or Chromium | Open the installed browser | Full browser qualification |
+| OpenSSL | `openssl version` | Temporary HTTPS certificates for browser tests |
+
+Install the Node **22** distribution from the [official Node downloads](https://nodejs.org/en/download), then reopen your terminal and check the versions. Python, Chrome and OpenSSL must be available before full qualification; they are not installed by `npm ci`. A local preview needs only the Node/npm toolchain and installed project packages.
+
 ## B. Resolve and lock dependencies once
 
 The repository includes a genuine npm-generated `package-lock.json`. For a normal checkout, skip bootstrap and proceed to the clean installation below. Only if starting a new source extraction without a reviewed lockfile:
@@ -26,17 +56,24 @@ npm run check:lock
 
 Review and commit the **genuine** generated lock. The same operation can be run with workflow 01 in GitHub's website. A lock generated from an unreachable registry cannot be invented.
 
-For every clean build thereafter:
+Install the reviewed dependencies:
 
 ```bash
 npm ci --ignore-scripts --no-audit --no-fund
 npm audit --audit-level=high
-npm run qualify
 ```
 
 `--ignore-scripts` prevents dependency lifecycle scripts. Platform-specific packages must still be present; inspect installation errors rather than manually running unknown scripts. A security advisory gate failure blocks release pending review.
 
+For your first visual preview, continue to D. For qualification, run:
+
+```bash
+npm run qualify
+```
+
 The qualification command runs structure/lock checks, offline regressions, compilation, EVM tests, the local request journey, public-asset build and browser checks. It stops on the first unmet prerequisite and records evidence under `qualification/`.
+
+**Success:** all eight stages report `PASS`; `qualification/LOCAL_RELEASE.json` reports `status: PASS` and `sourceUnchanged: true`. If browser prerequisites are missing, `npm test` and `npm run build:site` can still help diagnose the remaining code, but they do not replace full qualification. GitHub's Linux job runs the browser suite; its macOS/Windows jobs check installation, tests and the site build.
 
 The compiler path is the exact installed `solc/soljson.js`. Production settings: optimizer 200 runs, viaIR, Shanghai EVM. The build checks Ethereum size limits and produces compiler identity/hash evidence. Do not select a different profile for explorer verification.
 
@@ -48,13 +85,15 @@ Terminal 1:
 npm run node
 ```
 
-Terminal 2:
+Terminal 2, opened in the same repository folder:
 
 ```bash
 npm run deploy:local
 ```
 
 This deploys mocks and the test core to chain 31337, assigns a fictitious root/member and exercises a claim. Output is `.local/local-rehearsal.json`.
+
+**Success:** the report contains `chainId: 31337`, `claimed: true` and `scope: LOCAL_TEST_ONLY_NOT_A_MEMBERSHIP_OR_TICKET`. Keep Terminal 1 open until the rehearsal finishes. Restarting the node creates fresh local state; its addresses are not production configuration.
 
 **Never fund or reuse Hardhat's public test keys.** The production portal intentionally refuses this local network. For a local model of the production subclass and actual ethers request verification, run `npm run test:journey`. That model is still not real Ethereum finality, a physical wallet or Eventbrite.
 
@@ -67,11 +106,39 @@ npm run serve
 
 Open `http://127.0.0.1:8080`. Demo/layout only until a reviewed production contract and exact HTTPS origin are configured. The builder copies the genuine installed ethers distribution/licence and a strict public-file allowlist to `dist/site`. It never substitutes the test crypto facade.
 
+Choose **Membres → Explorer sans wallet → Vérifier** to explore the member demonstration. Use fictitious contacts only. The demonstration creates no signed receipt, claim, email or ticket. **Administration → Explorer la démonstration** opens the admin rehearsal. Open the HTTP address above; double-clicking source HTML is not the supported app launch method.
+
 `npm run test:browser` needs Chrome/Chromium and OpenSSL; set `CHROME_BIN` if discovery fails. The privacy browser fixture simulates Ethereum to test leakage/clearing; it is not a real-wallet acceptance.
+
+If automatic browser discovery fails, point to your installed executable, then rerun `npm run qualify`:
+
+```bash
+# macOS Terminal; use your actual Chromium path on Linux if different.
+export CHROME_BIN="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+```
+
+```powershell
+# Windows PowerShell; adjust this path to your installation.
+$env:CHROME_BIN = "C:\Program Files\Google\Chrome\Application\chrome.exe"
+```
+
+This browser suite uses OpenSSL only to create a temporary localhost test certificate. It does not provision a production HTTPS certificate.
 
 ## E. Read-only upstream mainnet fork
 
-Create `.env` locally from `.env.example`. Keep it outside all uploads. Set:
+Create `.env` locally from `.env.example`. Preserve an existing file and edit only the values needed for your current stage. These commands create it only when absent:
+
+```bash
+# macOS/Linux
+test -e .env || cp .env.example .env
+```
+
+```powershell
+# Windows PowerShell
+if (!(Test-Path .env)) { Copy-Item .env.example .env }
+```
+
+Use a local text editor and verify the filename is exactly `.env`, not `.env.txt`. Keep it outside all uploads. Set:
 
 ```text
 MAINNET_FORK_RPC_URL=YOUR_PRIVATE_READ_ONLY_MAINNET_RPC
@@ -81,6 +148,8 @@ MEMBER_LABELS=REAL_ASCII_LABEL_1,REAL_ASCII_LABEL_2
 ```
 
 The labels must be actual representative memberships—not the fictitious test fixtures. Confirm the true `club.agi.eth` holder and relevant wrapping/fuse states independently. Do not change ENS registrations or burn fuses just to make a test pass.
+
+`EXPECTED_ADMIN` is the **effective owning wallet** of the ENS name, including the canonical wrapper's ownership rules. It is not the name's address-resolution record. If the holder is a Safe, use the Safe address, not one of its individual signers. RPC credentials stay in `.env`; never copy them into `frontend/config.js` or the public site.
 
 macOS/Linux:
 
@@ -105,6 +174,8 @@ Rehearse the actual Ledger/Safe/member wallet, mobile browser, official-origin C
 
 Record private review reports, not customer receipts, under `.local/`. Use `releases/external-evidence.example.json` as the structure for `.local/external-evidence.json`; each report must bind the current source hash. The static edition requires **privateRequestStaging**, not a relay test.
 
+The required report entries are `independentSecurityReview`, `realWalletStaging`, `privateRequestStaging` and `eventbriteStaging`. Each identifies the actual reviewer, a private `.local/` report file and that file's SHA-256. Record `PASS` only for an executed, reviewed result. `npm run fingerprint` prints the source hash to bind; changing code, tests or configuration requires matching new evidence. Keep names/emails from participant receipts out of public qualification artifacts.
+
 ```bash
 npm run fingerprint
 npm run release:gate
@@ -122,11 +193,15 @@ npm run prepare:mainnet
 
 Review `.local/deployment-plan.json`: chain 1, production contract name, source/creation/runtime hashes, deployer, current root admin, nonce, predicted address, gas limit, fee ceiling and short expiry. **No transaction is sent by this command.**
 
+**Success:** the command prints `UNSIGNED CANARY PLAN — no transaction sent`. The plan lasts 30 minutes. If it expires or the deployer's nonce changes, prepare and review a new plan, then obtain a new signature. Never edit the JSON to extend its expiry or change its fee ceiling.
+
 The deployer can be a separate account with only the reviewed deployment budget. Do not export the root Ledger/Safe seed or private key. The deployer gains no special registry privileges.
 
 ## H. Root-holder approval and explicit broadcast
 
 Open the built `deployment.html` from a trusted local server or approved HTTPS origin. Load the plan and review every field before signing with the actual holder of `club.agi.eth`. Save the approval as `.local/deployment-approval.json`; it must remain private. Contract-wallet signing requires its real signing workflow and acceptance tests.
+
+For the local approval page, keep `npm run serve` running and open **`http://127.0.0.1:8080/deployment.html`**. Choose `.local/deployment-plan.json`, review the displayed fields, acknowledge them and sign. Move the downloaded `deployment-approval.json` from your browser's Downloads folder to `.local/deployment-approval.json` in this checkout. This is a deployment approval, not a member receipt. Its download is separate from the member/organizer pages, which provide no receipt-file export.
 
 The supplied broadcaster uses a locally encrypted **deployer** JSON keystore. Configure `DEPLOYER_KEYSTORE`. Provide its password locally for this one execution—never in GitHub, a command committed to source or shared logs. The environment-variable method is visible to processes with sufficient local privileges; use an isolated machine and clear it afterward.
 
@@ -171,6 +246,8 @@ npm run verify:mainnet -- 0xYOUR_DEPLOYED_CONTRACT
 
 Explorer verification requires a configured Etherscan API key and the same production build profile. Check actual runtime/admin independently, wait for finality, then configure the static app:
 
+`npm run inspect:mainnet` uses the approved `runtimeCodeHash` from `.local/deployment-plan.json`. If recovering an existing reviewed deployment without that plan, set `EXPECTED_RUNTIME_HASH` in `.env` from your independent approved record. A hash copied from an unknown contract is not approval. A successful inspection writes `.local/post-deployment.json`, including the checked `address` and `runtimeCodeHash` to use below. Replace both example placeholders with those reviewed values.
+
 ```bash
 python3 scripts/configure.py --contract 0xYOUR_DEPLOYED_CONTRACT --runtime-code-hash 0xAPPROVED_RUNTIME_HASH --origin https://claims.example.org --entitlement IA101_2026_09_22
 npm run build:site
@@ -182,6 +259,8 @@ The new public contract/origin configuration changes the source/configuration fi
 
 Upload **only `dist/site`** to a suitable static host. Apply `_headers` or equivalent response headers; the file is not automatically interpreted by all hosts. Test your actual wallet transport under `connect-src 'none'` rather than weakening the policy blindly. Do not serve the source repository, private directories, test fixtures or environment files. For IPFS-backed hosting, use a reviewed stable dedicated HTTPS origin; a changing raw gateway/CID origin is not automatically accepted by the pinned-origin policy.
 
+**Verify zero contact persistence on the final host:** use fictitious details and inspect both `member.html` and `verify.html`. Check that storage remains empty, no contact-bearing network request or download occurs, wallet prompts contain no name/email/private salt, and clear/reload leaves no receipt history. Test the explicit clipboard handoff separately: it is a user-directed copy outside the app's storage boundary. Ensure the host adds no analytics, forms, session-replay scripts or service worker. Run `npm run qualify` after configuration changes and repeat the actual wallet/host acceptance against that exact build.
+
 ## J. One real canary, then a separate launch decision
 
 From the root admin console, create IA 101 in **Draft**, set its 50 reserved places, UTC window and public descriptors, then open for an explicitly approved limited test. No Eventbrite account is integrated into the contract.
@@ -191,6 +270,25 @@ Run one genuine member through claim → finality → private request → explic
 Keep broad access closed until findings and private acceptance evidence are reviewed. The app cannot attest that a member sent an email, prove inbox delivery or issue tickets. Do not promise those events from a browser success indicator.
 
 If any older registry was deployed, reconcile all claims and tickets before migration. This source does not upgrade immutable deployed contracts or migrate records automatically.
+
+## Troubleshooting — what to do next
+
+| What you see | Next action |
+|---|---|
+| `EBADENGINE` | Check `node --version` and `npm --version`; reopen the terminal using Node 22 and npm 10. |
+| `package.json` not found | Open the terminal inside the extracted repository, then rerun the command. |
+| `LOCK_GATE_BLOCKED` or `npm ci` rejects the lock | Restore the reviewed lock from your checkout. Do not replace it with guessed versions or an automatic audit fix. |
+| Python not found | Install Python 3 and reopen the terminal; use `python` on Windows or `python3` on macOS/Linux. |
+| Chrome/OpenSSL missing | Install the named prerequisite; set `CHROME_BIN` to the real executable. Keep the failed qualification log, fix the prerequisite and rerun. |
+| Local rehearsal cannot reach `127.0.0.1:8545` | Start `npm run node` in Terminal 1 and keep it open. |
+| `EADDRINUSE` when previewing | Stop your previous preview process with Ctrl+C, then run `npm run serve` once. |
+| `NOT_CONFIGURED`, `WRONG_ORIGIN` or mainnet required | Demo is expected locally. Live operation needs the approved registry, exact HTTPS origin and Ethereum mainnet; local mock addresses cannot be used. |
+| `release:gate` reports `BLOCKED` | Read `qualification/DEPLOYMENT_GATE.json`; complete the missing real checks and source-bound private reports. |
+| Approval expired, admin changed or nonce changed | Stop and prepare/review/sign a fresh plan. An old signature cannot authorize edited fields. |
+| Broadcast interrupted or confirmation timed out | Inspect `.local/deployment-broadcast.json` and that transaction on Ethereum before any retry. Do not fund or send a duplicate deployment blindly. |
+| Receipt `WAITING_FOR_FINALITY` or expired | Wait for finality, or have the member prepare a fresh request for the existing claim. Do not claim or issue a second ticket. |
+
+Share only redacted failure details when requesting help. Never upload `.env`, keystores/passwords, private approvals or a member's receipt.
 
 ## Primary documentation
 

@@ -2,19 +2,38 @@ import {verifyTicketRequest,REGISTRY_VERSION,MAX_PACKET_BYTES} from './shared/ti
 import {createEthersIO} from './shared/ethers-adapter.mjs';
 const $=id=>document.getElementById(id),cfg=window.AGI_CONFIG||{};
 let epoch=0,timer=null;
+const errors={
+ WALLET_OR_LIBRARY_UNAVAILABLE:'Ouvrez le site construit avec un navigateur compatible avec votre wallet.',
+ WRONG_ORIGIN:'Utilisez uniquement l’origine HTTPS officielle configurée.',
+ BODY_TOO_LARGE:'Le reçu dépasse la taille autorisée.',INVALID_JSON:'Collez le reçu JSON complet, sans texte supplémentaire.',
+ POLICY_NOT_CONFIGURED:'L’origine, le contrat ou les avantages autorisés ne sont pas configurés correctement.',
+ POLICY_VERSION_MISMATCH:'La version du vérificateur doit correspondre au contrat approuvé.',
+ WAITING_FOR_FINALITY:'Le claim attend la finalité Ethereum. Réessayez plus tard.',
+ FINALITY_UNAVAILABLE:'La finalité Ethereum est indisponible. Réessayez avec votre fournisseur habituel.',
+ REQUEST_EXPIRED:'Demande expirée. Le membre doit préparer une nouvelle demande pour le même claim.',
+ CLAIM_NOT_CURRENT:'Ce claim est révoqué, modifié ou attribué à un autre wallet.',
+ WRONG_CHAIN:'Ethereum mainnet est requis.',WRONG_REGISTRY:'Le contrat ne correspond pas au registre approuvé.',
+ INVALID_SIGNATURE:'La signature ne valide pas ce reçu pour le bénéficiaire du claim.',
+ RECIPIENT_COMMITMENT_MISMATCH:'Les coordonnées ne correspondent pas à la demande signée.',
+ CHAIN_CHANGED_RETRY:'L’état Ethereum a changé pendant la vérification. Réessayez.',
+ ENTITLEMENT_NOT_ENABLED:'Cet avantage ne figure pas dans la configuration approuvée.',
+};
+function touch(){clearTimeout(timer);timer=setTimeout(clear,600000);}
 function clear(){epoch++;$('packetText').value='';$('verifyResult').textContent='';$('verifyStatus').textContent='Données effacées de cette page.';clearTimeout(timer);}
 $('clearReceipt').addEventListener('click',clear);
-$('packetText').addEventListener('input',()=>{epoch++;$('verifyResult').textContent='';clearTimeout(timer);timer=setTimeout(clear,600000);});
+$('packetText').addEventListener('input',()=>{epoch++;$('verifyResult').textContent='';$('verifyStatus').textContent='Reçu modifié. Relancez la vérification.';touch();});
 for(const e of ['pagehide','pageshow','beforeunload'])window.addEventListener(e,clear);
 if(window.ethereum?.on)for(const e of ['accountsChanged','chainChanged','disconnect'])window.ethereum.on(e,clear);
 $('verifyReceipt').addEventListener('click',async()=>{
  const button=$('verifyReceipt');if(button.disabled)return;button.disabled=true;const at=epoch;
+ touch();$('verifyResult').textContent='';$('verifyStatus').textContent='Vérification en cours. Aucun billet autorisé.';
  try{
   if(!window.ethers||!window.ethereum?.request)throw Error('WALLET_OR_LIBRARY_UNAVAILABLE');
   if(location.origin!==cfg.expectedOrigin||!cfg.expectedOrigin?.startsWith('https://'))throw Error('WRONG_ORIGIN');
   const raw=$('packetText').value;if(new TextEncoder().encode(raw).length>MAX_PACKET_BYTES)throw Error('BODY_TOO_LARGE');
   let packet;try{packet=JSON.parse(raw);}catch{throw Error('INVALID_JSON');}
   await window.ethereum.request({method:'eth_requestAccounts'});
+  if(at!==epoch)return;
   const provider=new ethers.BrowserProvider(window.ethereum);
   try{
    const policy={origin:cfg.expectedOrigin,chainId:1,registry:cfg.registryAddress.toLowerCase(),registryCodeHash:cfg.registryCodeHash,version:REGISTRY_VERSION,entitlements:cfg.allowedEntitlements.map(x=>x.startsWith('0x')?x:ethers.id(x))};
@@ -23,6 +42,6 @@ $('verifyReceipt').addEventListener('click',async()=>{
    $('verifyResult').textContent=JSON.stringify({status:result.status,claimKey:result.claimKey,claimRevision:result.payload.claimRevision,name:result.recipient.name,email:result.recipient.email,finalizedBlock:result.finalizedBlock,ticketIssued:false,mailboxControlVerified:false},null,2);
    $('verifyStatus').textContent='Signature et droit vérifiés. Contrôlez les doublons dans votre registre privé AVANT de créer un billet.';
   }finally{provider.destroy();}
- }catch(e){if(at===epoch){$('verifyResult').textContent='';$('verifyStatus').textContent='NON VALIDÉ : '+(/^[A-Z_]{3,80}$/.test(e.code||e.message)?(e.code||e.message):'Vérification indisponible. Aucun billet autorisé.');}}
- finally{button.disabled=false;clearTimeout(timer);timer=setTimeout(clear,600000);}
+ }catch(e){if(at===epoch){$('verifyResult').textContent='';const code=Object.hasOwn(errors,e?.code)?e.code:Object.hasOwn(errors,e?.message)?e.message:null;$('verifyStatus').textContent='NON VALIDÉ : '+(code?errors[code]:'Reçu invalide ou vérification indisponible. Aucun billet autorisé.');}}
+ finally{button.disabled=false;}
 });
