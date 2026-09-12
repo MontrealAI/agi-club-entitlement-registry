@@ -20,6 +20,8 @@ The EVM, journey and local-fork providers disable ethers' short-lived read cache
 
 `npm run test:fork`: local fork of a pinned finalized mainnet block, read-only upstream and local impersonation. Does not prove possession of a real wallet.
 
+Fork-runner regressions use synthetic reports in temporary directories and injected child outcomes. They verify old-report invalidation before configuration loading, private history preservation, missing/invalid input handling, error redaction, timeouts and late child writes, concurrent/interrupted locks, and binding to the current source/block/root/members. One check launches a real Node child through a temporary package entry to exercise cross-platform process invocation; another executes the actual fork script with a failing simulated provider. These checks make no upstream RPC calls and cannot replace the real fork evidence. The release gate rejects an active/interrupted lock and reports without a completed attempt identity.
+
 `npm run test:browser`: built-site genuine-library smoke test plus source UI privacy rehearsal with explicitly simulated wallet/crypto. Real-device wallet acceptance remains separate.
 
 `npm run test:browser:source`: only the mocked privacy-UI scope, suitable before dependencies are available. A browser security/network block is a failed/unexecuted test, not a pass.

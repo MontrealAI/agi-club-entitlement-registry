@@ -58,8 +58,11 @@ export function releaseGate(root=process.cwd()) {
     checks.push({type:'compiler',sha256:entry.sha256});
   } catch { blockers.push('Missing or invalid production compiler evidence for current source; rerun npm run qualify'); }
   try {
+    assert(!fs.existsSync(path.join(root,'.local/mainnet-fork.lock')),'Fork rehearsal running or interrupted');
     const entry=read('qualification/mainnet-fork.json'), q=entry.report, identity=q.identity;
     assert(q.status==='PASS' && q.sourceSha256===source);
+    assert(typeof q.attemptId==='string' && /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(q.attemptId));
+    assert(typeof q.completedAt==='string' && Number.isFinite(Date.parse(q.completedAt)));
     assert(q.scope==='LOCAL_FORK_OF_PINNED_MAINNET; no real transactions; not real-wallet acceptance');
     assert(compiler && q.creationCodeHash===compiler.creationCodeHash);
     assert(Number.isSafeInteger(q.forkBlock?.number) && q.forkBlock.number>0 && hash(q.forkBlock.hash));
@@ -75,7 +78,7 @@ export function releaseGate(root=process.cwd()) {
     }
     qualifiedBytecode={creationCodeHash:compiler.creationCodeHash.toLowerCase(),runtimeCodeHash:identity.runtimeCodeHash.toLowerCase(),admin:identity.admin.toLowerCase()};
     checks.push({type:'fork',sha256:entry.sha256});
-  } catch { blockers.push('Missing or incomplete pinned mainnet-fork evidence matching the production build; rerun npm run test:fork with approved real memberships'); }
+  } catch { blockers.push(fs.existsSync(path.join(root,'.local/mainnet-fork.lock'))?'Mainnet fork rehearsal is running or interrupted; inspect .local/mainnet-fork.lock before rerunning':'Missing or incomplete pinned mainnet-fork evidence matching the production build; rerun npm run test:fork with approved real memberships'); }
   try {
     const e=read('.local/external-evidence.json','.local').report;
     if(e.sourceSha256!==source) blockers.push('External evidence does not bind current source');
@@ -88,6 +91,19 @@ export function releaseGate(root=process.cwd()) {
       checks.push({type:name,reviewer:x.reviewer,sha256:x.sha256});
     }
   } catch { blockers.push('External evidence unavailable, empty or outside the private evidence directory'); }
+  // The runner may start after the first lock check, including while private reports are read.
+  // Recheck the exact fork bytes as well: a failed attempt can finish and remove its lock.
+  if(qualifiedBytecode) {
+    const lock=path.join(root,'.local/mainnet-fork.lock'),index=checks.findIndex(x=>x.type==='fork');
+    try {
+      assert(!fs.existsSync(lock),'Fork rehearsal started');
+      assert.equal(sha256(readFile('qualification/mainnet-fork.json','qualification')),checks[index].sha256,'Fork report changed');
+      assert(!fs.existsSync(lock),'Fork rehearsal started during final read');
+    } catch {
+      qualifiedBytecode=null;checks.splice(index,1);
+      blockers.push('Fork evidence changed or a rehearsal started during the release check; rerun release:gate after completion and inspect any retained fork lock');
+    }
+  }
   return {schema:'AGIClubDeploymentGate/1',sourceSha256:source,status:blockers.length?'BLOCKED':'EVIDENCE_READY_FOR_PRINCIPAL_REVIEW',deploymentAuthorized:false,blockers,checks,qualifiedBytecode,evidenceSha256:sha256(JSON.stringify(checks)),note:'Checks bind documents; they do not prove the truth of external assertions. Root-holder approval is a separate step. Broad launch requires the subsequent real production canary.'};
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)) {

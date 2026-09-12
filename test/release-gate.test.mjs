@@ -13,7 +13,7 @@ const localFile='qualification/LOCAL_RELEASE.json',compilerFile='qualification/c
 const hash=n=>'0x'+n.repeat(64),address=n=>'0x'+n.repeat(40);
 function fixture(t) {
  // Synthetic reports exist ONLY in a temporary unit-test directory. They are never release evidence.
- const root=fs.mkdtempSync(path.join(os.tmpdir(),'agi-gate-test-'));
+ const root=fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(),'agi-gate-test-')));
  t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
  const write=(file,data)=>{fs.mkdirSync(path.dirname(path.join(root,file)),{recursive:true});fs.writeFileSync(path.join(root,file),typeof data==='string'?data:JSON.stringify(data));};
  const read=file=>JSON.parse(fs.readFileSync(path.join(root,file),'utf8'));
@@ -24,7 +24,7 @@ function fixture(t) {
  const results=stages.map(name=>{const log='qualification/'+name.replaceAll(':','-')+'.log';write(log,'SYNTHETIC UNIT TEST LOG: '+name);return {name,status:'PASS',exitCode:0,log};});
  write(localFile,{repositoryVersion:pkg.version,contractVersion:REGISTRY_VERSION,status:'PASS',sourceSha256:source,sourceUnchanged:true,at:new Date().toISOString(),results,mainnetAuthorization:false});
  write(compilerFile,{status:'PASS',sourceSha256:source,compiler:pkg.devDependencies.solc+'+fixture',hardhat:pkg.devDependencies.hardhat,profile:'production',productionContract:'contracts/AGIClubEntitlementRegistryMainnet.sol:AGIClubEntitlementRegistryMainnet',creationBytes:100,runtimeBytes:80,creationCodeHash:hash('1'),templateRuntimeCodeHash:hash('2')});
- write(forkFile,{status:'PASS',scope:'LOCAL_FORK_OF_PINNED_MAINNET; no real transactions; not real-wallet acceptance',sourceSha256:source,creationCodeHash:hash('1'),forkBlock:{number:20000000,hash:hash('3')},identity:{chainId:1,contractVersion:REGISTRY_VERSION,runtimeCodeHash:hash('4'),root:ROOT,ens:ENS,wrapper:WRAPPER,address:address('5'),admin:address('6')},results:[{label:'fixture',status:'PASS',owner:address('7'),node:hash('8'),wrapped:true}]});
+ write(forkFile,{status:'PASS',attemptId:'00000000-0000-4000-8000-000000000001',completedAt:new Date().toISOString(),scope:'LOCAL_FORK_OF_PINNED_MAINNET; no real transactions; not real-wallet acceptance',sourceSha256:source,creationCodeHash:hash('1'),forkBlock:{number:20000000,hash:hash('3')},identity:{chainId:1,contractVersion:REGISTRY_VERSION,runtimeCodeHash:hash('4'),root:ROOT,ens:ENS,wrapper:WRAPPER,address:address('5'),admin:address('6')},results:[{label:'fixture',status:'PASS',owner:address('7'),node:hash('8'),wrapped:true}]});
  const external={sourceSha256:source};
  for(const kind of kinds) {const file='.local/'+kind+'.txt',report='SYNTHETIC UNIT TEST EVIDENCE: '+kind;write(file,report);external[kind]={status:'PASS',reviewer:'Fixture reviewer',file,sha256:sha256(report)};}
  write('.local/external-evidence.json',external);
@@ -50,6 +50,8 @@ test('Changed log changes the approval evidence fingerprint',t=>{
  const f=fixture(t),before=f.gate();f.write('qualification/test-browser.log','CHANGED SYNTHETIC LOG');const after=f.gate();assert.notEqual(after.evidenceSha256,before.evidenceSha256);
 });
 for(const [name,modify] of [
+ ['missing completion time',q=>{delete q.completedAt;}],
+ ['missing attempt identity',q=>{delete q.attemptId;}],
  ['missing block hash',q=>{delete q.forkBlock.hash;}],
  ['invalid block',q=>{q.forkBlock.number=-1;}],
  ['substitute ENS registry',q=>{q.identity.ens=address('9');}],
@@ -91,4 +93,26 @@ test('A private report cannot point outside the private directory',t=>{
 test('A symlinked evidence directory cannot substitute other files',t=>{
  const f=fixture(t),target=path.join(f.root,'outside');fs.renameSync(path.join(f.root,'.local'),target);
  fs.symlinkSync(target,path.join(f.root,'.local'),process.platform==='win32'?'junction':'dir');f.blocked();
+});
+
+test('A running or interrupted fork blocks otherwise complete evidence',t=>{const f=fixture(t);f.write('.local/mainnet-fork.lock','SYNTHETIC INTERRUPTED RUN');assert(f.gate().blockers.some(x=>x.includes('running or interrupted')));f.blocked();});
+
+for(const [name,whenRead,occurrence,replaceReport] of [
+ ['lock acquired after the initial lock check',forkFile,1,false],
+ ['lock acquired while external evidence is read','.local/eventbriteStaging.txt',1,false],
+ ['failed attempt completes after the fork report was read','.local/eventbriteStaging.txt',1,true],
+ ['lock acquired during the final fork-report read',forkFile,2,false],
+])test('Concurrent fork evidence rejects '+name,t=>{
+ const f=fixture(t),previous=f.read(forkFile),original=fs.readFileSync;
+ const watched=path.join(f.root,whenRead);let count=0,triggered=false;
+ t.mock.method(fs,'readFileSync',function(file,...args){
+  const bytes=original.call(this,file,...args);
+  if(file===watched&&++count===occurrence){
+   triggered=true;f.write('.local/mainnet-fork.lock','SYNTHETIC CONCURRENT ATTEMPT');
+   if(replaceReport){f.write(forkFile,{...previous,status:'FAIL_OR_BLOCKED'});f.remove('.local/mainnet-fork.lock');}
+  }
+  return bytes;
+ });
+ const g=f.gate();assert(triggered,'The intended filesystem interleaving must execute');
+ assert.equal(g.status,'BLOCKED');assert.equal(g.qualifiedBytecode,null);assert(!g.checks.some(x=>x.type==='fork'),'A stale fork must not contribute to approval evidence');
 });
