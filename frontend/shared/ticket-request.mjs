@@ -60,20 +60,27 @@ export async function preparePacket(scope,contact) {
   const payload={...scope,schema:SCHEMA,recipientCommitment:await recipientCommitment(recipient)};
   return {payload,recipient,message:requestMessage(payload)};
 }
+function verificationTime(options) {
+  const now=options.now ?? Math.floor(Date.now()/1000);
+  if (!Number.isSafeInteger(now) || now<0) fail('INVALID_CLOCK');
+  return now;
+}
+function validateTime(p,now) {
+  if (!Number.isSafeInteger(p.issuedAt) || p.issuedAt<0 || !Number.isSafeInteger(p.expiresAt) || p.issuedAt>now+300 || p.expiresAt<=p.issuedAt || p.expiresAt-p.issuedAt>MAX_TTL_SECONDS) fail('INVALID_TIME');
+  if (p.expiresAt<=now) fail('REQUEST_EXPIRED');
+}
 export async function validatePacket(packet,policy,crypto,options={}) {
   validatePolicy(policy);
   if (!exactKeys(packet,['payload','recipient','message','signature']) || !exactKeys(packet.payload,FIELDS)) fail('INVALID_SCHEMA');
   const p=Object.fromEntries(FIELDS.map(k=>[k,packet.payload[k]]));
-  const now=options.now ?? Math.floor(Date.now()/1000);
-  if (!Number.isSafeInteger(now) || now<0) fail('INVALID_CLOCK');
+  const now=verificationTime(options);
   if (p.schema!==SCHEMA) fail('UNSUPPORTED_SCHEMA');
   if (p.origin!==policy.origin || p.chainId!==1 || p.registry!==policy.registry) fail('WRONG_SCOPE');
   if (!bytes32(p.entitlementId) || !policy.entitlements.includes(p.entitlementId)) fail('ENTITLEMENT_NOT_ENABLED');
   if (typeof p.membershipLabel!=='string' || !/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(p.membershipLabel)) fail('INVALID_MEMBERSHIP');
   if (!bytes32(p.membershipNode) || p.membershipNode!==crypto.namehash(p.membershipLabel+'.club.agi.eth').toLowerCase()) fail('INVALID_MEMBERSHIP');
   if (!address(p.claimant) || !Number.isSafeInteger(p.claimRevision) || p.claimRevision<1 || p.claimRevision>4294967295) fail('INVALID_CLAIM');
-  if (!Number.isSafeInteger(p.issuedAt) || p.issuedAt<0 || !Number.isSafeInteger(p.expiresAt) || p.issuedAt>now+300 || p.expiresAt<=p.issuedAt || p.expiresAt-p.issuedAt>MAX_TTL_SECONDS) fail('INVALID_TIME');
-  if (p.expiresAt<=now) fail('REQUEST_EXPIRED');
+  validateTime(p,now);
   if (typeof p.nonce!=='string' || !/^0x[0-9a-f]{32}$/.test(p.nonce)) fail('INVALID_NONCE');
   if (!bytes32(p.recipientCommitment)) fail('INVALID_COMMITMENT');
   if (packet.message!==requestMessage(p)) fail('MESSAGE_PAYLOAD_MISMATCH');
@@ -89,19 +96,31 @@ function validateRegistry(s,policy) {
   if (!s || s.version!==policy.version || s.ens?.toLowerCase()!==ENS || s.wrapper?.toLowerCase()!==WRAPPER || s.root?.toLowerCase()!==ROOT || s.codeHash?.toLowerCase()!==policy.registryCodeHash) fail('WRONG_REGISTRY');
 }
 export async function verifyTicketRequest(packet,policy,io,options={}) {
-  const p=await validatePacket(packet,policy,io.crypto,options);
+  // Capture caller-owned data before the first await. Unsupported prototypes
+  // and extra fields remain intact so the existing schema checks reject them.
+  validatePolicy(policy);
+  const trustedPolicy={...policy,entitlements:[...policy.entitlements]};
+  const request=plain(packet)?{...packet}:packet;
+  if (plain(request)) {
+    if (plain(request.payload)) request.payload={...request.payload};
+    if (plain(request.recipient)) request.recipient={...request.recipient};
+  }
+  const timing={now:options.now};
+  const p=Object.freeze(await validatePacket(request,trustedPolicy,io.crypto,timing));
   if (BigInt(await io.chainId())!==1n) fail('WRONG_CHAIN');
   const [finalized,latest]=await Promise.all([io.block('finalized'),io.block('latest')]);
   if (!finalized || !latest || !Number.isSafeInteger(finalized.number) || finalized.number<0 || !bytes32(finalized.hash) || !Number.isSafeInteger(latest.number) || latest.number<finalized.number || !bytes32(latest.hash)) fail('FINALITY_UNAVAILABLE');
   // Only the public subset is passed into chain adapters. Never pass recipient/salt.
   const query=Object.freeze({entitlementId:p.entitlementId,membershipNode:p.membershipNode});
   const [rf,rl,cf,cl]=await Promise.all([io.registry(finalized.number),io.registry(latest.number),io.claim(query,finalized.number),io.claim(query,latest.number)]);
-  validateRegistry(rf,policy); validateRegistry(rl,policy);
+  validateRegistry(rf,trustedPolicy); validateRegistry(rl,trustedPolicy);
   if (!claimMatches(cl,p)) fail('CLAIM_NOT_CURRENT');
   if (!claimMatches(cf,p)) fail('WAITING_FOR_FINALITY');
-  const [sf,sl]=await Promise.all([io.validSignature(p.claimant,packet.message,packet.signature,finalized.number),io.validSignature(p.claimant,packet.message,packet.signature,latest.number)]);
+  const [sf,sl]=await Promise.all([io.validSignature(p.claimant,request.message,request.signature,finalized.number),io.validSignature(p.claimant,request.message,request.signature,latest.number)]);
   if (sf!==true || sl!==true) fail('INVALID_SIGNATURE');
   const [checkF,checkL]=await Promise.all([io.block(finalized.number),io.block(latest.number)]);
   if (checkF?.hash!==finalized.hash || checkL?.hash!==latest.hash) fail('CHAIN_CHANGED_RETRY');
-  return Object.freeze({status:'VERIFIED_REQUEST_NOT_A_TICKET',payload:p,recipient:Object.freeze({name:packet.recipient.name,email:packet.recipient.email}),claimKey:claimKey(p),revisionKey:revisionKey(p),finalizedBlock:finalized.number,finalizedHash:finalized.hash,latestBlock:latest.number,latestHash:latest.hash,verifiedAt:options.now??Math.floor(Date.now()/1000),ticketIssued:false,mailboxControlVerified:false,civilIdentityVerified:false});
+  const verifiedAt=verificationTime(timing);
+  validateTime(p,verifiedAt);
+  return Object.freeze({status:'VERIFIED_REQUEST_NOT_A_TICKET',payload:p,recipient:Object.freeze({name:request.recipient.name,email:request.recipient.email}),claimKey:claimKey(p),revisionKey:revisionKey(p),finalizedBlock:finalized.number,finalizedHash:finalized.hash,latestBlock:latest.number,latestHash:latest.hash,verifiedAt,ticketIssued:false,mailboxControlVerified:false,civilIdentityVerified:false});
 }

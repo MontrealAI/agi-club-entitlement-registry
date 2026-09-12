@@ -40,3 +40,55 @@ test('Missing runtime hash cannot disable verifier',async()=>{const f=await fixt
 for(const origin of ['http://claims.example.org','https://claims.example.org/path','https://u:p@claims.example.org','https://claims.example.org/'])test('Noncanonical policy origin rejected: '+origin,async()=>{const f=await fixture();f.policy.origin=origin;await rejects(()=>verifyTicketRequest(f.packet,f.policy,f.io,opts),'POLICY_NOT_CONFIGURED');});
 test('Claim key cannot be reset by a new signature, recipient or revision',async()=>{const a=await fixture(),b=await fixture();b.packet.payload.claimRevision=2;assert.equal(claimKey(a.packet.payload),claimKey(b.packet.payload));});
 test('Safe error codes do not echo supplied private fields',async()=>{const f=await fixture();f.packet.recipient.email='secret\n@invalid';try{await validatePacket(f.packet,f.policy,f.io.crypto,opts);assert.fail('Expected rejection');}catch(e){assert.equal(e.message,'INVALID_CONTACT');assert(!e.message.includes('secret'));}});
+
+for(const [field,value] of [['name','Changed Fictitious Recipient'],['email','changed@example.org']]){
+ test('Pending verification retains the committed recipient '+field,async()=>{
+  const f=await fixture(),expected=f.packet.recipient[field];
+  f.io.chainId=async()=>{f.packet.recipient[field]=value;return 1n;};
+  const result=await verifyTicketRequest(f.packet,f.policy,f.io,opts);
+  assert.equal(result.recipient[field],expected);
+ });
+}
+test('A pending request cannot swap in an unrelated signed message',async()=>{
+ const f=await fixture(),unrelated='Unrelated fictitious statement';
+ f.packet.signature=signMessage(unrelated);
+ f.io.chainId=async()=>{f.packet.message=unrelated;return 1n;};
+ await rejects(()=>verifyTicketRequest(f.packet,f.policy,f.io,opts),'INVALID_SIGNATURE');
+});
+test('A pending request cannot replace its submitted signature',async()=>{
+ const f=await fixture(),valid=f.packet.signature;
+ f.packet.signature=signMessage(f.packet.message,2n);
+ f.io.chainId=async()=>{f.packet.signature=valid;return 1n;};
+ await rejects(()=>verifyTicketRequest(f.packet,f.policy,f.io,opts),'INVALID_SIGNATURE');
+});
+test('Pending verification cannot relax the trusted runtime hash',async()=>{
+ const f=await fixture(),wrong=id('unapproved-runtime');
+ f.state.identity.codeHash=wrong;
+ f.io.chainId=async()=>{f.policy.registryCodeHash=wrong;return 1n;};
+ await rejects(()=>verifyTicketRequest(f.packet,f.policy,f.io,opts),'WRONG_REGISTRY');
+});
+for(const elapsed of [3600,3601]){
+ test('A request that expires during verification is rejected after '+elapsed+' seconds',async t=>{
+  const f=await fixture();let now=NOW;
+  t.mock.method(Date,'now',()=>now*1000);
+  f.io.chainId=async()=>{now=NOW+elapsed;return 1n;};
+  await rejects(()=>verifyTicketRequest(f.packet,f.policy,f.io),'REQUEST_EXPIRED');
+ });
+}
+test('An unexpired delayed request records its completion time',async t=>{
+ const f=await fixture();let now=NOW;
+ t.mock.method(Date,'now',()=>now*1000);
+ f.io.chainId=async()=>{now+=30;return 1n;};
+ const result=await verifyTicketRequest(f.packet,f.policy,f.io);
+ assert.equal(result.verifiedAt,NOW+30);assert(result.verifiedAt<result.payload.expiresAt);
+});
+test('The verified payload cannot be edited independently of its claim key',async()=>{
+ const f=await fixture(),result=await verifyTicketRequest(f.packet,f.policy,f.io,opts);
+ assert.throws(()=>{result.payload.claimRevision=99;},TypeError);
+ assert.throws(()=>{result.payload.membershipNode=id('other');},TypeError);
+ assert.equal(claimKey(result.payload),result.claimKey);
+});
+test('Snapshotting does not normalize unsupported request prototypes into valid packets',async()=>{
+ const f=await fixture(),packet=Object.assign(Object.create({custom:true}),f.packet);
+ await rejects(()=>verifyTicketRequest(packet,f.policy,f.io,opts),'INVALID_SCHEMA');
+});
