@@ -6,6 +6,8 @@
 
 `npm run test:journey`: isolated chain-ID-1 model, actual ethers adapter, real WebCrypto recipient binding. No real ENS ownership, finality, mail or Eventbrite.
 
+The EVM, journey and local-fork providers disable ethers' short-lived read cache because the simulated chain mines synchronously. This follows the [ethers provider guidance](https://docs.ethers.org/v6/api/providers/abstract-provider/). Rejection checks decode explicit RPC revert bytes, including Hardhat 3's nested error data; transport failures and transaction inputs never count as successful rejection evidence.
+
 `npm run test:fork`: local fork of a pinned finalized mainnet block, read-only upstream and local impersonation. Does not prove possession of a real wallet.
 
 `npm run test:browser`: built-site genuine-library smoke test plus source UI privacy rehearsal with explicitly simulated wallet/crypto. Real-device wallet acceptance remains separate.

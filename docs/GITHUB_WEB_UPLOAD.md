@@ -46,9 +46,11 @@ If the browser omits dotfiles: **Add file → Create new file**, enter the exact
 
 **Never upload `.env`.** `.env.example` contains empty placeholders and is meant to be uploaded.
 
-## 4. Obtain the genuine dependency lock
+## 4. Use the committed dependency lock
 
-The current archive has no fabricated lock. Open **Actions → 01 — Generate dependency lock (manual) → Run workflow** on `main`.
+The repository now includes a genuine npm-generated `package-lock.json`. Include it in source uploads and proceed to workflow 02. Do not run workflow 01 against an existing lock: it deliberately refuses to overwrite one.
+
+Only for an older source extraction that has no lock: open **Actions → 01 — Generate dependency lock (manual) → Run workflow** on its branch.
 
 The workflow only installs/builds in a runner and produces artifacts; it does not deploy, send mail or commit automatically. When completed, open the run and download **dependency-lock-candidate**.
 
@@ -58,7 +60,7 @@ If the workflow fails, inspect its actual error. An unavailable npm version, dep
 
 ## 5. Inspect real CI evidence
 
-Open **02 — Build and qualify (no deployment)**. It requires the committed lock and a successful clean installation. The very first run without a lock is expected to fail that gate; do not disable the gate.
+Open **02 — Build and qualify (no deployment)**. It requires the committed lock and a successful clean installation. If a source upload omits the lock, restore it from the same reviewed revision; do not disable the gate.
 
 Review every job and artifact. Green CI is evidence of those checks only, not an independent audit, proof of real wallet ownership, or production authorization.
 
