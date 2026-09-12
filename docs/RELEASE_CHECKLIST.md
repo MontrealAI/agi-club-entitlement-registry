@@ -1,50 +1,51 @@
-# Release decisions — three separate gates
+# Release decisions — four separate gates
 
 ## 1. Source publication
 
-- [ ] Upload clean source with no secrets or member data.
-- [ ] Inspect preserved contract provenance and this release's changes.
-- [ ] Generate, review and commit a real dependency lock.
-- [ ] Keep candidate status visible; no badge claiming mainnet readiness.
+- [ ] Publish clean source with no secrets or member data.
+- [ ] Inspect contract provenance and the current changes; review the [immutable scope](ENTITLEMENT_DESIGN_EN.md#decide-the-immutable-contract-scope-before-deploying) / [périmètre immuable](ENTITLEMENT_DESIGN_FR.md#décider-du-périmètre-immuable-avant-le-déploiement).
+- [ ] Use the reviewed dependency lock and retain candidate status; CI is not mainnet clearance.
 
-## 2. Limited mainnet canary (not broad member launch)
+## 2. Empty mainnet registry deployment
 
 - [ ] Clean npm installation and advisory review pass.
-- [ ] Solidity compiles with recorded compiler/profile/hashes and size limits.
-- [ ] EVM tests and real ethers request journey pass.
-- [ ] Production constructor and local deployment start with zero benefits; no benefit is created by deployment or prefilled in creation forms.
-- [ ] Hosted built assets and privacy instrumentation pass; test-device scope recorded.
-- [ ] Canonical ENS mainnet fork passes on representative real memberships.
-- [ ] Independent security review findings resolved against the exact bytes.
-- [ ] Qualified deployment-specific [legal review](LEGAL_RELEASE_REVIEW.md) completed; actual operator, offer, French/English notices and privacy operations verified and published as required.
-- [ ] Actual root/member wallets, intended mobile path and Safe if used are rehearsed.
-- [ ] Static no-PII-persistence and commitment-only signing verified on those devices.
-- [ ] Private copy/email/chosen fulfillment process staged using fictitious data.
-- [ ] Copied email visibly includes the full AGI Club subname; the organizer result shows the same verified identity. Both the current raw JSON and formatted email path are tested, including a misleading heading.
-- [ ] Create and update an explicitly approved canary through the actual admin wallet; confirm member catalogue refresh shows the changes without per-benefit website edits in registry mode. No event or quota is assumed for launch.
-- [ ] Current root holder explicitly approves exact deployment plan and fee ceiling.
-- [ ] Broadcast once; inspect transaction, runtime, admin, finality and explorer verification.
-- [ ] Preserve the recovery checkpoint; confirm finalized code and ENS authority through `inspect:mainnet` before retiring the disposable deployer.
-- [ ] Publish exact source on Etherscan using the matching verification package; confirm all public Read/Write Contract functions and record a real root-wallet operation following the [Etherscan guide](ETHERSCAN_GUIDE.md). Keep private receipts and contacts off Etherscan.
+- [ ] All eight qualification stages pass on unchanged source, including compiler/export, EVM/stateful/practical scenarios, genuine ethers journeys and bilingual browser/privacy checks.
+- [ ] Production constructor starts with zero benefits; no benefit is created by deployment or prefilled in creation forms.
+- [ ] Canonical ENS mainnet fork passes at a pinned finalized block on representative real memberships.
+- [ ] Independent security findings resolved against the exact code, compiler and lock.
+- [ ] Qualified [legal review](LEGAL_RELEASE_REVIEW.md) explicitly covers the empty deployment and existing membership/operator/privacy arrangements; future unknown benefits are excluded.
+- [ ] Actual root/member wallets, intended mobile path and Safe if used are rehearsed; static contact minimization and commitment-only signing are verified on those devices.
+- [ ] Private request, explicit copy/email handoff and verification are staged with fictitious data; the copied email and verified result show the same full AGI Club subname. No first offering needs to be selected.
+- [ ] `.local/external-evidence.json` states `deploymentScope: "EMPTY_REGISTRY_ONLY"` and contains the four completed, source-bound reports. `npm run release:gate` passes its evidence checks.
+- [ ] Current root holder reviews and signs the exact `AGIClubDeploymentPlan/2`, fee ceiling and expiry, authorizing only empty contract creation.
+- [ ] Broadcast once; preserve recovery checkpoint, inspect transaction, finalized runtime and ENS authority; verify exact source on Etherscan before retiring the disposable deployer.
 
-## 3. Broad member launch
+**Stopping here with an empty, verified registry is supported.** No benefit fulfillment report is required for this stage. No event, service, category, quota or first offer is assumed.
 
-- [ ] One actual approved member completes claim and finality.
-- [ ] Receipt signature and exact recipient verified; member confirms deliberate email handoff.
-- [ ] Organizer confirms receipt, checks the private fulfillment ledger and fulfills the chosen benefit once.
-- [ ] Participant confirms receipt or use of the chosen benefit.
-- [ ] Replayed or renewed requests do not get a duplicate allocation.
-- [ ] Any old claims/fulfillment records reconciled; support and incident process owned by a named operator.
-- [ ] Principal records a separate broad-launch decision.
+## 3. Chosen benefit and limited member canary
 
-Local tests cannot self-authorize real-world steps. Evidence presence/hash checks cannot prove an external assertion true. Never fill a NOT_EXECUTED field with PASS just to unblock a script.
+- [ ] Define the actual benefit, eligibility, public French/English terms, capacity/window, fulfillment method and minimal contact requirements. Confirm that the immutable contract can enforce the required native rules.
+- [ ] Follow the [English](ENTITLEMENT_DESIGN_EN.md#deploy-empty-approve-a-chosen-benefit-later) / [French](ENTITLEMENT_DESIGN_FR.md#déployer-vide--approuver-un-avantage-plus-tard) instructions for `.local/benefit-launch-evidence.json`.
+- [ ] Complete `benefitLegalReview` and `fulfillmentStaging` for the exact definition, registry, ID and source. Rehearse duplicates, concurrent operators, revocation, corrections and fulfillment/access cancellation as applicable. Eventbrite is optional.
+- [ ] Run `npm run launch:gate`; obtain separate root approval of the reviewed limited canary. This gate's result grants no authority and does not intercept Etherscan calls.
+- [ ] Create and read back an approved Draft using the actual admin wallet or Etherscan. Match every setting and both descriptors to the reviewed definition. Open deliberately if public member claiming is intended; curated grants may remain Draft.
+- [ ] Confirm catalogue refresh shows root changes without per-benefit site edits in registry mode. Review and requalify any changed site/origin configuration before using it.
+- [ ] Record a real root-wallet operation following the [Etherscan guide](ETHERSCAN_GUIDE.md). Never put private requests or contacts into Etherscan.
+
+## 4. Broad member launch
+
+- [ ] An explicitly approved member completes a real claim and finality, or verifies a deliberately granted current claim.
+- [ ] If private fulfillment is needed, verify the signed request and any supplied contacts, confirm deliberate handoff, check the private fulfillment record and provide the benefit once. A name and email are not mandatory for every benefit.
+- [ ] Participant confirms receipt or use of the actual benefit through the chosen process.
+- [ ] Replayed/renewed requests cannot cause duplicate fulfillment; prior records and corrections are reconciled.
+- [ ] Support, incident response, access changes, provider responsibilities and applicable retention are owned by the actual operator.
+- [ ] Principal records a separate broad-launch decision for the reviewed scope.
+
+Local tests cannot self-authorize real-world steps. Presence/hash checks cannot establish the truth of external assertions. Never change `NOT_EXECUTED` to `PASS` to unblock a command. Changed benefit definitions require new scope-bound reviews.
 
 ## Bilingual interface acceptance
 
 - Check all eight public pages in French and English, including keyboard use, mobile reflow, errors and notices. Automated browser qualification covers both languages.
-- Test language changes during actual wallet approval: temporary private data clears and stale requests cannot complete. Reject wallet prompts separately; submitted transactions cannot be cancelled by changing language.
-- Publish and verify both benefit titles through the approved administrator. An absent English title falls back to the published French title. No benefit is preconfigured.
-- Confirm the copied private email includes the full signed subname and that the fixed bilingual subject/link carries no member data. Preserve the exact signed protocol across languages.
-- Independent security and deployment-specific legal review, a pinned real mainnet fork, actual wallet/private-request/fulfillment acceptance and root-holder authorization remain release gates. Translation and passing CI do not clear those gates.
-
-The `fulfillmentStaging` report must cover the selected non-event or event process, including repeated requests, concurrent operators, corrections and revocation. This is a required review, not a renamed historical Eventbrite approval. A benefit may omit the private request in normal use; the shipped private-request code and privacy controls still need acceptance.
+- Test language changes during real wallet approval: temporary private data clears and stale operations cannot complete. Reject pending wallet prompts separately; a language change cannot reverse a submitted transaction.
+- Publish and verify both benefit titles. An absent English title falls back to the published French title. No benefit is preconfigured.
+- Confirm the copied email includes the full signed subname, while the fixed bilingual mailto subject has an empty body. The signed protocol remains identical across languages.

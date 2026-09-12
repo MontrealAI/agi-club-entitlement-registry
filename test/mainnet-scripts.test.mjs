@@ -13,8 +13,8 @@ function fixture() {
  // No Hardhat connection, filesystem writes, real key, or network transport exists in this VM.
  const now=Math.floor(Date.now()/1000),waits=new Map(),sent=[],saved=[],validations=[],providers=[];
  const state={now,admin:address('4'),valid:true,bytecode:'0x6000',nonce:0,closed:false,decryptions:0,checkpoint:null,checkpointError:false,broadcastError:false,finalizedNumber:100,latestNumber:104,reorg:false,finalAdmin:null,missingFinalCode:false};
- const plan={schema:'AGIClubDeploymentPlan/1',chainId:1,contract:PROD,sourceSha256:'a'.repeat(64),creationCodeHash:hash('1'),runtimeCodeHash:hash('2'),deployer:address('3'),admin:state.admin,nonce:'0',predictedAddress:address('5'),gasLimit:'100',maxFeePerGas:'5',maxPriorityFeePerGas:'1',maxCostWei:'500',createdAt:now,expiresAt:now+1800,evidenceSha256:'b'.repeat(64)};
- const gate={status:'EVIDENCE_READY_FOR_PRINCIPAL_REVIEW',sourceSha256:plan.sourceSha256,evidenceSha256:plan.evidenceSha256,blockers:[],qualifiedBytecode:{creationCodeHash:plan.creationCodeHash,runtimeCodeHash:plan.runtimeCodeHash,admin:plan.admin}};
+ const plan={schema:'AGIClubDeploymentPlan/2',chainId:1,contract:PROD,sourceSha256:'a'.repeat(64),creationCodeHash:hash('1'),runtimeCodeHash:hash('2'),deployer:address('3'),admin:state.admin,nonce:'0',predictedAddress:address('5'),gasLimit:'100',maxFeePerGas:'5',maxPriorityFeePerGas:'1',maxCostWei:'500',createdAt:now,expiresAt:now+1800,evidenceSha256:'b'.repeat(64)};
+ const gate={deploymentScope:'EMPTY_REGISTRY_ONLY',status:'EVIDENCE_READY_FOR_PRINCIPAL_REVIEW',sourceSha256:plan.sourceSha256,evidenceSha256:plan.evidenceSha256,blockers:[],qualifiedBytecode:{creationCodeHash:plan.creationCodeHash,runtimeCodeHash:plan.runtimeCodeHash,admin:plan.admin}};
  const boundary=async name=>{const wait=waits.get(name);if(wait){waits.delete(name);wait.started.resolve();await wait.pending.promise;}};
  const signed=[];
  const signer={connect(){return this;},getAddress:async()=>plan.deployer,signTransaction:async request=>{signed.push(request);await boundary('sign');return '0x1234';}};
@@ -25,7 +25,7 @@ function fixture() {
    async broadcastTransaction(raw){assert(state.checkpoint,'Checkpoint must precede submission');sent.push(raw);if(state.broadcastError)throw Error('Simulated ambiguous RPC timeout');return {hash:hash('8'),wait:async()=>({status:1,contractAddress:plan.predictedAddress,blockNumber:100,blockHash:hash('a')})};}
   },
  };
- const env={AGI_MAINNET_SEND:'I_APPROVE_THIS_LIMITED_CANARY',DEPLOYER_KEYSTORE:'.local/fixture-keystore.json',DEPLOYER_KEYSTORE_PASSWORD:'UNIT_TEST_ONLY',DEPLOYER_ADDRESS:plan.deployer,EXPECTED_ADMIN:plan.admin,DEPLOY_MAX_COST_ETH:'0.0000000000000005',REGISTRY_ADDRESS:plan.predictedAddress};
+ const env={AGI_MAINNET_SEND:'I_APPROVE_THIS_EMPTY_REGISTRY',DEPLOYER_KEYSTORE:'.local/fixture-keystore.json',DEPLOYER_KEYSTORE_PASSWORD:'UNIT_TEST_ONLY',DEPLOYER_ADDRESS:plan.deployer,EXPECTED_ADMIN:plan.admin,DEPLOY_MAX_COST_ETH:'0.0000000000000005',REGISTRY_ADDRESS:plan.predictedAddress};
  const identityCalls=[];
  return {state,plan,gate,sent,signed,saved,validations,providers,identityCalls,
   pause:name=>{const started=Promise.withResolvers(),pending=Promise.withResolvers();waits.set(name,{started,pending});return {started:started.promise,release:pending.resolve};},
@@ -126,4 +126,8 @@ for(const wrapped of [false,true])test('Production identity pins all '+(wrapped?
  assert.equal(result.admin,address('4'));assert(calls.some(x=>x.method==='owner'));
  if(wrapped)assert(calls.some(x=>x.method==='getData'));
  for(const call of calls)assert.equal(call.tag,42,call.method);
+});
+
+for(const script of ['prepare','deploy'])test(script+' refuses an ambiguous deployment scope before contacting a wallet',async()=>{
+ const f=fixture();delete f.gate.deploymentScope;await assert.rejects(()=>f.run(script),/Only empty-registry deployment evidence/);assert.equal(f.sent.length,0);assert.equal(f.state.decryptions,0);
 });

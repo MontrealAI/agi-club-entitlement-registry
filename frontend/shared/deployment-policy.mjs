@@ -3,7 +3,7 @@ export const PLAN_FIELDS = Object.freeze(['schema','chainId','contract','sourceS
 const h32=/^0x[0-9a-f]{64}$/,sha=/^[0-9a-f]{64}$/,address=/^0x[0-9a-f]{40}$/,dec=/^(0|[1-9][0-9]*)$/;
 export function validatePlan(plan, now=Math.floor(Date.now()/1000)) {
  if(!plan||typeof plan!=='object'||Array.isArray(plan)||Object.keys(plan).sort().join()!==[...PLAN_FIELDS].sort().join())throw Error('Invalid deployment-plan fields');
- if(plan.schema!=='AGIClubDeploymentPlan/1'||plan.chainId!==1||plan.contract!=='contracts/AGIClubEntitlementRegistryMainnet.sol:AGIClubEntitlementRegistryMainnet')throw Error('Wrong production scope');
+ if(plan.schema!=='AGIClubDeploymentPlan/2'||plan.chainId!==1||plan.contract!=='contracts/AGIClubEntitlementRegistryMainnet.sol:AGIClubEntitlementRegistryMainnet')throw Error('Wrong production scope');
  if(!sha.test(plan.sourceSha256)||!sha.test(plan.evidenceSha256)||!h32.test(plan.creationCodeHash)||!h32.test(plan.runtimeCodeHash))throw Error('Invalid hash');
  for(const k of ['deployer','admin','predictedAddress'])if(!address.test(plan[k])||/^0x0{40}$/.test(plan[k]))throw Error('Invalid '+k);
  if(plan.deployer===plan.admin)throw Error('Disposable deployer must differ from root administrator');
@@ -17,5 +17,5 @@ export function validatePlan(plan, now=Math.floor(Date.now()/1000)) {
 }
 export function deploymentMessage(plan, now=Math.floor(Date.now()/1000)) {
  validatePlan(plan,now);const ordered={};for(const field of PLAN_FIELDS)ordered[field]=plan[field];
- return 'AGI CLUB — LIMITED MAINNET CANARY DEPLOYMENT APPROVAL\n'+JSON.stringify(ordered)+'\nI approve ONLY this exact contract creation, signer, nonce, fee ceiling and time window. No member launch, token approval, transfer, upgrade or Eventbrite action is authorized.';
+ return 'AGI CLUB — EMPTY REGISTRY DEPLOYMENT APPROVAL\n'+JSON.stringify(ordered)+'\nI approve ONLY this exact contract creation, signer, nonce, fee ceiling and time window. The registry starts empty. No benefit creation, member launch, fulfillment, token approval, transfer or upgrade is authorized.';
 }

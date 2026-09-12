@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {Readable} from 'node:stream';
-import {readCatalogPage,requestPolicy} from '../frontend/member-catalog.mjs';
+import {readCatalogPage,requestPolicy,readBenefitDetails,publicTermsLink} from '../frontend/member-catalog.mjs';
 import {membershipName,formatRequestEmail,parseRequestEmail,MAX_EMAIL_BYTES} from '../shared/request-email.mjs';
 import {validatePolicy,verifyEntitlementRequest,validatePacket,requestMessage,REGISTRY_VERSION} from '../shared/entitlement-request.mjs';
 import {defaultValue} from '../frontend/etherscan-tools.mjs';
@@ -12,6 +12,19 @@ import {fixture,NOW} from './fixtures.mjs';
 import {id,signMessage} from './crypto-reference.mjs';
 
 const cfg={entitlementMode:'registry',allowedEntitlements:[]};
+test('Selected benefit details use one explicit block for every public read',async()=>{
+ const calls=[],key=id('FICTITIOUS_DETAILS'),registry={};
+ const values={entitlement:[key,id('PUBLIC_METADATA'),0n,4n,4n,0n,999999999999n,2n,true],titleFR:'Avantage',titleEN:'Benefit',metadataURI:'ipfs://fictitious-public-terms'};
+ for(const [name,value] of Object.entries(values))registry[name]=async(...args)=>{calls.push({name,args});return value;};
+ const d=await readBenefitDetails(registry,key,12345);assert.equal(d.capacity,0n);assert.equal(d.active,4n);assert.equal(d.uri,values.metadataURI);
+ assert.equal(calls.length,4);for(const call of calls)assert.deepEqual(call.args,[key,{blockTag:12345}]);
+ await assert.rejects(()=>readBenefitDetails(registry,key,'latest'));
+ registry.metadataURI=async()=>{throw Error('RPC secret must not be echoed');};await assert.rejects(()=>readBenefitDetails(registry,key,12345),{message:'CATALOG_UNAVAILABLE'});
+});
+test('Public instruction links only permit credential-free HTTPS; other URIs remain inert text',()=>{
+ assert.equal(publicTermsLink('https://example.org/public-terms'),'https://example.org/public-terms');
+ for(const uri of ['ipfs://document','javascript:alert(1)','data:text/html,test','http://example.org','https://name:secret@example.org','https://example.org/\nprivate',null,''])assert.equal(publicTermsLink(uri),null);
+});
 function catalogue(count=63) {
   const ids=Array.from({length:count},(_,i)=>id('FICTITIOUS_BENEFIT_'+i)),calls=[];
   const registry={entitlementCount:async()=>BigInt(ids.length),entitlementIdsPage:async(o,n)=>{calls.push([o,n]);return ids.slice(o,o+n);},

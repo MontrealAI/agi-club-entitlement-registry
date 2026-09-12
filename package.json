@@ -1,6 +1,6 @@
 {
   "name": "agi-club-entitlement-registry",
-  "version": "2.4.0-rc.1",
+  "version": "2.4.0-rc.2",
   "private": true,
   "type": "module",
   "description": "ENS-rooted AGI Club benefits. Static-only optional private entitlement requests; no contact storage or email relay.",
@@ -33,7 +33,7 @@
     "export:etherscan": "npm run compile",
     "build:site": "node scripts/package.mjs",
     "test:offline": "node --test test/protocol.test.mjs test/privacy.test.mjs test/assets.test.mjs test/repository.test.mjs test/admin.test.mjs test/wallet-session.test.mjs test/receipt-input.test.mjs test/serve.test.mjs test/verify-ui.test.mjs test/deployment-ui.test.mjs test/release-gate.test.mjs test/mainnet-scripts.test.mjs test/fork-runner.test.mjs test/catalog-email.test.mjs test/language.test.mjs",
-    "test:evm": "npm run test:etherscan && hardhat run scripts/evm-tests.mjs --build-profile production --network hardhat && npm run test:stateful",
+    "test:evm": "npm run test:etherscan && hardhat run scripts/evm-tests.mjs --build-profile production --network hardhat && npm run test:stateful && npm run test:scenarios",
     "test:stateful": "hardhat run scripts/stateful-tests.mjs --build-profile production --network hardhat",
     "test:fork": "node scripts/run-fork-tests.mjs",
     "test:browser": "node scripts/browser-check.mjs && node scripts/browser-privacy.mjs",
@@ -53,6 +53,8 @@
     "privacy:check": "node --test test/privacy.test.mjs",
     "test:browser:source": "node scripts/browser-privacy.mjs --source",
     "verify:request": "node tools/verify_entitlement_request.mjs",
-    "test:etherscan": "node --test test/etherscan.test.mjs"
+    "test:etherscan": "node --test test/etherscan.test.mjs",
+    "launch:gate": "node scripts/benefit-launch-gate.mjs",
+    "test:scenarios": "hardhat run scripts/contract-scenarios.mjs --build-profile production --network isolatedMainnetModel"
   }
 }

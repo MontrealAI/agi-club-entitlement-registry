@@ -10,5 +10,5 @@ for(const name of LOCAL_STAGES){
  if(r.status!==0){console.error(log.trimEnd());break;} // Surface the failure in CI as well as its artifact; never cascade missing prerequisites.
 }
 const after=sourceDigest().sourceSha256;
-const report={repositoryVersion:'2.4.0-rc.1',contractVersion:'2.1.1',status:results.length===8&&results.every(x=>x.status==='PASS')&&before===after?'PASS':'BLOCKED',sourceSha256:after,sourceUnchanged:before===after,at:new Date().toISOString(),results,mainnetAuthorization:false,notes:['All local suites must pass; report does not replace fork, independent review, real wallets and private-message/fulfillment acceptance.','Asset build must not modify canonical sources.']};
+const report={repositoryVersion:'2.4.0-rc.2',contractVersion:'2.1.1',status:results.length===8&&results.every(x=>x.status==='PASS')&&before===after?'PASS':'BLOCKED',sourceSha256:after,sourceUnchanged:before===after,at:new Date().toISOString(),results,mainnetAuthorization:false,notes:['All local suites must pass; report does not replace fork, independent review, real wallets and private-message/fulfillment acceptance.','Asset build must not modify canonical sources.']};
 fs.writeFileSync('qualification/LOCAL_RELEASE.json',JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report,null,2));if(report.status!=='PASS')process.exitCode=1;

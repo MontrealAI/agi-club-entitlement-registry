@@ -6,7 +6,7 @@ import {SCHEMA,REGISTRY_VERSION,requestMessage,preparePacket,verifyEntitlementRe
 import {createEthersIO} from '../shared/ethers-adapter.mjs';
 import {revertData} from '../test/revert-data.mjs';
 import {formatRequestEmail,parseRequestEmail,membershipName} from '../shared/request-email.mjs';
-import {readCatalogPage} from '../frontend/member-catalog.mjs';
+import {readCatalogPage,readBenefitDetails} from '../frontend/member-catalog.mjs';
 const r={status:'NOT_EXECUTED',scope:'ISOLATED EVM MODEL, genuine ethers signatures/adapter, WebCrypto salted recipient binding, no mail backend; NO real ENS, wallets, provider email or Eventbrite',results:[]};let connection,provider;
 try {
  connection=await network.create();assert.equal(connection.networkName,'isolatedMainnetModel');
@@ -34,6 +34,11 @@ try {
   const secondId=ethers.id('SECOND_LOCAL_JOURNEY_ONLY');await receipt(c.connect(admin).createEntitlement(secondId,ethers.id('PERK'),1,0,0,1,ethers.ZeroHash));
   await receipt(c.connect(admin).setDescriptor(secondId,'Titre modifié','Changed title','',ethers.ZeroHash));
   const updated=await readCatalogPage(c,config,ethers);assert.equal(updated.rows[1].id,secondId);assert.equal(updated.rows[1].title,'Titre modifié');
+  await receipt(c.connect(admin).setDescriptor(secondId,'Instructions fictives','Fictitious instructions','https://example.org/public-terms',ethers.ZeroHash));
+  const block=await provider.getBlock('latest');
+  const details=await readBenefitDetails(c,secondId,block.number);assert.equal(details.uri,'https://example.org/public-terms');assert.equal(details.fr,'Instructions fictives');assert.equal(details.capacity,1n);
+  await receipt(c.connect(admin).setCapacity(secondId,2));
+  assert.equal((await readBenefitDetails(c,secondId,block.number)).capacity,1n,'Pinned details must not mix a later administrative change');
  });
  await check('Actual claim calldata and logs contain public entitlement evidence, never recipient fields',async()=>{
   const tx=await provider.getTransaction(claimTx.hash),decoded=c.interface.parseTransaction(tx);

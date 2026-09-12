@@ -1,5 +1,9 @@
 /* Reviewed UI copy only. Never place member data or protocol messages here. */
 export const PAGE_MESSAGES = Object.freeze(Object.fromEntries(Object.entries({
+  "m288": {"fr": "Lire les détails de cet avantage", "en": "Read this benefit’s details"},
+  "m289": {"fr": "Consulter les instructions publiques (nouvel onglet)", "en": "Open public instructions (new tab)"},
+  "m290": {"fr": "La capacité compte les attributions actives, pas les livraisons. Ces dates limitent les nouvelles réclamations ; elles ne font pas expirer un droit déjà actif. Les instructions externes sont sous la responsabilité de leur éditeur.", "en": "Capacity counts active allocations, not deliveries. These dates limit new claims; they do not expire an active right. External instructions are the responsibility of their publisher."},
+
   "m000": {
     "fr": "AGI CLUB — Entitlement Registry",
     "en": "AGI CLUB — Entitlement Registry"
@@ -57,8 +61,8 @@ export const PAGE_MESSAGES = Object.freeze(Object.fromEntries(Object.entries({
     "en": "Your AGI Club name. Your wallet. Your choice."
   },
   "m014": {
-    "fr": "Aperçu du registre · 2.4.0-rc.1.",
-    "en": "Registry preview · 2.4.0-rc.1."
+    "fr": "Aperçu du registre · 2.4.0-rc.2.",
+    "en": "Registry preview · 2.4.0-rc.2."
   },
   "m015": {
     "fr": "Aucun déploiement n’est fourni. La qualification mainnet, les revues et la configuration restent nécessaires avant l’ouverture. Une démonstration ne crée aucun droit réel.",
@@ -177,8 +181,8 @@ export const PAGE_MESSAGES = Object.freeze(Object.fromEntries(Object.entries({
     "en": ", Ethereum mainnet."
   },
   "m044": {
-    "fr": "Code du contrat 2.1.1 · Dépôt 2.4.0-rc.1 · Protocole de demande /4",
-    "en": "Contract code 2.1.1 · Repository 2.4.0-rc.1 · Request protocol /4"
+    "fr": "Code du contrat 2.1.1 · Dépôt 2.4.0-rc.2 · Protocole de demande /4",
+    "en": "Contract code 2.1.1 · Repository 2.4.0-rc.2 · Request protocol /4"
   },
   "m045": {
     "fr": "Les wallets et claims sont publics. Le code source publié n’est pas un service déployé.",
@@ -413,8 +417,8 @@ export const PAGE_MESSAGES = Object.freeze(Object.fromEntries(Object.entries({
     "en": "Authority source: the effective owner of"
   },
   "m103": {
-    "fr": "Interface 2.4.0-rc.1 · Contrat 2.1.1 · Demande privée /4.",
-    "en": "Interface 2.4.0-rc.1 · Contract 2.1.1 · Private request /4."
+    "fr": "Interface 2.4.0-rc.2 · Contrat 2.1.1 · Demande privée /4.",
+    "en": "Interface 2.4.0-rc.2 · Contract 2.1.1 · Private request /4."
   },
   "m104": {
     "fr": "Publication du code ≠ autorisation de déploiement. La mise à disposition des avantages reste distincte du registre.",
@@ -733,8 +737,8 @@ export const PAGE_MESSAGES = Object.freeze(Object.fromEntries(Object.entries({
     "en": "on Ethereum mainnet. Request names and emails remain off-chain. Wallet addresses and claim proofs are public."
   },
   "m183": {
-    "fr": "v2.4.0-rc.1 · Aucun déploiement n’est fourni par défaut. Une interface ne constitue pas un audit.",
-    "en": "v2.4.0-rc.1 · No deployment is provided by default. An interface is not an audit."
+    "fr": "v2.4.0-rc.2 · Aucun déploiement n’est fourni par défaut. Une interface ne constitue pas un audit.",
+    "en": "v2.4.0-rc.2 · No deployment is provided by default. An interface is not an audit."
   },
   "m184": {
     "fr": "Vérifier la transaction",
@@ -961,9 +965,9 @@ export const PAGE_MESSAGES = Object.freeze(Object.fromEntries(Object.entries({
     "fr": "Vérifiez. Puis autorisez."
   },
   "m240": {
-    "en": "This signs a limited deployment authorization. It sends no transaction. Only use the trusted HTTPS origin after independent review. Never export the club.agi.eth hardware-wallet key.",
-    "fr": "Cette étape signe une autorisation de déploiement limitée. Elle n’envoie aucune transaction. Utilisez uniquement l’origine HTTPS de confiance, après une revue indépendante. N’exportez jamais la clé du portefeuille matériel détenant club.agi.eth."
-  },
+    "fr": "Cette étape autorise uniquement la création du registre vide. Elle n’envoie aucune transaction et n’autorise aucune création d’avantage ni ouverture aux membres. Utilisez l’origine de confiance après revue indépendante. N’exportez jamais la clé du wallet détenant club.agi.eth.",
+    "en": "This step authorizes only creation of the empty registry. It sends no transaction and authorizes no benefit creation or member launch. Use the trusted origin after independent review. Never export the key of the wallet holding club.agi.eth."
+},
   "m241": {
     "en": "A production deployment is irreversible. A signature is a real authorization, not a demo.",
     "fr": "Un déploiement en production est irréversible. La signature est une véritable autorisation, pas une démonstration."
@@ -973,9 +977,9 @@ export const PAGE_MESSAGES = Object.freeze(Object.fromEntries(Object.entries({
     "fr": "Charger votre fichier local deployment-plan.json"
   },
   "m243": {
-    "en": "I have reviewed the exact source, bytecode, reports, deployer, fee ceiling and expiry. I authorize only this limited canary.",
-    "fr": "J’ai vérifié le code source exact, le bytecode, les rapports, le déployeur, le plafond des frais et l’expiration. J’autorise uniquement ce déploiement limité."
-  },
+    "fr": "J’ai vérifié le code exact, le bytecode, les rapports, le déployeur, le plafond des frais et l’expiration. J’autorise uniquement la création du registre vide.",
+    "en": "I reviewed the exact source, bytecode, reports, deployer, fee ceiling and expiry. I authorize only creation of the empty registry."
+},
   "m244": {
     "en": "Verify club.agi.eth and sign this plan",
     "fr": "Vérifier club.agi.eth et signer ce plan"

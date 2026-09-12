@@ -18,16 +18,11 @@
     "file": ".local/wallet-staging.json",
     "sha256": ""
   },
-  "fulfillmentStaging": {
-    "status": "NOT_EXECUTED",
-    "reviewer": "",
-    "file": ".local/fulfillment-staging.json",
-    "sha256": ""
-  },
   "privateRequestStaging": {
     "status": "NOT_EXECUTED",
     "reviewer": "",
     "file": ".local/private-request-staging.json",
     "sha256": ""
-  }
+  },
+  "deploymentScope": "EMPTY_REGISTRY_ONLY"
 }

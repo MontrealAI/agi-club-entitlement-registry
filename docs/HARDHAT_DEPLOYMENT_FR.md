@@ -191,19 +191,20 @@ Après lecture des revues privées, le contrôle de livraison relit l’empreint
 
 ## F. Revues indépendantes et essais de vrais appareils
 
-Complétez la [revue juridique de livraison](LEGAL_RELEASE_REVIEW.md) avec un conseil qualifié et l’opérateur réel : offre, droits des membres, avis FR/EN, renseignements obligatoires et traitement des courriels/prestations. Publiez les informations requises avant l’empreinte finale du code. La case de lecture du membre est temporaire ; elle ne constitue pas un registre d’acceptation conservé.
+Complétez la [revue juridique de livraison](LEGAL_RELEASE_REVIEW.md) avec un conseil qualifié et l’opérateur réel : périmètre explicitement vide du déploiement, droits existants des membres, avis FR/EN, renseignements obligatoires et traitement des courriels/prestations. Publiez les informations requises avant l’empreinte finale du code. La case de lecture du membre est temporaire ; elle ne constitue pas un registre d’acceptation conservé.
 
 Résolvez les constats sur les sources, le compilateur et le verrou exacts. Vérifiez transitions d’autorité, wrapping/expiration, appels non autorisés, doublons, lots, quotas, révocation/réattribution, finalité et signatures invalides.
 
-Essayez réellement Ledger/Safe/portefeuille membre, navigateur mobile, origine HTTPS et CSP, signature, copie explicite, courriel, vérification et mise à disposition choisie. Les données de test restent fictives. Vérifiez que le portefeuille reçoit une empreinte salée, pas les coordonnées.
+Essayez réellement Ledger/Safe/portefeuille membre, navigateur mobile, origine HTTPS et CSP, signature, copie explicite, courriel et vérification de demandes fictives. L’avantage réel et sa mise à disposition seront revus séparément une fois choisis. Les données de test restent fictives. Vérifiez que le portefeuille reçoit une empreinte salée, pas les coordonnées.
 
-Conservez les rapports privés sous `.local/`, sans reçus clients. Utilisez `releases/external-evidence.example.json` pour préparer `.local/external-evidence.json`. Les cinq entrées requises sont :
+Conservez les rapports privés sous `.local/`, sans reçus clients. Utilisez `releases/external-evidence.example.json` pour préparer `.local/external-evidence.json`. Indiquez `deploymentScope: "EMPTY_REGISTRY_ONLY"`. Les quatre entrées requises sont :
 
 - `independentSecurityReview` : revue de sécurité indépendante ;
 - `legalReview` : revue juridique du déploiement réel ;
 - `realWalletStaging` : essais des vrais portefeuilles ;
-- `privateRequestStaging` : parcours de demande privée ;
-- `fulfillmentStaging` : mise à disposition et réception/utilisation de l’avantage choisi.
+- `privateRequestStaging` : parcours de demande privée.
+
+Aucun avantage choisi ni rapport de livraison n’est requis pour déployer vide. Une offre ultérieure exige ses propres revues juridique et de mise à disposition via `npm run launch:gate` ([instructions](ENTITLEMENT_DESIGN_FR.md#déployer-vide--approuver-un-avantage-plus-tard)).
 
 Chaque entrée identifie le véritable réviseur, son rapport privé sous `.local/`, l’empreinte SHA-256 de ce fichier et la source exacte. Inscrivez `PASS` uniquement pour un résultat exécuté et revu. Aucun test de relais ne remplace `privateRequestStaging`.
 
@@ -216,7 +217,7 @@ Le contrôle exige huit étapes locales réussies et leurs journaux non vides, l
 
 Le contrôle vérifie exhaustivité et empreintes, pas la véracité indépendante des déclarations d’autrui. Il n’autorise jamais lui-même un déploiement. Tout changement de code, tests, configuration, avis publics, guide juridique ou licence exige les preuves correspondantes. Gardez coordonnées et conseils juridiques hors des artefacts publics.
 
-## G. Préparer un plan non signé et limité
+## G. Préparer un plan non signé pour un registre vide
 
 Après réussite des contrôles, configurez `.env` avec `MAINNET_RPC_URL`, `EXPECTED_ADMIN`, `DEPLOYER_ADDRESS` et **`DEPLOY_MAX_COST_ETH`**, votre plafond explicite en ETH. Un budget vide bloque la préparation ; ce plafond n’est pas une promesse de tarif.
 
@@ -224,7 +225,9 @@ Après réussite des contrôles, configurez `.env` avec `MAINNET_RPC_URL`, `EXPE
 npm run prepare:mainnet
 ```
 
-Relisez `.local/deployment-plan.json` : chaîne 1, contrat de production, empreintes source/création/exécution, déployeur, administrateur ENS actuel, nonce, adresse prédite, limite de gas, plafonds des frais et expiration. **Cette commande n’envoie aucune transaction.** La réussite affiche `UNSIGNED CANARY PLAN — no transaction sent`.
+Le `AGIClubDeploymentPlan/2` autorise uniquement la création exacte du registre vide, sans création d’avantage ni lancement membre. Régénérez et révisez les anciens plans/signatures `/1` ; ne les réétiquetez pas.
+
+Relisez `.local/deployment-plan.json` : chaîne 1, contrat de production, empreintes source/création/exécution, déployeur, administrateur ENS actuel, nonce, adresse prédite, limite de gas, plafonds des frais et expiration. **Cette commande n’envoie aucune transaction.** La réussite affiche `UNSIGNED EMPTY REGISTRY PLAN — no transaction sent`.
 
 Le plan expire après 30 minutes. Si son délai ou le nonce change, préparez, relisez et faites signer un nouveau plan. Ne modifiez pas le JSON pour prolonger sa validité ou son budget. Le planificateur compare aussi l’artefact réel au code qualifié et le détenteur actuel à la preuve du fork ; une différence impose les nouvelles vérifications concernées.
 
@@ -245,7 +248,7 @@ Le diffuseur utilise un fichier JSON **chiffré du déployeur**, indiqué par `D
 printf "Deployer keystore password: "
 read -r -s DEPLOYER_KEYSTORE_PASSWORD; printf "\n"
 export DEPLOYER_KEYSTORE_PASSWORD
-AGI_MAINNET_SEND=I_APPROVE_THIS_LIMITED_CANARY npm run deploy:mainnet
+AGI_MAINNET_SEND=I_APPROVE_THIS_EMPTY_REGISTRY npm run deploy:mainnet
 unset DEPLOYER_KEYSTORE_PASSWORD
 ```
 
@@ -255,7 +258,7 @@ $secret = Read-Host "Deployer keystore password" -AsSecureString
 $ptr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secret)
 try {
   $env:DEPLOYER_KEYSTORE_PASSWORD = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($ptr)
-  $env:AGI_MAINNET_SEND = "I_APPROVE_THIS_LIMITED_CANARY"
+  $env:AGI_MAINNET_SEND = "I_APPROVE_THIS_EMPTY_REGISTRY"
   npm run deploy:mainnet
 } finally {
   [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($ptr)
@@ -337,4 +340,4 @@ Gardez l’accès général fermé jusqu’à revue des constats et preuves priv
 
 Ne partagez que des erreurs expurgées. Ne téléversez jamais `.env`, clés, mots de passe, autorisations privées ou reçus membres.
 
-Pour ressources, accès, services, allocations périodiques ou autres avantages, consultez le [guide général](ENTITLEMENT_DESIGN_FR.md). `fulfillmentStaging` doit couvrir le processus choisi ; Eventbrite est facultatif. Aucun événement ne doit être choisi pour déployer. La demande privée est facultative pour un avantage ; la validation de son code, des appareils et de la confidentialité reste obligatoire.
+Pour ressources, accès, services, allocations périodiques ou autres avantages, consultez le [guide général](ENTITLEMENT_DESIGN_FR.md). `fulfillmentStaging` relève du contrôle ultérieur `launch:gate` pour un avantage choisi ; Eventbrite est facultatif. Le déploiement vide exige le périmètre de revue explicite `EMPTY_REGISTRY_ONLY`. Aucun événement ne doit être choisi pour déployer. La demande privée est facultative pour un avantage ; la validation de son code, des appareils et de la confidentialité reste obligatoire.

@@ -26,6 +26,6 @@ Removing the database removes that custody layer. It also removes a shared mail 
 
 ## Versioning
 
-Repository 2.4.0-rc.1; contract 2.1.1; request /4. Earlier /3 and /2.x requests are incompatible and must be regenerated from an existing valid claim. No new on-chain claim is required merely to update the receipt format.
+Repository 2.4.0-rc.2; contract 2.1.1; request /4. Earlier /3 and /2.x requests are incompatible and must be regenerated from an existing valid claim. No new on-chain claim is required merely to update the receipt format.
 
 Both contact fields are independently optional in `/4`; empty strings mean not supplied and remain commitment-bound. `VERIFIED_REQUEST_NOT_FULFILLED` and `fulfillmentConfirmed: false` never assert delivery, access or mailbox control. Deploy the new member and verifier assets together; no silent legacy ticket-receipt conversion is supported.
