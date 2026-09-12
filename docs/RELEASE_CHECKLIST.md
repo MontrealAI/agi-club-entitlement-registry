@@ -22,6 +22,7 @@
 - [ ] Current root holder explicitly approves exact deployment plan and fee ceiling.
 - [ ] Broadcast once; inspect transaction, runtime, admin, finality and explorer verification.
 - [ ] Preserve the recovery checkpoint; confirm finalized code and ENS authority through `inspect:mainnet` before retiring the disposable deployer.
+- [ ] Publish exact source on Etherscan using the matching verification package; confirm all public Read/Write Contract functions and record a real root-wallet operation following the [Etherscan guide](ETHERSCAN_GUIDE.md). Keep private receipts and contacts off Etherscan.
 
 ## 3. Broad member launch
 

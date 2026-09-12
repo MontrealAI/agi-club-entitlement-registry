@@ -5,6 +5,7 @@ import {createHash} from 'node:crypto';
 import {network, artifacts as hhArtifacts} from 'hardhat';
 import {sourceDigest} from './source-digest.mjs';
 import {revertData} from '../test/revert-data.mjs';
+import {ACTIONS,EXPLORER_ABI,prepareExplorerCall} from '../frontend/etherscan-tools.mjs';
 const report={version:'2.1.1',status:'NOT_EXECUTED',at:new Date().toISOString(),scope:'LOCAL HARDHAT + MOCK ENS/WRAPPERS. NOT mainnet-fork, Safe or real-wallet qualification',results:[]};
 let rpc,provider,ethers,connection;
 fs.mkdirSync('qualification',{recursive:true});
@@ -72,6 +73,39 @@ try{
  await run('Contract-wallet holder is admin, its individual signer is not',async()=>{const w=await deploy('QualificationWallet',[aa]);await tx(ens.setOwner(root,await w.getAddress()));assert.equal(await c.admin(),await w.getAddress());await bad('pause',[],'NotClubAdmin',admin);await tx(w.connect(admin).execute(await c.getAddress(),c.interface.encodeFunctionData('pause')));assert.equal(await c.paused(),true);await tx(w.connect(admin).execute(await c.getAddress(),c.interface.encodeFunctionData('unpause')));await tx(ens.setOwner(root,aa));});
  await run('Closed, not-yet-open and ended entitlements return distinct reasons',async()=>{const n=ethers.id('NEXT');await bad('claim',[n,'dave'],'ClaimRejected',member,[4n]);await tx(c.connect(admin).setEntitlementState(n,3));await bad('claim',[n,'dave'],'ClaimRejected',member,[5n]);await tx(c.connect(admin).setEntitlementState(n,2));await tx(c.connect(admin).setWindow(n,4000000000,4000000100));await bad('claim',[n,'dave'],'ClaimRejected',member,[7n]);await tx(c.connect(admin).setWindow(n,1,2));await bad('claim',[n,'dave'],'ClaimRejected',member,[8n]);});
 
+ await run('Explorer catalogue covers every public production function and all 19 writes',async()=>{
+  const expected=new ethers.Interface(artifact('AGIClubEntitlementRegistryMainnet').abi).fragments.filter(f=>f.type==='function').map(f=>f.format('full')).sort();
+  assert.deepEqual([...EXPLORER_ABI].sort(),expected);
+  assert.deepEqual(Object.keys(ACTIONS).sort(),new ethers.Interface(EXPLORER_ABI).fragments.filter(f=>!['view','pure'].includes(f.stateMutability)).map(f=>f.name).sort());
+ });
+ await run('All 19 explorer-prepared write functions execute on the local EVM with exact claim history',async()=>{
+  const registry=await deploy('AGIClubEntitlementRegistry',[await ens.getAddress(),[await wrapper.getAddress()]]),address=await registry.getAddress(),done=new Set();
+  for(const label of ['explorer-a','explorer-b','explorer-c','explorer-d','explorer-e'])await tx(ens.setOwner(ethers.namehash(label+'.club.agi.eth'),ma));
+  async function prepared(method,values,signer=admin){
+   const p=prepareExplorerCall(method,values,address,ethers);assert.equal(p.transaction.chainId,1);assert.equal(p.transaction.value,'0');
+   // Only ABI-shaped data is exercised here; the actual transaction uses the guarded local provider, never the helper's mainnet chain ID.
+   await tx(signer.sendTransaction({to:address,data:p.transaction.data,value:0n}));done.add(method);
+  }
+  const id='EXPLORER_FIRST';
+  for(const [method,values]of [
+   ['createEntitlement',[id,'EVENT','5','0','0','1','']],['setCategory',[id,'BRIEFING']],['setMetadataHash',[id,'']],
+   ['setDescriptor',[id,'Avantage de test','Test benefit','','']],['setWindow',[id,'','']],['setCapacity',[id,'5']],
+   ['setEntitlementState',[id,'2']],['duplicateEntitlement',[id,'EXPLORER_SECOND']],
+  ])await prepared(method,values);
+  await prepared('claim',[id,'explorer-a'],member);
+  for(const [method,values]of [
+   ['adminGrantClaimToCurrentOwner',[id,'explorer-b']],['adminGrantBatchToCurrentOwners',[id,'explorer-c,explorer-d']],
+   ['adminGrantClaimOverride',[id,'explorer-e',na,'PUBLIC_TEST_CASE']],['revokeClaim',[id,'explorer-a','PUBLIC_TEST_CASE']],
+   ['reinstateClaim',[id,'explorer-a']],['revokeBatch',[id,'["explorer-b","explorer-c"]','PUBLIC_TEST_CASE']],
+   ['reassignRevokedClaim',[id,'explorer-b',na]],['setSupportedNameWrapper',[await wrapper.getAddress(),'true']],['pause',[]],['unpause',[]],
+  ])await prepared(method,values);
+  assert.deepEqual([...done].sort(),Object.keys(ACTIONS).sort());
+  const state=await registry.entitlement(ethers.id(id));assert.equal(state[3],4n);assert.equal(state[4],5n);
+  assert.equal((await registry.claimRecord(ethers.id(id),ethers.namehash('explorer-a.club.agi.eth')))[4],3n);
+  assert.equal(await registry.claimantOf(ethers.id(id),ethers.namehash('explorer-b.club.agi.eth')),na);
+  assert.equal(await registry.claimantOf(ethers.id(id),ethers.namehash('explorer-c.club.agi.eth')),ethers.ZeroAddress);
+  assert.equal(await registry.admin(),aa);assert.equal(await registry.isAdmin(da),false);
+ });
  await run('Production constructor rejects chain 31337 even with canonical-shaped local fixtures',async()=>{
   const E='0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e',W='0xD4416b13d2b3a9aBae7AcD5D6C2BbDBE25686401';
   await rpc.request({method:'hardhat_setCode',params:[E,await provider.getCode(await ens.getAddress())]});

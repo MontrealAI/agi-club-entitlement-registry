@@ -7,6 +7,7 @@ Start with a local preview. You need no funded wallet, RPC account, deployment k
 | See the interface on your computer | A → B installation → D | Local demonstration at `http://127.0.0.1:8080` |
 | Test the contracts with free local test ETH | A → B → C | `.local/local-rehearsal.json`; chain 31337 only |
 | Qualify a production candidate | A → B qualification → E → F | Evidence for the exact source; no broadcast |
+| Verify source or manage the deployed registry through Etherscan | [Bilingual Etherscan guide](ETHERSCAN_GUIDE.md) | Exact verification input and all 52 public functions; public parameters only |
 | Deploy an approved limited canary | G → H → I → J | Root-approved deployment, verified identity, then a real member rehearsal |
 
 **Run commands one at a time, from the repository folder. Continue only when the current command succeeds.** Keep a long-running local server in its own terminal; stop it with **Ctrl+C**.
@@ -292,6 +293,8 @@ npm run verify:mainnet -- 0xYOUR_DEPLOYED_CONTRACT
 ```
 
 Explorer verification requires a configured Etherscan API key and the same production build profile. Check actual runtime/admin independently, wait for finality, then configure the static app:
+
+For manual website verification, run `npm run export:etherscan` or download the matching Linux CI artifact `etherscan-verification-not-deployed`. The export recompiles the exact Standard JSON and checks it against the production artifact. Upload `dist/etherscan/standard-input.json` using **Solidity (Standard-Json-Input)**; use the compiler and `project/` contract path recorded in `VERIFICATION.json`, with no constructor arguments. The website route does not use your CLI API key. Follow the [Etherscan guide](ETHERSCAN_GUIDE.md) for exact steps, every administrative/member operation and troubleshooting. The static site's **Etherscan** page supplies copy-ready public inputs in French and English.
 
 `npm run inspect:mainnet` uses the approved `runtimeCodeHash` from `.local/deployment-plan.json`. If recovering an existing reviewed deployment without that plan, set `EXPECTED_RUNTIME_HASH` in `.env` from your independent approved record. A hash copied from an unknown contract is not approval. Inspection pins finalized and latest blocks, checks runtime, registry getters and canonical ENS authority at both, then checks the block hashes again. It rejects an unfinalized owner change, missing finalized code or an inconsistent/reorganized block view. A successful inspection writes `.local/post-deployment.json`, including both block anchors, the checked `address` and `runtimeCodeHash` to use below. Replace both example placeholders with those reviewed values.
 
