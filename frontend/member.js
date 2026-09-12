@@ -3,7 +3,7 @@ import {createEthersIO} from './shared/ethers-adapter.mjs';
 import {MEMBER_ABI} from './contract-abi.mjs';
 import {PrivateMemory} from './private-memory.mjs';
 const $=id=>document.getElementById(id), cfg=window.AGI_CONFIG||{}, memory=new PrivateMemory();
-let provider=null,signer=null,contract=null,account='',member=null,demo=false,busy=false,timer=null,sessionEpoch=0,membershipEpoch=0,walletPromptEpoch=null,txProvider=null;
+let provider=null,signer=null,contract=null,account='',member=null,demo=false,busy=false,timer=null,sessionEpoch=0,membershipEpoch=0,usageEpoch=0,walletPromptEpoch=null,txProvider=null;
 const claimStates=['Disponible','En pause','Nom non admissible','Avantage inconnu','En préparation','Fermé','Archivé','Pas encore ouvert','Terminé','Déjà réclamé','Révoqué','Membership absent','Autre détenteur','Droit expiré','Contingent complet'];
 const status=(text,bad=false)=>{$('status').textContent=text;$('status').classList.toggle('error',bad);};
 const message=text=>{$('requestStatus').textContent=text;};
@@ -12,7 +12,8 @@ function invalidate(clearInputs=false) {
   if(clearInputs){$('ticketName').value='';$('ticketEmail').value='';$('consent').checked=false;$('copyConsent').checked=false;}
   message('Aucune demande conservée par la page. Vous pouvez préparer une nouvelle demande sans refaire le claim.');
 }
-function clearPrivate() { invalidate(true); clearTimeout(timer); }
+function clearPrivate() { usageEpoch++;$('usageConsent').checked=false;invalidate(true);clearTimeout(timer); }
+function assertUsage(){if(!$('usageConsent').checked)throw Error('USAGE_NOTICE');}
 function touch(){clearTimeout(timer);timer=setTimeout(()=>{clearPrivate();message('Les coordonnées ont été effacées après 10 minutes d’inactivité. Aucun billet n’a été envoyé par cette page.');},600000);}
 function lockContact(enabled){$('contactInputs').disabled=!enabled;$('prepareRequest').disabled=!enabled;}
 function disconnect(){
@@ -55,6 +56,7 @@ const errors={
  LIBRARY_MISSING:'Les dépendances du portail ne sont pas construites. Consultez le guide de publication.',
  NOT_CONFIGURED:'Le contrat et son origine officielle ne sont pas configurés. La démonstration reste disponible.',
  CONSENT:'Confirmez la préparation locale de vos coordonnées.',
+ USAGE_NOTICE:'Lisez les conditions et confirmez les frais réseau et le caractère public du claim avant de poursuivre.',
  COPY_CONSENT:'Confirmez que la copie place vos coordonnées dans le presse-papiers de votre appareil.',
  COPY_UNAVAILABLE:'Copie automatique indisponible. Sélectionnez la demande dans le cadre, copiez-la vous-même puis effacez les données.',
  NO_PACKET:'Préparez d’abord la demande signée.',UNKNOWN:'Opération non confirmée. Vérifiez votre wallet et réessayez. Aucune demande de billet n’a été envoyée.'
@@ -116,10 +118,12 @@ async function inspectMember(){
 async function claim(){
   txProvider=provider;
   try{
-    const epoch=sessionEpoch,selection=membershipEpoch,claimMember=member;
-    const current=()=>epoch===sessionEpoch&&selection===membershipEpoch;
+    const epoch=sessionEpoch,selection=membershipEpoch,notice=usageEpoch,claimMember=member;
+    const current=()=>epoch===sessionEpoch&&selection===membershipEpoch&&notice===usageEpoch;
     const assertClaim=async()=>{
+      assertUsage();
       await assertSession();
+      assertUsage();
       if(!current()||!claimMember||member!==claimMember)throw Error('EDITED');
     };
     await assertClaim();
@@ -135,6 +139,7 @@ async function claim(){
   }finally{if(txProvider!==provider)txProvider?.destroy?.();txProvider=null;}
 }
 async function prepare(){
+  assertUsage();
   if(!$('consent').checked)throw Error('CONSENT');
   if(demo){message('DÉMONSTRATION uniquement. Aucune signature, copie de demande, transaction ou transmission. Pour explorer la confidentialité, saisissez uniquement des coordonnées fictives puis utilisez Effacer.');return;}
   const epoch=memory.epoch,contact={name:$('ticketName').value,email:$('ticketEmail').value};
@@ -144,12 +149,14 @@ async function prepare(){
   const unsigned=await preparePacket({origin:cfg.expectedOrigin,chainId:1,registry:cfg.registryAddress.toLowerCase(),entitlementId:member.id,membershipLabel:member.label,membershipNode:member.node,claimant:account.toLowerCase(),claimRevision:Number(current[4]),issuedAt,expiresAt:issuedAt+DEFAULT_TTL_SECONDS,nonce:randomHex(16)},contact);
   contact.name='';contact.email='';
   await validatePacket({...unsigned,signature:'0x01'},policy(),ethers);
+  assertUsage();
   if(epoch!==memory.epoch)throw Error('EDITED');
   status('Signez la demande : le wallet reçoit une empreinte salée, pas votre nom ni votre courriel.');
   const signature=await signer.signMessage(unsigned.message);
   await assertSession();if(epoch!==memory.epoch)throw Error('EDITED');
   const packet={...unsigned,signature};
   await verifyTicketRequest(packet,policy(),createEthersIO(ethers,provider,cfg.registryAddress));
+  assertUsage();
   if(!memory.set(packet,epoch))throw Error('EDITED');
   $('requestPreview').value=JSON.stringify(packet,null,2);$('copyRequest').disabled=false;
   message('Demande vérifiée, uniquement dans cette page. Copiez-la vous-même dans un courriel à president@montreal.ai. Le site ne l’envoie pas.');
@@ -167,6 +174,7 @@ $('clearPrivate').addEventListener('click',()=>{clearPrivate();status('Coordonn�
 on('demo',()=>{disconnect();demo=true;$('authority').textContent='Démonstration';$('modeNotice').textContent='DÉMONSTRATION — sans wallet, sans transaction et sans envoi. Utilisez des données fictives.';$('memberLabel').value='exemple';status('Cliquez sur Vérifier pour explorer un droit fictif.');});
 for(const f of ['ticketName','ticketEmail'])$(f).addEventListener('input',()=>{invalidate();touch();});
 $('consent').addEventListener('change',()=>invalidate());
+$('usageConsent').addEventListener('change',()=>{usageEpoch++;invalidate(true);touch();});
 for(const f of ['memberLabel','benefitSelect'])$(f).addEventListener('input',()=>{membershipEpoch++;clearPrivate();member=null;lockContact(false);$('claim').disabled=true;$('eligibility').textContent='Vérifiez de nouveau le membership et l’avantage sélectionnés.';});
 for(const e of ['pointerdown','keydown'])document.addEventListener(e,touch,{passive:true});
 window.addEventListener('pagehide',clearPrivate);

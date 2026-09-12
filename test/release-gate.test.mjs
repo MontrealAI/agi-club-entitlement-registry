@@ -8,7 +8,7 @@ import {sha256,sourceDigest} from '../scripts/source-digest.mjs';
 import {ENS,WRAPPER,ROOT,REGISTRY_VERSION} from '../shared/ticket-request.mjs';
 
 const stages=['check:repo','check:lock','test:offline','compile','test:evm','test:journey','build:site','test:browser'];
-const kinds=['independentSecurityReview','realWalletStaging','privateRequestStaging','eventbriteStaging'];
+const kinds=['independentSecurityReview','legalReview','realWalletStaging','privateRequestStaging','eventbriteStaging'];
 const localFile='qualification/LOCAL_RELEASE.json',compilerFile='qualification/compiler-status.json',forkFile='qualification/mainnet-fork.json';
 const hash=n=>'0x'+n.repeat(64),address=n=>'0x'+n.repeat(40);
 function fixture(t) {
@@ -69,6 +69,22 @@ for(const [name,modify] of [
 ]) test('Compiler evidence refuses '+name,t=>{const f=fixture(t);f.edit(compilerFile,modify);f.blocked();});
 test('Missing compiler identity cannot qualify a fork',t=>{const f=fixture(t);f.remove(compilerFile);f.blocked();});
 test('Private report mutation invalidates its recorded hash',t=>{const f=fixture(t);f.write('.local/independentSecurityReview.txt','CHANGED SYNTHETIC REPORT');f.blocked();});
+test('Technical evidence alone cannot replace the legal review',t=>{
+ const f=fixture(t);f.edit('.local/external-evidence.json',q=>{delete q.legalReview;});
+ assert(f.gate().blockers.includes('legalReview: missing reviewed evidence'));
+});
+test('An unexecuted legal review blocks deployment preparation',t=>{
+ const f=fixture(t);f.edit('.local/external-evidence.json',q=>{q.legalReview.status='NOT_EXECUTED';});f.blocked();
+});
+test('Legal review bytes are bound into the root holder approval',t=>{
+ const f=fixture(t),before=f.gate();f.write('.local/legalReview.txt','CHANGED SYNTHETIC LEGAL REPORT');f.blocked();
+ f.edit('.local/external-evidence.json',q=>{q.legalReview.sha256=sha256('CHANGED SYNTHETIC LEGAL REPORT');});
+ const after=f.gate();assert.equal(after.status,'EVIDENCE_READY_FOR_PRINCIPAL_REVIEW');assert.notEqual(after.evidenceSha256,before.evidenceSha256);
+});
+for(const file of ['frontend/legal.html','PRIVACY.md','LICENSE','docs/LEGAL_RELEASE_REVIEW.md'])test('Changing '+file+' invalidates prior reviewed source',t=>{
+ const f=fixture(t);assert.equal(f.gate().status,'EVIDENCE_READY_FOR_PRINCIPAL_REVIEW');
+ f.write(file,'CHANGED SYNTHETIC LEGAL SCOPE');assert(f.gate().blockers.includes('External evidence does not bind current source'));
+});
 test('A private report cannot point outside the private directory',t=>{
  const f=fixture(t);f.edit('.local/external-evidence.json',q=>{q.independentSecurityReview.file='.local/../package.json';q.independentSecurityReview.sha256=sha256(fs.readFileSync(path.join(f.root,'package.json')));});f.blocked();
 });

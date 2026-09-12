@@ -9,6 +9,10 @@ for(const file of ['member.js','private-memory.mjs','verify.js','app.js']){
 }
 for(const [file,ids]of [['member.html',['ticketName','ticketEmail','requestPreview']],['verify.html',['packetText']]])test(file+' has no submit form and suppresses contact-field autocomplete',()=>{const s=read('frontend/'+file);assert(!/<form\b/i.test(s));for(const id of ids){const tag=s.match(new RegExp('<(?:input|textarea)[^>]*id="'+id+'"[^>]*>'))?.[0];assert(tag);assert(tag.includes('autocomplete="off"'));assert(tag.includes('spellcheck="false"'));assert(!/\sname=/.test(tag));}});
 test('Email link is fixed and contains no body or recipient data',()=>{const s=read('frontend/member.html'),links=[...s.matchAll(/href="(mailto:[^"]+)"/g)];assert.equal(links.length,1);assert(links[0][1].startsWith('mailto:president@montreal.ai?subject='));assert(!/body=/i.test(links[0][1]));});
+test('Administrative code has no legacy receipt, mailto-body or member-signature path',()=>{
+ const s=read('frontend/app.js');assert(s.includes("if(PAGE!=='admin')return;"));
+ for(const pattern of [/mailto:/i,/signedPacket|sendEmail|downloadRequest|relayRequest/,/signMessage|personal_sign/])assert(!pattern.test(s));
+});
 test('No member file download and no network endpoint in config',()=>{assert(!/Blob|createObjectURL|\.download\s*=|fetch\s*\(|mailto:/i.test(read('frontend/member.js')));assert(!/requestEndpoint|apiKey|mailToken/.test(read('frontend/config.js')));});
 test('Organizer verifier has no receipt export, file persistence or logging path',()=>{const s=read('frontend/verify.js');for(const pattern of [/Blob|createObjectURL|\.download\s*=|mailto:/i,/showSaveFilePicker|showDirectoryPicker|getDirectory|createWritable|FileSystem/,/console\.(log|error|warn|info|debug|trace)\s*\(/])assert(!pattern.test(s));});
 test('Wallet signs commitment-only message rather than a raw contact packet',()=>{const s=read('frontend/member.js');assert(s.includes('signer.signMessage(unsigned.message)'));assert(!s.includes('signer.signMessage(JSON.stringify'));});

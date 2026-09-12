@@ -1,6 +1,7 @@
 'use strict';
 (() => {
 const $=id=>document.getElementById(id), CFG=window.AGI_CONFIG||{}, PAGE=document.body.dataset.page;
+if(PAGE!=='admin')return;
 const ENS='0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e', WRAPPER='0xD4416b13d2b3a9aBae7AcD5D6C2BbDBE25686401';
 const ABI=[
 'function VERSION() view returns(string)','function CANONICAL_ENS() view returns(address)','function CANONICAL_WRAPPER() view returns(address)',
@@ -10,19 +11,17 @@ const ABI=[
 'function titleFR(bytes32) view returns(string)','function titleEN(bytes32) view returns(string)','function metadataURI(bytes32) view returns(string)',
 'function claimRecord(bytes32,bytes32) view returns(address,uint64,uint64,uint64,uint32,uint8)',
 'function claimNodesPage(bytes32,uint256,uint256) view returns(bytes32[])','function claimNodeCount(bytes32) view returns(uint256)',
-'function claimability(bytes32,address,string) view returns(uint8,bytes32,address,address,uint8,bool,bool,uint64,uint64,uint64,uint8)',
 'function createEntitlement(bytes32,bytes32,uint64,uint64,uint64,uint8,bytes32)',
 'function duplicateEntitlement(bytes32,bytes32)','function setEntitlementState(bytes32,uint8)','function setCapacity(bytes32,uint64)','function setWindow(bytes32,uint64,uint64)',
 'function setCategory(bytes32,bytes32)','function setDescriptor(bytes32,string,string,string,bytes32)',
 'function adminGrantBatchToCurrentOwners(bytes32,string[])','function adminGrantClaimOverride(bytes32,string,address,bytes32)',
 'function revokeBatch(bytes32,string[],bytes32)','function reinstateClaim(bytes32,string)','function reassignRevokedClaim(bytes32,string,address)',
-'function setSupportedNameWrapper(address,bool)','function pause()','function unpause()','function claim(bytes32,string)',
+'function setSupportedNameWrapper(address,bool)','function pause()','function unpause()',
 'error AdminUnavailable()','error NotClubAdmin(address,address)','error ClaimRejected(uint8)','error CapacityFull(bytes32)','error CapacityBelowActiveClaims(uint64,uint64)',
 'error EntitlementAlreadyExists(bytes32)','error InvalidDescriptor()','error InvalidBatchSize()','error InvalidTimeWindow(uint64,uint64)','error EnforcedPause()'
 ];
-let provider, signer, contract, account='', root='', demo=false, selected='', entries=[], auditRows=[], signedPacket=null, txPlan=null, catalogQueue=Promise.resolve(), connected=false, currentMember=null, requestEpoch=0, walletPromptEpoch=null, txInFlight=false, txProvider=null;
+let provider, signer, contract, account='', root='', demo=false, selected='', entries=[], auditRows=[], txPlan=null, catalogQueue=Promise.resolve(), connected=false, requestEpoch=0, walletPromptEpoch=null, txInFlight=false, txProvider=null;
 const logEntries=[];const states=['Inconnu','Brouillon','Ouvert','Fermé','Archivé'];
-const claimStates=['Disponible','Registre en pause','Nom non admissible','Avantage inconnu','En brouillon','Fermé','Archivé','Pas encore ouvert','Période terminée','Déjà réclamé','Révoqué','Membership non trouvé','Le wallet n’est pas le détenteur','Membership expiré','Contingent complet'];
 function status(s,bad=false){if($('status')){$('status').textContent=s;$('status').style.color=bad?'var(--red)':'var(--green)';}}
 function log(s){logEntries.push({time:new Date().toISOString(),message:s});if($('log'))$('log').textContent=logEntries.slice(-30).map(x=>x.time+' · '+x.message).join('\n');}
 function showError(e){let text=e?.shortMessage||e?.reason||e?.message||String(e);status(text,true);log('ERREUR : '+text);}
@@ -52,7 +51,7 @@ function resetSession(){
   // The active transaction owns its provider until confirmation tracking settles.
   if(provider!==txProvider)provider?.destroy?.();
   provider=null;account='';root='';
-  selected='';entries=[];window.totalCount=0;signedPacket=null;currentMember=null;
+  selected='';entries=[];window.totalCount=0;
   if($('modeNotice'))$('modeNotice').textContent='Connectez le wallet pour vérifier le réseau, le contrat et les sources d’autorité.';
   clearTransaction();renderAuthority();renderCatalog();
 }
@@ -148,10 +147,9 @@ async function refresh(){
   const nextRoot=await registry.admin();
   if(registry!==contract||epoch!==requestEpoch||demo)return;
   root=nextRoot;renderAuthority();
-  if(PAGE==='member'&&$('benefitSelect')){const ids=await contract.entitlementIdsPage(0,100);$('benefitSelect').replaceChildren();for(const id of ids){const en=await contract.entitlement(id);if(!en[8]||Number(en[7])===1||Number(en[7])===4)continue;const op=document.createElement('option');op.value=id;op.textContent=(await contract.titleFR(id))||id;$('benefitSelect').append(op);}if($('benefitSelect').options.length){$('canonical').value=$('benefitSelect').value;}else{$('canonical').value=CFG.defaultEntitlement||'IA101_2026_09_22';}}
   if(PAGE==='admin')await updateCatalog();
 }
-function startDemo(){resetSession();demo=true;connected=false;contract=null;provider=null;signer=null;account='DEMO-ADMIN';root='DEMO-ADMIN';selected='';entries=[{id:'DEMO:IA101_2026_09_22',name:'IA101_2026_09_22',category:'EVENT',fr:'IA 101 — Admission membre offerte',en:'AI 101 — Complimentary member admission',state:1,cap:50,active:0,unique:0,opens:0,closes:0,hash:'',uri:''}];signedPacket=null;currentMember=null;renderAuthority();renderCatalog();if($('modeNotice'))$('modeNotice').textContent='DÉMONSTRATION LOCALE. Données fictives ; aucun droit réel, aucune preuve blockchain, aucun courriel envoyé. Actualiser la page remet la démonstration à zéro.';status('Explorez les commandes sans signature et sans frais.');if(PAGE==='admin')select(entries[0]);log('Mode démonstration activé.');}
+function startDemo(){resetSession();demo=true;connected=false;contract=null;provider=null;signer=null;account='DEMO-ADMIN';root='DEMO-ADMIN';selected='';entries=[{id:'DEMO:IA101_2026_09_22',name:'IA101_2026_09_22',category:'EVENT',fr:'IA 101 — Admission membre offerte',en:'AI 101 — Complimentary member admission',state:1,cap:50,active:0,unique:0,opens:0,closes:0,hash:'',uri:''}];renderAuthority();renderCatalog();if($('modeNotice'))$('modeNotice').textContent='DÉMONSTRATION LOCALE. Données fictives ; aucun droit réel, aucune preuve blockchain, aucun courriel envoyé. Actualiser la page remet la démonstration à zéro.';status('Explorez les commandes sans signature et sans frais.');if(PAGE==='admin')select(entries[0]);log('Mode démonstration activé.');}
 async function preview(method,args,summary){
   clearTransaction();
   if(demo){if(!confirm('DÉMONSTRATION uniquement\n'+summary+'\nSimuler cette action ?'))return;demoMutation(method,args);return;}
@@ -160,9 +158,9 @@ async function preview(method,args,summary){
   const registry=contract;
   const admin=await registry.admin();
   if(admin===ethers.ZeroAddress)throw Error('Autorité indisponible : vérifiez la détention ENS et son échéance.');
-  const data=registry.interface.encodeFunctionData(method,args),isSelf=method==='claim';
+  const data=registry.interface.encodeFunctionData(method,args);
   let plan;
-  if(!isSelf&&admin.toLowerCase()!==account.toLowerCase()){
+  if(admin.toLowerCase()!==account.toLowerCase()){
     if((await provider.getCode(admin))==='0x')throw Error('Lecture seule : le wallet connecté ne détient pas club.agi.eth.');
     plan={method,args,data,summary,safe:true,from:admin,epoch};
   }else plan={method,args,data,summary,safe:false,from:account,epoch};
@@ -171,7 +169,7 @@ async function preview(method,args,summary){
   root=admin;renderAuthority();txPlan=plan;
   $('confirmText').textContent=summary+(plan.safe?'\nL’administrateur est un contrat : exportez et exécutez la transaction depuis ce wallet.':'');
   $('confirmData').textContent=JSON.stringify({chainId:1,contract:CFG.registryAddress,from:plan.from,method,args},(_,v)=>typeof v==='bigint'?v.toString():v,2);
-  $('approveConfirm').disabled=plan.safe;$('exportConfirm').hidden=isSelf;$('confirm').showModal();
+  $('approveConfirm').disabled=plan.safe;$('exportConfirm').hidden=false;$('confirm').showModal();
 }
 async function approve(){
   if(txInFlight)throw Error('Une transaction est déjà en cours. Attendez sa confirmation.');
@@ -184,7 +182,7 @@ async function approve(){
       if(plan.safe||plan.epoch!==requestEpoch||registry!==contract||plan.from.toLowerCase()!==account.toLowerCase())throw Error('Le wallet a changé : préparez une nouvelle transaction.');
     };
     await assertPlan();
-    if(plan.method!=='claim'&&(await registry.admin()).toLowerCase()!==account.toLowerCase())throw Error('L’administrateur a changé. Transaction refusée.');
+    if((await registry.admin()).toLowerCase()!==account.toLowerCase())throw Error('L’administrateur a changé. Transaction refusée.');
     status('Simulation de la transaction…');
     await registry[plan.method].staticCall(...plan.args);
     const gas=await registry[plan.method].estimateGas(...plan.args);
@@ -199,7 +197,7 @@ async function approve(){
 }
 function demoMutation(method,a){let e=entries.find(e=>e.id===a[0]);if(method==='createEntitlement'){if(entries.some(x=>x.id===a[0]))throw Error('Identifiant déjà utilisé.');entries.push({id:a[0],name:a[0].slice(5),fr:a[0].slice(5),en:'',category:a[1],cap:Number(a[2]),active:0,unique:0,opens:a[3],closes:a[4],state:1,hash:'',uri:''});e=entries.at(-1);}
 else if(method==='duplicateEntitlement'){if(!e)throw Error('Avantage absent.');if(entries.some(x=>x.id===a[1]))throw Error('Identifiant déjà utilisé.');entries.push({...e,id:a[1],name:a[1].slice(5),fr:'Copie à configurer',en:'',state:1,active:0,unique:0,opens:0,closes:0,hash:'',uri:''});e=entries.at(-1);}
-else if(method==='setEntitlementState')e.state=Number(a[1]);else if(method==='setCapacity'){if(Number(a[1])&&Number(a[1])<e.active)throw Error('Quota inférieur aux réclamations actives.');e.cap=Number(a[1]);}else if(method==='setWindow'){e.opens=a[1];e.closes=a[2];}else if(method==='setCategory')e.category=a[1];else if(method==='setDescriptor'){[e.fr,e.en,e.uri,e.hash]=a.slice(1);}else if(method==='adminGrantBatchToCurrentOwners'){if(e.cap&&e.active+a[1].length>e.cap)throw Error('Contingent complet.');e.active+=a[1].length;e.unique+=a[1].length;}else if(method==='claim'){currentMember={label:label(vals('memberLabel')),id:a[0],claimed:true};$('eligibility').textContent='DÉMO : réclamation fictive enregistrée.';$('claim').disabled=true;$('request').disabled=false;}else{status('Action simulée : '+method+'. Consultez les tests EVM pour les garanties réelles.');}log('DÉMO : '+method);renderCatalog();if(e&&PAGE==='admin')select(e);}
+else if(method==='setEntitlementState')e.state=Number(a[1]);else if(method==='setCapacity'){if(Number(a[1])&&Number(a[1])<e.active)throw Error('Quota inférieur aux réclamations actives.');e.cap=Number(a[1]);}else if(method==='setWindow'){e.opens=a[1];e.closes=a[2];}else if(method==='setCategory')e.category=a[1];else if(method==='setDescriptor'){[e.fr,e.en,e.uri,e.hash]=a.slice(1);}else if(method==='adminGrantBatchToCurrentOwners'){if(e.cap&&e.active+a[1].length>e.cap)throw Error('Contingent complet.');e.active+=a[1].length;e.unique+=a[1].length;}else{status('Action simulée : '+method+'. Consultez les tests EVM pour les garanties réelles.');}log('DÉMO : '+method);renderCatalog();if(e&&PAGE==='admin')select(e);}
 async function audit(){if(demo){auditRows=[{simulation:true,note:'Relevé fictif uniquement',entitlement:selected,active:entries.find(x=>x.id===selected)?.active||0}];$('auditData').textContent=JSON.stringify(auditRows,null,2);return;}await assertLive();const id=idRequired();let n=Number(await contract.claimNodeCount(id));auditRows=[];for(let o=0;o<n;o+=100){for(const node of await contract.claimNodesPage(id,o,100)){const r=await contract.claimRecord(id,node);auditRows.push({entitlementId:id,membershipNode:node,claimant:r[0],status:Number(r[5])===1?'ACTIVE':'REVOKED',revision:Number(r[4]),firstClaimedAt:iso(r[1]),lastActivatedAt:iso(r[2]),revokedAt:iso(r[3])});}}$('auditData').textContent=JSON.stringify(auditRows,null,2);}
 bind('connect',connect);bind('demo',startDemo);bind('refresh',refresh);bind('lang',()=>window.open('index.html','_blank','noopener'));if($('lang'))$('lang').textContent='Accueil';
 bind('cancelConfirm',clearTransaction);bind('approveConfirm',approve);bind('exportConfirm',async()=>{await assertLive();if(txPlan?.epoch!==requestEpoch)throw Error('Préparez une nouvelle transaction.');if(!txPlan)throw Error('Aucune transaction préparée.');download('AGI_CLUB_UNSIGNED_TRANSACTION.json',{chainId:1,to:CFG.registryAddress,value:'0',from:txPlan.from,data:txPlan.data,description:txPlan.summary});});
@@ -221,12 +219,10 @@ bind('pause',()=>preview('pause',[],'Suspendre les auto-réclamations publiques.
 bind('unpause',()=>preview('unpause',[],'Reprendre les auto-réclamations publiques.'));
 bind('wrapperPolicy',()=>{if(demo)return preview('setSupportedNameWrapper',['DEMO:WRAPPER',true],'Simulation de support wrapper membre.');needEthers();const w=vals('wrapperAddress');if(!ethers.isAddress(w))throw Error('Adresse de wrapper non valide.');return preview('setSupportedNameWrapper',[ethers.getAddress(w),$('wrapperEnabled').checked],'Modifier la source de vérification des memberships. Ce réglage ne change jamais la source d’autorité de club.agi.eth. Revue du code et essai de régression obligatoires avant activation.');});
 bind('audit',audit);bind('exportAudit',()=>download('AGI_CLUB_CLAIMS.json',auditRows));
-bind('sendEmail',()=>{if(!signedPacket)throw Error('Préparez la demande signée.');const body='Bonjour Vincent,\n\nVoici ma demande de billet AGI Club signée. Merci de vérifier le reçu avant émission.\n\n'+JSON.stringify(signedPacket);location.href='mailto:president@montreal.ai?subject='+encodeURIComponent('AGI CLUB — IA 101 — demande signée à vérifier')+'&body='+encodeURIComponent(body);$('requestStatus').textContent='Votre client courriel a été sollicité. Vérifiez le message et envoyez-le vous-même. Si son contenu est tronqué, joignez le reçu JSON. Envoi non confirmé par cette page.';});
 if($('modeNotice'))$('modeNotice').textContent=CFG.registryAddress?'Configuration présente. Connectez le wallet pour vérifier le réseau, le contrat et les sources d’autorité.':'NON DÉPLOYÉ / NON CONFIGURÉ. La démonstration fonctionne sans wallet. Aucun avantage réel ne peut être réclamé avant déploiement et qualification.';
 if(window.ethereum?.on)for(const event of ['accountsChanged','chainChanged','disconnect'])window.ethereum.on(event,()=>{
   if(event!=='disconnect'&&walletPromptEpoch===requestEpoch)return;
   resetSession();
-  for(const id of ['downloadRequest','sendEmail','relayRequest','claim','request'])if($(id))$(id).disabled=true;
   status('Wallet ou réseau modifié. Reconnectez-vous avant de poursuivre.',true);
 });
 })();

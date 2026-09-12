@@ -18,12 +18,15 @@ Open **[START_HERE.html](START_HERE.html)**. No installation is needed to read i
 | Upload through the GitHub website | [GitHub UI guide](docs/GITHUB_WEB_UPLOAD.md) |
 | See a local demo, rehearse a deployment or deploy an approved canary | [Step-by-step Hardhat guide and troubleshooting](docs/HARDHAT_DEPLOYMENT.md) |
 | Understand exactly where contact data goes | [Privacy policy and implementation boundary](PRIVACY.md) |
+| Review conditions, regulatory exposure and legal release requirements | [Bilingual public notice](frontend/legal.html), [operator/counsel review](docs/LEGAL_RELEASE_REVIEW.md) |
 | Issue one complimentary ticket | [French operator guide](docs/OPERATOR_GUIDE_FR.md) |
 | Evaluate readiness | [Release checklist](docs/RELEASE_CHECKLIST.md), [actual evidence](evidence/RELEASE_STATUS.json) |
 
 ### Status — read before deployment
 
 This is a **source release candidate**, not an independently audited or mainnet-authorized deployment. Source publication is separate from hosting a live portal and from deploying Ethereum bytecode. No chain address is invented, and no production wallet, gas, email or Eventbrite action was performed for this delivery.
+
+Production preparation also requires a completed deployment-specific `legalReview`, bound to the reviewed source and private report bytes. Public notices preserve mandatory rights and the MIT license; they do not establish an exemption, eliminate liability or replace qualified counsel's review of the actual operator, membership offering and privacy operations. The member acknowledgement stays in memory only.
 
 The contract version is **2.1.1**, preserved byte-for-byte from the previous source candidate. Repository version is **2.3.0-rc.1**. The new privacy-preserving request schema is **`AGIClubTicketRequest/3`**. Old request formats are rejected rather than silently upgraded.
 

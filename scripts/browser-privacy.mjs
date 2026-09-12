@@ -13,7 +13,7 @@ try{
  const A=walletAddress(1n),E=id('IA101_2026_09_22'),N=namehash('alice.club.agi.eth'),CODE='0x'+'22'.repeat(32);let base;
  const fixture=`window.__calls=[];window.__clipboard=[];window.__walletEvents={};window.ethereum={request:async r=>{window.__calls.push(r);if(r.method==='eth_requestAccounts'){if(window.__permissionError)throw Error(window.__permissionError);if(window.__permissionGate)await window.__permissionGate;}if(r.method==='eth_chainId')return '0x1';return ['${A}'];},on:(event,fn)=>{window.__walletEvents[event]=fn;}};
  window.ethers={id:()=> '${E}',namehash:n=>n==='club.agi.eth'?'${namehash('club.agi.eth')}':'${N}',isAddress:x=>/^0x[0-9a-f]{40}$/i.test(x),keccak256:()=> '${CODE}',ZeroAddress:'0x'+'0'.repeat(40),verifyMessage:()=> '${A}',hashMessage:()=> '${id('mock-hash')}',
- BrowserProvider:class{async getSigner(){return{getAddress:async()=> '${A}',signMessage:async m=>{window.__calls.push({method:'personal_sign',message:m});return '0x'+'11'.repeat(65);}};}async getCode(a){window.__calls.push({method:'getCode',a});return a.toLowerCase()==='${A}'?'0x':'0x6000';}async getNetwork(){return{chainId:1n};}async getBlock(t){return{number:t==='finalized'||t===100?100:104,hash:'0x'+(t==='finalized'||t===100?'aa':'bb').repeat(32)};}destroy(){}},
+ BrowserProvider:class{async getSigner(){return{getAddress:async()=> '${A}',signMessage:async m=>{window.__calls.push({method:'personal_sign',message:m});if(window.__signatureGate)await window.__signatureGate;return '0x'+'11'.repeat(65);}};}async getCode(a){window.__calls.push({method:'getCode',a});return a.toLowerCase()==='${A}'?'0x':'0x6000';}async getNetwork(){return{chainId:1n};}async getBlock(t){return{number:t==='finalized'||t===100?100:104,hash:'0x'+(t==='finalized'||t===100?'aa':'bb').repeat(32)};}destroy(){}},
  Contract:class{async VERSION(){return '2.1.1';}async CANONICAL_ENS(){return '0x00000000000c2e074ec69a0dfb2997ba6c7d2e1e';}async CANONICAL_WRAPPER(){return '0xd4416b13d2b3a9abae7acd5d6c2bbdbe25686401';}async CLUB_AGI_ETH_NODE(){return '${namehash('club.agi.eth')}';}async admin(){return '${A}';}async titleFR(){return 'TEST FICTIF — IA 101';}async claimability(){return[9,'${N}','${A}','${A}',1,false,false,0,1,50,2];}async claimRecord(...args){window.__calls.push({method:'claimRecord',args});return ['${A}',1n,1n,0n,1n,1n];}}};
  Object.defineProperty(navigator,'clipboard',{value:{writeText:async t=>{window.__clipboard.push(t);}},configurable:true});
  `;
@@ -67,19 +67,34 @@ try{
  await check('Actual hosted member module loads',async()=>assert(await evaluate('!!document.getElementById("prepareRequest")'),'Hosted page unavailable: '+await evaluate('location.href+" | "+document.title')));
  await click('connect');assert(await evaluate('document.getElementById("connection").textContent.includes('+JSON.stringify(A)+')'),await evaluate('document.getElementById("status").textContent'));
  await evaluate('document.getElementById("memberLabel").value="alice"');await click('verify');assert(await evaluate('!document.getElementById("contactInputs").disabled'),await evaluate('document.getElementById("status").textContent'));
- const fill=`document.getElementById('ticketName').value='PRIVATE FICTIVE MEMBER';document.getElementById('ticketName').dispatchEvent(new Event('input'));document.getElementById('ticketEmail').value='private-fixture@example.org';document.getElementById('ticketEmail').dispatchEvent(new Event('input'));document.getElementById('consent').checked=true;`;
+ const fill=`document.getElementById('usageConsent').checked=true;document.getElementById('usageConsent').dispatchEvent(new Event('change'));document.getElementById('ticketName').value='PRIVATE FICTIVE MEMBER';document.getElementById('ticketName').dispatchEvent(new Event('input'));document.getElementById('ticketEmail').value='private-fixture@example.org';document.getElementById('ticketEmail').dispatchEvent(new Event('input'));document.getElementById('consent').checked=true;`;
+ await check('No signature prompt without the reading acknowledgement',async()=>{
+  await evaluate(fill+"document.getElementById('usageConsent').checked=false;");await click('prepareRequest');
+  assert.equal(await evaluate("window.__calls.filter(x=>x.method==='personal_sign').length"),0);
+ });
  await evaluate(fill);await click('prepareRequest');
  await check('Actual sign and verify handlers prepare a bounded private receipt',async()=>assert(await evaluate('!document.getElementById("copyRequest").disabled'),await evaluate('document.getElementById("status").textContent')));
  await check('No contact text sent to wallet or Ethereum adapter',async()=>{const v=await evaluate('JSON.stringify(window.__calls)');assert(!v.includes('PRIVATE FICTIVE MEMBER'));assert(!v.includes('private-fixture@example.org'));});
  await check('Wallet message does not contain the private salt',async()=>assert(await evaluate(`!JSON.stringify(window.__calls).includes(JSON.parse(document.getElementById('requestPreview').value).recipient.salt)`)));
  await check('Zero writes to cookie/local/session stores',async()=>assert(await evaluate('localStorage.length===0&&sessionStorage.length===0&&document.cookie===""')));
  await check('No private request copied without explicit acknowledgement',async()=>{await click('copyRequest');assert.equal(await evaluate('window.__clipboard.length'),0);});
+ await check('Withdrawing and renewing acknowledgement discards an outstanding private signature',async()=>{
+  // Return immediately: CDP otherwise awaits the newly assigned pending promise.
+  await evaluate(fill+"window.__signatureGate=new Promise(resolve=>{window.__completeSignature=resolve;});true;");
+  const signatures=await evaluate("window.__calls.filter(x=>x.method==='personal_sign').length");
+  await evaluate("document.getElementById('prepareRequest').click()");
+  await waitFor("window.__calls.filter(x=>x.method==='personal_sign').length>"+signatures,'pending private signature');
+  await evaluate("document.getElementById('usageConsent').checked=false;document.getElementById('usageConsent').dispatchEvent(new Event('change'));"+fill+"window.__completeSignature();window.__signatureGate=null;");
+  await waitFor("document.getElementById('prepareRequest').getAttribute('aria-busy')!=='true'",'discarded signature');
+  assert(await evaluate("document.getElementById('copyRequest').disabled&&document.getElementById('requestPreview').value===''") );
+ });
+ await evaluate(fill);await click('prepareRequest');
  await check('Editing contacts invalidates the existing signed packet',async()=>{await evaluate('document.getElementById("ticketEmail").dispatchEvent(new Event("input"))');assert(await evaluate('document.getElementById("copyRequest").disabled&&document.getElementById("requestPreview").value===""'));});
  await evaluate(fill);await click('prepareRequest');
  await check('Explicit clipboard handoff clears page references and fields',async()=>{await evaluate('document.getElementById("copyConsent").checked=true');await click('copyRequest');assert(await evaluate('window.__clipboard.length===1 && document.getElementById("ticketName").value==="" && document.getElementById("ticketEmail").value==="" && document.getElementById("requestPreview").value==="" && document.getElementById("copyRequest").disabled'));});
  const privateReceipt=await evaluate('window.__clipboard[0]'),privateSalt=JSON.parse(privateReceipt).recipient.salt;
- await check('Return from page cache clears private fields',async()=>{await evaluate(fill+'window.dispatchEvent(new PageTransitionEvent("pageshow",{persisted:true}));');assert(await evaluate('document.getElementById("ticketEmail").value===""'));});
- await check('Pagehide clears fields',async()=>{await evaluate(fill+'window.dispatchEvent(new Event("pagehide"));');assert(await evaluate('document.getElementById("ticketName").value===""'));});
+ await check('Return from page cache clears private fields',async()=>{await evaluate(fill+'window.dispatchEvent(new PageTransitionEvent("pageshow",{persisted:true}));');assert(await evaluate('document.getElementById("ticketEmail").value===""&&!document.getElementById("usageConsent").checked'));});
+ await check('Pagehide clears fields',async()=>{await evaluate(fill+'window.dispatchEvent(new Event("pagehide"));');assert(await evaluate('document.getElementById("ticketName").value===""&&!document.getElementById("usageConsent").checked'));});
  await check('Mailto link has no private body or member address',async()=>{const h=await evaluate('document.querySelector("a[href^=mailto]").getAttribute("href")');assert(!h.includes('body='));assert(!h.includes('private-fixture'));});
  for(const width of [1280,390])await check('Member layout '+width+'px fits viewport',async()=>{await command('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:false});await evaluate('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(true))))');assert(await evaluate('document.documentElement.scrollWidth<=innerWidth+2'));});
  await check('Member flow leaves all persistent stores empty and creates no file or log',emptyStores);
@@ -87,7 +102,7 @@ try{
  await check('Reloading the member page never restores contact fields or the receipt',async()=>{
   await evaluate(fill);const generation=await evaluate('window.__documentGeneration');await command('Page.reload',{ignoreCache:true});
   await waitFor('window.__documentGeneration!=='+JSON.stringify(generation)+'&&document.readyState==="complete"&&!!window.__calls','member reload');
-  assert(await evaluate(`document.getElementById('ticketName').value===''&&document.getElementById('ticketEmail').value===''&&document.getElementById('requestPreview').value===''`));
+  assert(await evaluate(`document.getElementById('ticketName').value===''&&document.getElementById('ticketEmail').value===''&&document.getElementById('requestPreview').value===''&&!document.getElementById('usageConsent').checked`));
  });
  await command('Page.navigate',{url:base+'/verify.html'});
  await waitFor('location.href==='+JSON.stringify(base+'/verify.html')+'&&document.readyState==="complete"','organizer page and modules');
