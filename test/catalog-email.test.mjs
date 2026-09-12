@@ -15,7 +15,7 @@ const cfg={entitlementMode:'registry',allowedEntitlements:[]};
 function catalogue(count=63) {
   const ids=Array.from({length:count},(_,i)=>id('FICTITIOUS_BENEFIT_'+i)),calls=[];
   const registry={entitlementCount:async()=>BigInt(ids.length),entitlementIdsPage:async(o,n)=>{calls.push([o,n]);return ids.slice(o,o+n);},
-    entitlement:async()=>[id('PERK'),id('metadata'),0n,0n,0n,0n,0n,1n,true],titleFR:async key=>'Fictitious '+ids.indexOf(key)};
+    entitlement:async()=>[id('PERK'),id('metadata'),0n,0n,0n,0n,0n,1n,true],titleEN:async()=>'',titleFR:async key=>'Fictitious '+ids.indexOf(key)};
   return {ids,calls,registry};
 }
 test('Shipped configuration and explorer creation fields contain no preconfigured event',()=>{
@@ -92,4 +92,11 @@ test('Email parser rejects oversized input, extra mail text and invalid subnames
   const f=await fixture();assert.throws(()=>parseRequestEmail(' '.repeat(MAX_EMAIL_BYTES+1)),{code:'BODY_TOO_LARGE'});
   assert.throws(()=>parseRequestEmail(formatRequestEmail(f.packet)+'\nSent from my phone'),{code:'INVALID_JSON'});
   for(const label of ['','alice\nBcc:private@example.org','nested.alice','alice@example.org','UPPER'])assert.throws(()=>membershipName(label),{code:'INVALID_MEMBERSHIP'});
+});
+
+test('Catalogue reads both administrator titles without inventing an English title',async()=>{
+ const f=catalogue(1);f.registry.titleFR=async()=> 'Avantage';f.registry.titleEN=async()=> 'Benefit';
+ const page=await readCatalogPage(f.registry,cfg,{id});assert.equal(page.rows[0].fr,'Avantage');assert.equal(page.rows[0].en,'Benefit');
+ f.registry.titleEN=async()=>'';assert.equal((await readCatalogPage(f.registry,cfg,{id})).rows[0].en,'');
+ f.registry.titleEN=async()=>{throw Error('Unavailable');};await assert.rejects(()=>readCatalogPage(f.registry,cfg,{id}));
 });

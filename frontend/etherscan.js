@@ -1,26 +1,8 @@
+import {getLanguage, onLanguageChange, tr} from './language.mjs';
 import {ACTIONS, EXPLORER_ABI, defaultValue, prepareExplorerCall} from './etherscan-tools.mjs';
 const $ = id => document.getElementById(id), ethers = window.ethers;
 const iface = new ethers.Interface(EXPLORER_ABI);
-let language = 'fr', prepared = null, generation = 0;
-const french = Object.fromEntries([...document.querySelectorAll('[data-i18n]')].map(el => [el.dataset.i18n, el.textContent]));
-const english = {
-  skipContent:'Skip to content', footerPrivacy:'Privacy', footerLegal:'Terms · Legal', footerVerify:'Verify a receipt', footerDeployment:'Deployment',
-  home:'Home', admin:'Administration', member:'Members', title:'Your registry, through Etherscan.',
-  intro:'Prepare exact values to read, configure or use the verified contract. Every operation remains subject to registry rules and your wallet confirmation.',
-  privacy:'Public parameters only. No participant names, email addresses, private receipts or secrets. This helper connects to no wallet and sends no transaction.',
-  stepsTitle:'Three steps', step1:'Check the approved deployment address, verified code and admin() on Etherscan.',
-  step2:'Choose an operation below. Prepare and copy its public values.', step3:'Open Read Contract or Write Contract, find the function by name and use these values. For a write, check the wallet, then confirm the resulting state.',
-  boundary:'Approved deployment and website configuration follow the Hardhat guide. Private receipts stay in the member application and private verifier. Etherscan does not replace those steps.',
-  guide:'Complete FR / EN guide: verification, operations and troubleshooting', prepareTitle:'Prepare an operation', address:'Approved production registry address',
-  addressNote:'The check below validates address format only. It does not establish contract identity, safety or deployment authorization.', operation:'Operation', prepare:'Prepare values', clear:'Clear everything', result:'Values to use on Etherscan',
-  copyHint:'Copy each value into the field with the same name. Function numbering may change on Etherscan. Editing any input invalidates this preparation.', open:'Open the contract tab on Etherscan', advanced:'Call data for a contract wallet (advanced)',
-  safe:'If admin() is a Safe or another contract wallet, that wallet must execute the call. Its individual signer receives no automatic privileges. Use the wallet’s own execution workflow with these data. Nothing is submitted here.', copyData:'Copy public call data', rulesTitle:'Essential reference',
-  states:'States: 1 = Draft, 2 = Open, 3 = Closed, 4 = Archived. 0 is invalid.', capacity:'Capacity: 0 = unlimited. A positive capacity cannot be lower than the active claim count.',
-  history:'Revoke, reinstate and reassign preserve history. An ENS transfer does not create a second claim.', batch:'Batches: 1–50 distinct labels. Any failure reverts the entire batch. Start small.',
-  authority:'Every administrative write requires the current effective holder of club.agi.eth. The disposable deployer has no privileges. A zero admin() address blocks administration.',
-  exceptions:'Administrative grants bypass public claim state, dates and pause, while respecting capacity. An override is an exception, not proof of ownership.', receipt:'Prepare my private receipt', verify:'Verify a private receipt', legal:'Terms and limits',
-  footer:'Local preparation of public parameters · Ethereum mainnet, chain 1 · Etherscan code verification is not an audit or launch authorization.',
-};
+let language = getLanguage(), prepared = null, generation = 0;
 const errors = {
   ADDRESS:['Adresse Ethereum invalide ou interdite pour cette opération.','Invalid Ethereum address or address not allowed for this operation.'],
   LABEL:['Utilisez un label ASCII direct, en minuscules, de 1 à 63 caractères.','Use a direct lowercase ASCII label, 1–63 characters.'],
@@ -33,7 +15,6 @@ const errors = {
   BOOLEAN:['Choisissez true ou false.','Choose true or false.'], TITLE:['Titre FR obligatoire ; 160 octets UTF-8 maximum par titre.','FR title is required; each title allows up to 160 UTF-8 bytes.'],
   URI:['Utilisez une URI publique HTTPS ou IPFS de 512 octets maximum, ou laissez vide.','Use a public HTTPS or IPFS URI up to 512 bytes, or leave empty.'],
 };
-const tr = (fr, en) => language === 'fr' ? fr : en;
 function invalidate() { generation++; prepared = null; $('result').hidden = true; $('values').replaceChildren(); $('transaction').textContent = ''; $('openExplorer').removeAttribute('href'); $('status').textContent = ''; }
 function hint(p) {
   if (['opensAt','closesAt'].includes(p.name)) return tr('UTC : 2026-09-22T16:00:00Z, secondes Unix, ou vide/0 sans limite.','UTC: 2026-09-22T16:00:00Z, Unix seconds, or empty/0 for no bound.');
@@ -100,14 +81,10 @@ $('copyTransaction').addEventListener('click', () => { if (prepared) copy(JSON.s
 $('operation').addEventListener('change', fields); $('registry').addEventListener('input', invalidate);
 function clear() { invalidate(); $('registry').value = ''; for (const el of $('parameters').querySelectorAll('input,textarea,select')) el.value = ''; }
 $('clear').addEventListener('click', clear); window.addEventListener('pagehide', clear); window.addEventListener('pageshow', event => { if (event.persisted) clear(); });
-$('language').addEventListener('click', () => {
+onLanguageChange(() => {
   const inputs=iface.getFunction($('operation').value).inputs.map((_,i)=>$('parameter-'+i).value);
-  language = language === 'fr' ? 'en' : 'fr'; document.documentElement.lang = language; $('language').textContent = language === 'fr' ? 'English' : 'Français';
-  for (const el of document.querySelectorAll('[data-i18n]')) el.textContent = (language === 'fr' ? french : english)[el.dataset.i18n];
-  document.querySelector('.brand').setAttribute('aria-label',tr('AGI Club — Accueil','AGI Club — Home'));
-  document.querySelector('.header-tail').setAttribute('aria-label',tr('Navigation principale','Main navigation'));
-  document.querySelector('.footer-links').setAttribute('aria-label',tr('Ressources du Club','Club resources'));
-  populate();
+  language=getLanguage();populate();
   inputs.forEach((value,i)=>{$('parameter-'+i).value=value;});
+  $('status').textContent=tr('Langue modifiée. Les champs sont conservés ; préparez à nouveau les valeurs.','Language changed. Inputs are retained; prepare the values again.');
 });
 $('registry').value = window.AGI_CONFIG?.registryAddress || ''; populate();

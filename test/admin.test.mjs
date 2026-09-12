@@ -1,3 +1,6 @@
+import {RUNTIME_MESSAGES} from '../frontend/translations.mjs';
+import {languageFixture} from './language-fixture.mjs';
+import {benefitTitle} from '../frontend/language-core.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -39,6 +42,7 @@ class Element {
 }
 
 function adminFixture(count = 2) {
+ const language=languageFixture('fr');
   const elements = new Map();
   for (const [tag, id] of html.matchAll(/<[^>]+\bid="([^"]+)"[^>]*>/g)) {
     const element = new Element();
@@ -106,7 +110,7 @@ function adminFixture(count = 2) {
       on: (event, listener) => walletListeners.set(event, listener),
     },
   };
-  runInNewContext(source.replace(/^import .*;\r?\n/gm,''), {uint,utcSeconds,
+  runInNewContext(source.replace(/^import .*;\r?\n/gm,''), {...language,RUNTIME_MESSAGES,benefitTitle,uint,utcSeconds,
     window, ethers, location: {origin: window.AGI_CONFIG.expectedOrigin},
     document: {
       body: {dataset: {page: 'admin'}},
@@ -116,7 +120,7 @@ function adminFixture(count = 2) {
     confirm: () => true,
   }, {filename: 'frontend/app.js'});
   return {
-    rows, pages, el: id => elements.get(id),
+    changeLanguage:language.changeLanguage,rows, pages, el: id => elements.get(id),
     click: id => elements.get(id).click(),
     select: index => elements.get('catalog').children[index].children[1].click(),
     ids: () => elements.get('catalog').children.map(card => card.children[0].children[2].textContent),
@@ -173,7 +177,7 @@ test('a failed refresh preserves the catalog so loading more cannot skip or dupl
   await ui.click('connect');
   ui.failRead(ui.rows[10].id);
   await ui.click('refresh');
-  assert.match(ui.el('status').textContent, /Fixture RPC read failed/);
+  assert.match(ui.el('status').textContent, /Opération non confirmée/);
   assert.deepEqual(ui.ids(), ui.rows.slice(0, 50).map(row => row.id));
   ui.failRead(null);
   await ui.click('loadMore');
@@ -256,4 +260,19 @@ test('Invalid calendar dates cannot silently roll into another month',async()=>{
  const ui=adminFixture();await ui.click('demo');ui.el('canonical').value='FICTITIOUS_DATES';ui.el('category').value='PERK';ui.el('capacity').value='1';ui.el('opens').value='2027-02-30T12:00:00Z';await ui.click('create');
  assert.deepEqual(ui.ids(),[]);assert.match(ui.el('status').textContent,/date UTC réelle/);
  ui.el('opens').value='18446744073709551615';await ui.click('create');assert.equal(ui.el('opens').value,'18446744073709551615');
+});
+
+test('Language changes keep public edits and discard the previous transaction preview',async()=>{
+ const ui=adminFixture();await ui.click('connect');await ui.select(0);
+ ui.el('titleEN').value='Edited public title';ui.el('capacity').value='9007199254740993';
+ await ui.click('updateCap');assert(ui.el('confirm').open);
+ ui.changeLanguage('en');assert(!ui.el('confirm').open);assert.equal(ui.el('confirmData').textContent,'');
+ assert.equal(ui.el('titleEN').value,'Edited public title');assert.equal(ui.el('capacity').value,'9007199254740993');
+ await ui.click('updateCap');assert.match(ui.el('confirmText').textContent,/Change the capacity/);
+ assert.equal(JSON.parse(ui.el('confirmData').textContent).args[1],'9007199254740993');
+});
+
+test('Untrusted provider failures are localized without echoing provider details to the screen or session log',async()=>{
+ const ui=adminFixture(2);await ui.click('connect');ui.failRead(ui.rows[0].id);ui.changeLanguage('en');await ui.click('refresh');
+ assert.match(ui.el('status').textContent,/Operation unconfirmed/);assert.doesNotMatch(ui.el('log').textContent,/Fixture RPC read failed/);
 });

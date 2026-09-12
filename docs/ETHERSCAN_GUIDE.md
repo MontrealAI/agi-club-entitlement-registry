@@ -1,3 +1,5 @@
+[Hardhat English](HARDHAT_DEPLOYMENT.md) · [Hardhat français](HARDHAT_DEPLOYMENT_FR.md) · [Operator English](OPERATOR_GUIDE_EN.md) · [Organisateur français](OPERATOR_GUIDE_FR.md)
+
 # AGI CLUB — Etherscan, pas à pas / step by step
 
 **FR — Après un déploiement approuvé et une vérification exacte du code, les 52 fonctions publiques du registre sont accessibles depuis Etherscan : 33 lectures et 19 écritures.** L’assistant **Etherscan** du site prépare leurs valeurs, sans wallet ni transaction. Il ne collecte aucun nom de participant ni courriel. Les lectures peuvent se faire sans wallet ; les écritures exigent le bon wallet et des frais réseau.

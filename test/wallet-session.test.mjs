@@ -1,3 +1,6 @@
+import {RUNTIME_MESSAGES} from '../frontend/translations.mjs';
+import {languageFixture} from './language-fixture.mjs';
+import {benefitTitle} from '../frontend/language-core.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -37,6 +40,7 @@ class Element {
 }
 
 function fixture(page) {
+ const language=languageFixture('fr');
   const html = readFileSync(new URL(`../frontend/${page}.html`, import.meta.url), 'utf8');
   const filename = page === 'admin' ? 'app.js' : 'member.js';
   const source = readFileSync(new URL(`../frontend/${filename}`, import.meta.url), 'utf8');
@@ -68,7 +72,7 @@ function fixture(page) {
     CANONICAL_WRAPPER: async () => state.wrapper, adminNameWrapper: async () => state.wrapper,
     CLUB_AGI_ETH_NODE: async () => state.root, admin: async () => account,
     entitlementCount: async () => BigInt(state.catalogCount), entitlementIdsPage: async (offset,limit) => call('catalogPage',Array.from({length:Math.min(limit,state.catalogCount-offset)},(_,i)=>hash(1000+offset+i))),
-    paused: async () => false, titleFR: async () => {if(state.failCatalog)throw Error('Fixture read failure');return state.catalogTitle||'Fictitious benefit';},
+    paused: async () => false, titleEN: async () => state.catalogEnglishTitle||'', titleFR: async () => {if(state.failCatalog)throw Error('Fixture read failure');return state.catalogTitle||'Fictitious benefit';},
     entitlement: async () => [hash(1),hash(0),50n,0n,0n,0n,0n,2n,true],
     claimability: async () => call('claimability', [0]),
     claimRecord: async () => [account, 0n, 0n, 0n, 0n, 0n],
@@ -107,7 +111,7 @@ function fixture(page) {
   };
   // Import declarations are supplied below; the member handler body is unchanged.
   runInNewContext(source.replace(/^import .*;\r?\n/gm, ''), {
-    window, ethers, ENS, WRAPPER, ROOT, REGISTRY_VERSION, MEMBER_ABI, PrivateMemory, uint,utcSeconds,readCatalogPage,requestPolicy,
+    ...language,RUNTIME_MESSAGES,benefitTitle,window, ethers, ENS, WRAPPER, ROOT, REGISTRY_VERSION, MEMBER_ABI, PrivateMemory, uint,utcSeconds,readCatalogPage,requestPolicy,
     location: {origin: window.AGI_CONFIG.expectedOrigin},
     document: {
       body: {dataset: {page}}, addEventListener() {},
@@ -117,7 +121,7 @@ function fixture(page) {
     confirm: () => true, setTimeout: () => 1, clearTimeout() {},
   }, {filename: `frontend/${filename}`});
   return {
-    state, calls, sent, providers,config:window.AGI_CONFIG,
+    changeLanguage:language.changeLanguage,state, calls, sent, providers,config:window.AGI_CONFIG,
     el: id => elements.get(id), click: id => elements.get(id).click(),
     walletEvent: event => walletListeners.get(event)?.([]),
     pageEvent: event => pageListeners.get(event)?.(),
@@ -336,4 +340,16 @@ test('member: disconnect during a catalogue page cannot restore the old options 
  const ui=fixture('member');ui.config.entitlementMode='registry';ui.config.allowedEntitlements=[];ui.state.catalogCount=31;
  await ui.click('connect');const paused=ui.pause('catalogPage'),loading=ui.click('loadBenefits');await paused.started;ui.walletEvent('disconnect');const status=ui.el('status').textContent;
  paused.release();await loading;assert.equal(ui.el('benefitSelect').children.length,1);assert.equal(ui.el('benefitSelect').disabled,true);assert.equal(ui.el('status').textContent,status);
+});
+
+for(const page of ['member','admin'])test(page+': language change during gas estimation cancels the prepared transaction',async()=>{
+ const ui=fixture(page);await ui.click('connect');
+ const wait=ui.pause(page==='member'?'claim.estimateGas':'pause.estimateGas'),pending=attemptTransaction(ui,page);
+ await wait.started;ui.changeLanguage('en');wait.release();await pending;
+ assert.equal(ui.sent.length,0);assert.match(ui.el('status').textContent,/changed|cancel|connect|Operation unconfirmed/i);
+});
+test('Member runtime errors and eligibility use the selected language',async()=>{
+ const ui=fixture('member');ui.changeLanguage('en');await ui.click('connect');await chooseBenefit(ui);
+ ui.el('memberLabel').value='alice';await ui.click('verify');assert.match(ui.el('eligibility').textContent,/Available/);
+ ui.el('memberLabel').value='invalid.name';await ui.click('verify');assert.match(ui.el('status').textContent,/Enter a single AGI Club label/);
 });
