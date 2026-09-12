@@ -2,6 +2,8 @@
 
 `npm run test:offline`: no package downloads required; uses test-only Ethereum crypto/chain fixtures and actual WebCrypto SHA-256. Tests binding and source/PII-storage boundaries, not physical wallets or EVM bytecode.
 
+The admin regressions execute the actual `frontend/app.js` with a minimal DOM and simulated read-only wallet/registry. They cover category selection and transaction previews, multi-page refreshes, failed and overlapping reads, and wallet/demo changes during pending reads. They do not validate browser rendering, Ethereum cryptography or live transactions.
+
 `npm run test:evm`: real Hardhat EVM, compiled contracts and local ENS/wrapper mocks.
 
 `npm run test:journey`: isolated chain-ID-1 model, actual ethers adapter, real WebCrypto recipient binding. No real ENS ownership, finality, mail or Eventbrite.
