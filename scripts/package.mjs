@@ -6,7 +6,7 @@ import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 const root=fileURLToPath(new URL('..',import.meta.url));
 const expectedEthersVersion=JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8')).dependencies.ethers;
-const report={version:'2.4.0-rc.2',status:'NOT_EXECUTED',at:new Date().toISOString(),realDependencyRequired:'ethers@'+expectedEthersVersion};
+const report={version:'2.4.0-rc.3',status:'NOT_EXECUTED',at:new Date().toISOString(),realDependencyRequired:'ethers@'+expectedEthersVersion};
 const sha=b=>createHash('sha256').update(b).digest('hex');
 fs.mkdirSync(path.join(root,'qualification'),{recursive:true});
 try{

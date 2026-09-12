@@ -87,6 +87,8 @@ Consultez `qualification/DEPLOYMENT_GATE.json`. **`BLOCKED` impose de s’arrêt
 
 Suivez les sections G–H du [guide Hardhat](HARDHAT_DEPLOYMENT_FR.md) : budget explicite, adresse du déployeur jetable et fichier de clés chiffré, plan non signé, signature du détenteur racine et envoi unique. Aucun budget de frais ni aucune adresse de déployeur ne sont préremplis. N’exportez jamais la phrase de récupération ou la clé privée du portefeuille racine.
 
+Considérez le déployeur comme compromis : aucune approbation ENS, aucun contrôle d’un nom parent, aucun rôle Safe ni accès aux clés racines. Ses ETH restent exposés à toute personne détenant sa clé. Les contrôles locaux du plan signé ne peuvent empêcher cette personne de contourner l’outil. Conservez le plan et le point de reprise pour la vérification indépendante.
+
 `npm run prepare:mainnet` n’envoie aucune transaction. La seule commande documentée de diffusion en production est `npm run deploy:mainnet`, avec sa confirmation explicite ponctuelle et l’autorisation signée. Ne déployez pas le contrat de test configurable, ne dirigez pas les tests vers mainnet et ne renseignez aucun argument constructeur pour `AGIClubEntitlementRegistryMainnet`.
 
 Si l’envoi est interrompu, conservez `.local/deployment-broadcast.json` et suivez la procédure de reprise en lecture seule de la section H. Une expiration du délai RPC n’autorise pas un nouvel envoi.
@@ -94,6 +96,8 @@ Si l’envoi est interrompu, conservez `.local/deployment-broadcast.json` et sui
 ## 5. Vérifier maintenant ; choisir la première offre plus tard
 
 Suivez la section I du [guide Hardhat](HARDHAT_DEPLOYMENT_FR.md) pour l’inspection finalisée, la vérification du code sur Etherscan et la configuration revue du contrat, de son empreinte et de l’origine HTTPS. Publiez uniquement le site public construit lorsqu’il est prêt ; le dépôt source et le dossier privé de déploiement ne sont pas des fichiers à héberger.
+
+Exécutez `npm run inspect:mainnet` depuis une copie du dépôt, un appareil et un fournisseur indépendants et fiables. La transaction exacte de création finalisée doit être vérifiée, ainsi que le runtime et l’autorité ENS. Vérifiez `creationVerified: true` et `finalityVerified: true` dans le rapport actuel réussi. Un constructeur dangereux peut produire le même runtime ; le badge Etherscan et `isAdmin(deployer) = false` seuls ne prouvent ni l’initialisation correcte ni l’absence de permissions ENS/Safe indirectes. La section I explique la reprise sans plan ou sans point de reprise.
 
 Après avoir écrit la configuration publique, relancez `npm run qualify` et relisez la nouvelle empreinte source avant les essais sur l’hôte final. Un registre correctement configuré peut être qualifié ; des réglages incomplets ou une origine non sécurisée doivent être refusés.
 

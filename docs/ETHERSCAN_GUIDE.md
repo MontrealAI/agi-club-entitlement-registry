@@ -22,6 +22,10 @@
 
 **EN.** Etherscan source verification publishes source matching an already-deployed contract. It does not deploy, audit or authorize launch. Complete the Hardhat gates first: full qualification, real mainnet fork, independent reviews, real-wallet acceptance and the root holder’s bounded approval. The production contract is `AGIClubEntitlementRegistryMainnet` with **no constructor arguments**. The disposable deployer pays gas and receives no privileges.
 
+**FR.** Considérez sa clé comme compromise : aucune approbation ENS, aucun contrôle parent ni rôle Safe. Dans Etherscan, ouvrez la transaction **Contract Creator** et comparez déployeur, hash, nonce et données de création au dossier indépendant approuvé. Exécutez aussi `npm run inspect:mainnet` selon le guide Hardhat : l’empreinte du constructeur exact, le reçu et la finalité doivent être vérifiés avant d’accepter l’adresse. Le même runtime peut être installé par un constructeur malveillant ; le badge de vérification et `isAdmin = false` ne suffisent pas.
+
+**EN.** Treat its key as compromised: no ENS approvals, parent control or Safe roles. In Etherscan, open the **Contract Creator** transaction and compare its sender, hash, nonce and creation input to the independent approved record. Also run `npm run inspect:mainnet` as documented in the Hardhat guide: verify the exact creation-code hash, receipt and finality before accepting the address. A malicious constructor can install identical runtime; a verification badge and `isAdmin = false` are insufficient.
+
 Generate the public verification package / Générer le dossier public :
 
 ```bash

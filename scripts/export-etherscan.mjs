@@ -51,7 +51,7 @@ export function verificationPackage({artifact, buildInfo, compilerReport, source
       optimizer: {enabled: true, runs: 200}, viaIR: true, evmVersion: 'shanghai',
       creationCodeHash: compilerReport.creationCodeHash, standardInputSha256: sha256(inputText),
       mainnetAuthorization: false, etherscanVerified: false,
-      note: 'Public compiler material only. Recompilation passed locally. Upload to the actual approved contract address on Etherscan; inspect finalized deployed runtime separately.',
+      note: 'Public compiler material only. Recompilation passed locally. Upload to the actual approved contract address on Etherscan; independently inspect the exact finalized creation transaction, runtime and ENS authority.',
     },
   };
 }

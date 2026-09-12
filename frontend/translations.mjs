@@ -61,8 +61,8 @@ export const PAGE_MESSAGES = Object.freeze(Object.fromEntries(Object.entries({
     "en": "Your AGI Club name. Your wallet. Your choice."
   },
   "m014": {
-    "fr": "Aperçu du registre · 2.4.0-rc.2.",
-    "en": "Registry preview · 2.4.0-rc.2."
+    "fr": "Aperçu du registre · 2.4.0-rc.3.",
+    "en": "Registry preview · 2.4.0-rc.3."
   },
   "m015": {
     "fr": "Aucun déploiement n’est fourni. La qualification mainnet, les revues et la configuration restent nécessaires avant l’ouverture. Une démonstration ne crée aucun droit réel.",
@@ -181,8 +181,8 @@ export const PAGE_MESSAGES = Object.freeze(Object.fromEntries(Object.entries({
     "en": ", Ethereum mainnet."
   },
   "m044": {
-    "fr": "Code du contrat 2.1.1 · Dépôt 2.4.0-rc.2 · Protocole de demande /4",
-    "en": "Contract code 2.1.1 · Repository 2.4.0-rc.2 · Request protocol /4"
+    "fr": "Code du contrat 2.1.1 · Dépôt 2.4.0-rc.3 · Protocole de demande /4",
+    "en": "Contract code 2.1.1 · Repository 2.4.0-rc.3 · Request protocol /4"
   },
   "m045": {
     "fr": "Les wallets et claims sont publics. Le code source publié n’est pas un service déployé.",
@@ -417,8 +417,8 @@ export const PAGE_MESSAGES = Object.freeze(Object.fromEntries(Object.entries({
     "en": "Authority source: the effective owner of"
   },
   "m103": {
-    "fr": "Interface 2.4.0-rc.2 · Contrat 2.1.1 · Demande privée /4.",
-    "en": "Interface 2.4.0-rc.2 · Contract 2.1.1 · Private request /4."
+    "fr": "Interface 2.4.0-rc.3 · Contrat 2.1.1 · Demande privée /4.",
+    "en": "Interface 2.4.0-rc.3 · Contract 2.1.1 · Private request /4."
   },
   "m104": {
     "fr": "Publication du code ≠ autorisation de déploiement. La mise à disposition des avantages reste distincte du registre.",
@@ -737,8 +737,8 @@ export const PAGE_MESSAGES = Object.freeze(Object.fromEntries(Object.entries({
     "en": "on Ethereum mainnet. Request names and emails remain off-chain. Wallet addresses and claim proofs are public."
   },
   "m183": {
-    "fr": "v2.4.0-rc.2 · Aucun déploiement n’est fourni par défaut. Une interface ne constitue pas un audit.",
-    "en": "v2.4.0-rc.2 · No deployment is provided by default. An interface is not an audit."
+    "fr": "v2.4.0-rc.3 · Aucun déploiement n’est fourni par défaut. Une interface ne constitue pas un audit.",
+    "en": "v2.4.0-rc.3 · No deployment is provided by default. An interface is not an audit."
   },
   "m184": {
     "fr": "Vérifier la transaction",
