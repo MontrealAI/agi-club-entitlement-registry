@@ -247,7 +247,18 @@ try {
 
 The process environment is not a hardware vault, and these cleanup commands do not guarantee RAM erasure. Use your trusted wallet tooling to create/export an **encrypted Ethereum JSON keystore for the separate deployer**. An unencrypted raw private-key export is not the expected input. Never use the root Ledger/Safe key for this step.
 
-The broadcaster refuses CI, requires the exact acknowledgement and signed plan, rechecks hashes/admin/nonce/fee bounds and records the transaction hash. **If interrupted after broadcast, inspect that transaction—do not rerun blindly.** A local plan or two confirmations are not proof of finality.
+The broadcaster refuses CI, requires the exact acknowledgement and signed plan, and rechecks hashes/admin/nonce/fee bounds. It signs locally, calculates the transaction hash and writes and flushes a private recovery checkpoint **before** RPC submission. The checkpoint contains public transaction metadata, not a private key or signed transaction bytes. A second invocation cannot overwrite the checkpoint or submit again from that checkout. The planner also refuses to replace a plan when a checkpoint exists. A failed checkpoint write prevents submission.
+
+**If submission or confirmation is interrupted, keep `.local/deployment-broadcast.json` and inspect its transaction hash.** Its `SIGNED_SUBMISSION_OUTCOME_UNCONFIRMED` status deliberately does not claim that the node accepted or rejected the transaction. The file is not rewritten to imply success. An RPC timeout can occur after acceptance; a missing receipt can mean a pending transaction. Neither is permission to retry. Two confirmations are not proof of finality.
+
+Recovery, without another transaction:
+
+1. Open the checkpoint in your local editor. Keep its `transactionHash`, `deployer`, `nonce` and `predictedAddress`; never publish private approvals or keystores.
+2. Check that hash and deployer nonce through your approved Ethereum provider/explorer. Reconcile pending, mined, failed or replaced transactions. If no receipt is found, preserve the uncertainty; do not delete the checkpoint to bypass the guard.
+3. Set `REGISTRY_ADDRESS` to the reviewed `predictedAddress` and run `npm run inspect:mainnet` once code is present. It needs no deployer password and sends no transaction. If finality is pending, rerun only this read-only check later.
+4. If the original deployment cannot be completed, document the outcome and have the root holder approve any replacement plan and budget explicitly. Use a separate reviewed checkout and preserve the original evidence. Do not infer permission for a replacement from an RPC error or regenerate approvals automatically.
+
+The broadcaster's `.local/mainnet-deployment.json` records a latest-state identity check with `finalityVerified: false`. Only successful finalized inspection produces a separate `.local/post-deployment.json` with `finalityVerified: true`. The approval deadline controls when this helper may submit; it does not make an Ethereum transaction expire or cancel it once pending.
 
 For a contract wallet, ERC-1271 approval is checked at finalized and latest state both before unlocking the deployer keystore and again after the deployment preflight. Plan expiry and evidence are checked after those final reads. These are checks at the observed chain state; they cannot guarantee that ownership or contract-wallet policy will remain unchanged before the transaction is mined. See [ERC-1271](https://eips.ethereum.org/EIPS/eip-1271) for state-dependent signature validity.
 
@@ -262,7 +273,7 @@ npm run verify:mainnet -- 0xYOUR_DEPLOYED_CONTRACT
 
 Explorer verification requires a configured Etherscan API key and the same production build profile. Check actual runtime/admin independently, wait for finality, then configure the static app:
 
-`npm run inspect:mainnet` uses the approved `runtimeCodeHash` from `.local/deployment-plan.json`. If recovering an existing reviewed deployment without that plan, set `EXPECTED_RUNTIME_HASH` in `.env` from your independent approved record. A hash copied from an unknown contract is not approval. A successful inspection writes `.local/post-deployment.json`, including the checked `address` and `runtimeCodeHash` to use below. Replace both example placeholders with those reviewed values.
+`npm run inspect:mainnet` uses the approved `runtimeCodeHash` from `.local/deployment-plan.json`. If recovering an existing reviewed deployment without that plan, set `EXPECTED_RUNTIME_HASH` in `.env` from your independent approved record. A hash copied from an unknown contract is not approval. Inspection pins finalized and latest blocks, checks runtime, registry getters and canonical ENS authority at both, then checks the block hashes again. It rejects an unfinalized owner change, missing finalized code or an inconsistent/reorganized block view. A successful inspection writes `.local/post-deployment.json`, including both block anchors, the checked `address` and `runtimeCodeHash` to use below. Replace both example placeholders with those reviewed values.
 
 ```bash
 python3 scripts/configure.py --contract 0xYOUR_DEPLOYED_CONTRACT --runtime-code-hash 0xAPPROVED_RUNTIME_HASH --origin https://claims.example.org --entitlement IA101_2026_09_22
@@ -301,7 +312,7 @@ If any older registry was deployed, reconcile all claims and tickets before migr
 | `NOT_CONFIGURED`, `WRONG_ORIGIN` or mainnet required | Demo is expected locally. Live operation needs the approved registry, exact HTTPS origin and Ethereum mainnet; local mock addresses cannot be used. |
 | `release:gate` reports `BLOCKED` | Read `qualification/DEPLOYMENT_GATE.json`; complete the missing real checks and source-bound private reports. |
 | Approval expired, admin changed or nonce changed | Stop and prepare/review/sign a fresh plan. An old signature cannot authorize edited fields. |
-| Broadcast interrupted or confirmation timed out | Inspect `.local/deployment-broadcast.json` and that transaction on Ethereum before any retry. Do not fund or send a duplicate deployment blindly. |
+| Broadcast interrupted, timed out or checkpoint already exists | Preserve `.local/deployment-broadcast.json`. Reconcile its hash/nonce and use the read-only recovery steps in H. Do not delete the checkpoint or automatically retry. |
 | Receipt `WAITING_FOR_FINALITY` or expired | Wait for finality, or have the member prepare a fresh request for the existing claim. Do not claim or issue a second ticket. |
 
 Share only redacted failure details when requesting help. Never upload `.env`, keystores/passwords, private approvals or a member's receipt.

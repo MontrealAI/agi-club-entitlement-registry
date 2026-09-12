@@ -1,7 +1,9 @@
 /** Creates an UNSIGNED, short-lived exact-bytecode canary plan. Sends no transaction. */
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import {network,artifacts} from 'hardhat';import {ethers} from 'ethers';
 import {canonicalAdmin,PROD,save} from './runtime.mjs';import {releaseGate} from './release-gate.mjs';import {validatePlan} from '../shared/deployment-policy.mjs';
+assert(!fs.existsSync('.local/deployment-broadcast.json'),'Deployment checkpoint already exists. Inspect it before preparing any replacement deployment');
 const gate=releaseGate();assert.equal(gate.status,'EVIDENCE_READY_FOR_PRINCIPAL_REVIEW',gate.blockers.join('; '));
 const connection=await network.create();const provider=new ethers.BrowserProvider(connection.provider,undefined,{cacheTimeout:-1});
 try {

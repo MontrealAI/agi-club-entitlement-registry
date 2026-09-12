@@ -21,6 +21,7 @@
 - [ ] Private copy/email/manual Eventbrite process staged using fictitious data.
 - [ ] Current root holder explicitly approves exact deployment plan and fee ceiling.
 - [ ] Broadcast once; inspect transaction, runtime, admin, finality and explorer verification.
+- [ ] Preserve the recovery checkpoint; confirm finalized code and ENS authority through `inspect:mainnet` before retiring the disposable deployer.
 
 ## 3. Broad member launch
 
