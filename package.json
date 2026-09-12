@@ -14,7 +14,7 @@
     "npm": ">=10 <11"
   },
   "dependencies": {
-    "ethers": "6.15.0"
+    "ethers": "6.17.0"
   },
   "devDependencies": {
     "hardhat": "3.16.0",
