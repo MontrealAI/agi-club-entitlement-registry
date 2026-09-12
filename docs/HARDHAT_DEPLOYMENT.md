@@ -97,6 +97,18 @@ This deploys mocks and the test core to chain 31337, assigns a fictitious root/m
 
 **Never fund or reuse Hardhat's public test keys.** The production portal intentionally refuses this local network. For a local model of the production subclass and actual ethers request verification, run `npm run test:journey`. That model is still not real Ethereum finality, a physical wallet or Eventbrite.
 
+To run repeatable sequences of contract operations without an RPC account or funded wallet:
+
+```bash
+npm run test:stateful
+```
+
+This runs four fixed seeds, each with an adversarial prefix and 128 generated steps against the compiled contract on local chain 31337. After every step, a separate state model checks every claim record, claimant, timestamp, revision, capacity counter and claim index. The sequences include ENS transfers and failures, pause changes, competing last-seat claims and mined transactions that must revert without leaving partial batch changes. The disposable test deployer is checked for absence of privileges throughout.
+
+**Success:** `qualification/stateful-tests.json` reports `PASS` for every seed. A failure records the seed, step and command; rerun the same command with the same source and dependencies to reproduce it. The default `npm test` and full qualification also run these simulations. CI includes the report in its qualification artifacts on Linux, macOS and Windows.
+
+These are bounded local simulations with fictitious ENS records. Existing EVM tests cover expiry/window boundaries and all privileged entry points; browser tests cover the static app's contact-data handling. None of these substitutes for a pinned real-mainnet fork, real-wallet acceptance or independent security/legal review.
+
 ## D. Build and view static assets
 
 ```bash
