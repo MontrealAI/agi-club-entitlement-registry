@@ -29,7 +29,9 @@ export function validOrigin(origin) {
 }
 export function validatePolicy(policy) {
   if (!plain(policy) || !validOrigin(policy.origin) || policy.chainId!==1 || !address(policy.registry) || !bytes32(policy.registryCodeHash) || /^0x0{64}$/.test(policy.registryCodeHash)) fail('POLICY_NOT_CONFIGURED');
-  if (!Array.isArray(policy.entitlements) || !policy.entitlements.length || !policy.entitlements.every(bytes32)) fail('POLICY_NOT_CONFIGURED');
+  const mode=policy.entitlementMode ?? 'allowlist';
+  if (!['allowlist','registry'].includes(mode) || !Array.isArray(policy.entitlements) || !policy.entitlements.every(bytes32)) fail('POLICY_NOT_CONFIGURED');
+  if (mode==='registry' ? policy.entitlements.length!==0 : policy.entitlements.length===0) fail('POLICY_NOT_CONFIGURED');
   if (policy.version!==REGISTRY_VERSION) fail('POLICY_VERSION_MISMATCH');
   return policy;
 }
@@ -76,7 +78,7 @@ export async function validatePacket(packet,policy,crypto,options={}) {
   const now=verificationTime(options);
   if (p.schema!==SCHEMA) fail('UNSUPPORTED_SCHEMA');
   if (p.origin!==policy.origin || p.chainId!==1 || p.registry!==policy.registry) fail('WRONG_SCOPE');
-  if (!bytes32(p.entitlementId) || !policy.entitlements.includes(p.entitlementId)) fail('ENTITLEMENT_NOT_ENABLED');
+  if (!bytes32(p.entitlementId) || /^0x0{64}$/.test(p.entitlementId) || (policy.entitlementMode!=='registry' && !policy.entitlements.includes(p.entitlementId))) fail('ENTITLEMENT_NOT_ENABLED');
   if (typeof p.membershipLabel!=='string' || !/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(p.membershipLabel)) fail('INVALID_MEMBERSHIP');
   if (!bytes32(p.membershipNode) || p.membershipNode!==crypto.namehash(p.membershipLabel+'.club.agi.eth').toLowerCase()) fail('INVALID_MEMBERSHIP');
   if (!address(p.claimant) || !Number.isSafeInteger(p.claimRevision) || p.claimRevision<1 || p.claimRevision>4294967295) fail('INVALID_CLAIM');

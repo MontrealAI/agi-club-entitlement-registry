@@ -12,9 +12,8 @@ try {
  await receipt(ens.setOwner(ROOT,await admin.getAddress()));
  await receipt(ens.setOwner(ethers.namehash('demo.club.agi.eth'),await member.getAddress()));
  const registry=await deploy(artifacts,deployer,CORE,[await ens.getAddress(),[await wrapper.getAddress()]]);
- const id=ethers.id('LOCAL_DEMO_ONLY');await receipt(registry.connect(admin).createEntitlement(id,ethers.id('EVENT'),50,0,0,2,ethers.ZeroHash));
- await receipt(registry.connect(member).claim(id,'demo'));
- const out={scope:'LOCAL_TEST_ONLY_NOT_A_MEMBERSHIP_OR_TICKET',chainId:31337,registry:await registry.getAddress(),admin:await registry.admin(),member:await member.getAddress(),entitlementId:id,claimed:await registry.hasClaimed(id,ethers.namehash('demo.club.agi.eth'))};
+ assert.equal(await registry.entitlementCount(),0n,'Local deployment must start empty too');
+ const out={scope:'LOCAL_TEST_ONLY_NOT_A_MEMBERSHIP_OR_TICKET',chainId:31337,registry:await registry.getAddress(),admin:await registry.admin(),member:await member.getAddress(),entitlementCount:0,claimsCreated:0};
  save('.local/local-rehearsal.json',out);console.log(out);
- console.log('Core deployment and claim are local only. The production member page intentionally rejects this network.');
+ console.log('Empty core deployment is local only. No event or claim was created. The production member page intentionally rejects this network.');
 } finally {provider.destroy();await connection.close();}

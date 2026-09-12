@@ -3,8 +3,8 @@ window.AGI_CONFIG = Object.freeze({
   registryAddress: '',
   chainId: 1,
   registryCodeHash: '',
-  allowedEntitlements: ['IA101_2026_09_22'],
+  entitlementMode: 'registry',
+  allowedEntitlements: [],
   expectedOrigin: '',
-  contactEmail: 'president@montreal.ai',
-  defaultEntitlement: 'IA101_2026_09_22'
+  contactEmail: 'president@montreal.ai'
 });

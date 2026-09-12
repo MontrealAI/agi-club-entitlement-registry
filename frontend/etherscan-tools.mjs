@@ -54,10 +54,10 @@ function publicHash(value, ethers, maxBytes = 128) {
   return ethers.id(value);
 }
 export function defaultValue(field, method) {
-  if (idFields.has(field.name || 'entitlementId') && field.type === 'bytes32') return field.name === 'newId' ? '' : 'IA101_2026_09_22';
-  if (field.name === 'category' || field.name === 'newCategory') return 'EVENT';
+  if (idFields.has(field.name || 'entitlementId') && field.type === 'bytes32') return '';
+  if (field.name === 'category' || field.name === 'newCategory') return '';
   if (['initialState', 'newState'].includes(field.name)) return '1';
-  if (['capacity', 'newCapacity'].includes(field.name)) return '50';
+  if (['capacity', 'newCapacity'].includes(field.name)) return '';
   if (field.name === 'limit') return '25';
   if (field.type.startsWith('uint')) return '0';
   if (field.type === 'bool') return 'false';

@@ -8,6 +8,7 @@ import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {readReceipt} from '../tools/read-receipt.mjs';
 import {MAX_PACKET_BYTES,preparePacket,validatePacket} from '../shared/ticket-request.mjs';
+import {MAX_EMAIL_BYTES} from '../shared/request-email.mjs';
 import {fixture,NOW} from './fixtures.mjs';
 import {signMessage} from './crypto-reference.mjs';
 
@@ -28,7 +29,7 @@ test('CLI input accepts exactly the byte limit',async()=>{
 
 test('CLI input rejects oversized data before reading the remaining stream',async()=>{
   let resumed=false;
-  async function* input(){yield Buffer.alloc(MAX_PACKET_BYTES+1,32);resumed=true;yield Buffer.from('{}');}
+  async function* input(){yield Buffer.alloc(MAX_EMAIL_BYTES+1,32);resumed=true;yield Buffer.from('{}');}
   await assert.rejects(()=>readReceipt(input()),{message:'BODY_TOO_LARGE'});
   assert.equal(resumed,false);
 });

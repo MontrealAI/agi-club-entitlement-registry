@@ -6,6 +6,7 @@ import fs from 'node:fs/promises';
 import {verifyTicketRequest,validatePolicy,RequestError} from '../shared/ticket-request.mjs';
 import {createEthersIO} from '../shared/ethers-adapter.mjs';
 import {readReceipt} from './read-receipt.mjs';
+import {membershipName} from '../shared/request-email.mjs';
 let provider;
 try{
  const [configFile,flag]=process.argv.slice(2);
@@ -16,7 +17,7 @@ try{
  const {ethers}=await import('ethers');const transport=new ethers.FetchRequest(process.env.RPC_URL);transport.timeout=10000;
  provider=new ethers.JsonRpcProvider(transport,undefined,{batchMaxCount:1});
  const result=await verifyTicketRequest(packet,policy,createEthersIO(ethers,provider,policy.registry));
- const out={status:result.status,claimKey:result.claimKey,claimRevision:result.payload.claimRevision,finalizedBlock:result.finalizedBlock,ticketIssued:false,mailboxControlVerified:false,recipient:flag==='--show-recipient'?result.recipient:'REDACTED',action:'Check the private issuance register. One claim key authorizes at most one admission, not one per signature/email/revision.'};
+ const out={status:result.status,membership:membershipName(result.payload.membershipLabel),claimKey:result.claimKey,claimRevision:result.payload.claimRevision,finalizedBlock:result.finalizedBlock,ticketIssued:false,mailboxControlVerified:false,recipient:flag==='--show-recipient'?result.recipient:'REDACTED',action:'Check the private issuance register. One claim key authorizes at most one admission, not one per signature/email/revision.'};
  process.stdout.write(JSON.stringify(out,null,2)+'\n');
 }catch(e){const code=e instanceof RequestError?e.code:/^[A-Z_]{3,80}$/.test(e.code||e.message)?(e.code||e.message):'VERIFICATION_FAILED';process.stderr.write(JSON.stringify({status:'NOT_VERIFIED',error:code,instruction:'Usage: node tools/verify_ticket_request.mjs TRUSTED_POLICY.json [--show-recipient] < PRIVATE_RECEIPT.json. Do not upload receipt or terminal output.'})+'\n');process.exitCode=1;}
 finally{provider?.destroy();}

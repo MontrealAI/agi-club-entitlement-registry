@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {runInNewContext} from 'node:vm';
 import {REGISTRY_VERSION,MAX_PACKET_BYTES,RequestError} from '../shared/ticket-request.mjs';
+import {parseRequestEmail,membershipName,MAX_EMAIL_BYTES} from '../shared/request-email.mjs';
+import {requestPolicy} from '../frontend/member-catalog.mjs';
 
 function fixture() {
  const ids=['packetText','verifyResult','verifyStatus','verifyReceipt','clearReceipt'];
@@ -14,10 +16,10 @@ function fixture() {
  const ethers={id:()=> '0x'+'33'.repeat(32),BrowserProvider:class{constructor(){providers.push(this);}destroy(){this.destroyed=true;}}};window.ethers=ethers;
  const source=readFileSync(new URL('../frontend/verify.js',import.meta.url),'utf8');
  runInNewContext(source.replace(/^import .*;\r?\n/gm,''),{
-  window,ethers,REGISTRY_VERSION,MAX_PACKET_BYTES,RequestError,TextEncoder,
+  window,ethers,REGISTRY_VERSION,MAX_PACKET_BYTES,RequestError,TextEncoder,parseRequestEmail,membershipName,MAX_EMAIL_BYTES,requestPolicy,
   location:{origin:window.AGI_CONFIG.expectedOrigin},document:{getElementById:id=>elements.get(id)},
   setTimeout:(fn,delay)=>{const id=++next;timers.set(id,{fn,at:now+delay});return id;},clearTimeout:id=>timers.delete(id),
-  createEthersIO:()=>({}),verifyTicketRequest:async packet=>{await boundary('verification');if(error)throw error;return {status:'VERIFIED_REQUEST_NOT_A_TICKET',claimKey:'PUBLIC_FIXTURE',payload:{claimRevision:1},recipient:packet.recipient,finalizedBlock:100};},
+  createEthersIO:()=>({}),verifyTicketRequest:async packet=>{await boundary('verification');if(error)throw error;return {status:'VERIFIED_REQUEST_NOT_A_TICKET',claimKey:'PUBLIC_FIXTURE',payload:{claimRevision:1,membershipLabel:'fictitious-member'},recipient:packet.recipient,finalizedBlock:100};},
  },{filename:'frontend/verify.js'});
  return {
   calls,providers,el:id=>elements.get(id),
@@ -33,6 +35,7 @@ function fixture() {
 test('Organizer verifier displays the verified recipient and releases its provider',async()=>{
  const ui=fixture();await ui.input();await ui.click('verifyReceipt');
  assert.equal(JSON.parse(ui.el('verifyResult').textContent).email,'fixture@example.org');
+ assert.equal(JSON.parse(ui.el('verifyResult').textContent).membership,'fictitious-member.club.agi.eth');
  assert(ui.providers.every(provider=>provider.destroyed));
 });
 

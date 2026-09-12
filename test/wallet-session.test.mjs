@@ -5,6 +5,8 @@ import {runInNewContext} from 'node:vm';
 import {ENS, WRAPPER, ROOT, REGISTRY_VERSION} from '../shared/ticket-request.mjs';
 import {MEMBER_ABI} from '../frontend/contract-abi.mjs';
 import {PrivateMemory} from '../frontend/private-memory.mjs';
+import {uint,utcSeconds} from '../frontend/etherscan-tools.mjs';
+import {readCatalogPage,requestPolicy} from '../frontend/member-catalog.mjs';
 
 // Actual UI handlers with simulated wallet, contract, and DOM boundaries.
 // These fixtures never send a transaction or verify real Ethereum bytecode.
@@ -48,7 +50,7 @@ function fixture(page) {
   if (page === 'member') elements.get('benefitSelect').value = 'IA101_2026_09_22';
   const hash = n => '0x' + BigInt(n).toString(16).padStart(64, '0');
   const account = '0x' + '11'.repeat(20);
-  const state = {code: '0x6000', codeHash: hash(88), version: REGISTRY_VERSION, ens: ENS, wrapper: WRAPPER, root: ROOT, chain: '0x1', permissionEvent: false};
+  const state = {code: '0x6000', codeHash: hash(88), version: REGISTRY_VERSION, ens: ENS, wrapper: WRAPPER, root: ROOT, chain: '0x1', permissionEvent: false,catalogCount:0};
   const calls = [], sent = [], providers = [], waits = new Map(), walletListeners = new Map(), pageListeners = new Map();
   async function call(name, result) {
     calls.push(name);
@@ -65,8 +67,9 @@ function fixture(page) {
     CANONICAL_ENS: async () => state.ens, ensRegistry: async () => state.ens,
     CANONICAL_WRAPPER: async () => state.wrapper, adminNameWrapper: async () => state.wrapper,
     CLUB_AGI_ETH_NODE: async () => state.root, admin: async () => account,
-    entitlementCount: async () => 0n, entitlementIdsPage: async () => [],
-    paused: async () => false, titleFR: async () => 'Fictitious benefit',
+    entitlementCount: async () => BigInt(state.catalogCount), entitlementIdsPage: async (offset,limit) => call('catalogPage',Array.from({length:Math.min(limit,state.catalogCount-offset)},(_,i)=>hash(1000+offset+i))),
+    paused: async () => false, titleFR: async () => {if(state.failCatalog)throw Error('Fixture read failure');return state.catalogTitle||'Fictitious benefit';},
+    entitlement: async () => [hash(1),hash(0),50n,0n,0n,0n,0n,2n,true],
     claimability: async () => call('claimability', [0]),
     claimRecord: async () => [account, 0n, 0n, 0n, 0n, 0n],
     interface: {encodeFunctionData: () => '0x12345678'},
@@ -104,7 +107,7 @@ function fixture(page) {
   };
   // Import declarations are supplied below; the member handler body is unchanged.
   runInNewContext(source.replace(/^import .*;\r?\n/gm, ''), {
-    window, ethers, ENS, WRAPPER, ROOT, REGISTRY_VERSION, MEMBER_ABI, PrivateMemory,
+    window, ethers, ENS, WRAPPER, ROOT, REGISTRY_VERSION, MEMBER_ABI, PrivateMemory, uint,utcSeconds,readCatalogPage,requestPolicy,
     location: {origin: window.AGI_CONFIG.expectedOrigin},
     document: {
       body: {dataset: {page}}, addEventListener() {},
@@ -114,7 +117,7 @@ function fixture(page) {
     confirm: () => true, setTimeout: () => 1, clearTimeout() {},
   }, {filename: `frontend/${filename}`});
   return {
-    state, calls, sent, providers,
+    state, calls, sent, providers,config:window.AGI_CONFIG,
     el: id => elements.get(id), click: id => elements.get(id).click(),
     walletEvent: event => walletListeners.get(event)?.([]),
     pageEvent: event => pageListeners.get(event)?.(),
@@ -127,9 +130,11 @@ function fixture(page) {
   };
 }
 
+async function chooseBenefit(ui){ui.el('benefitSelect').value=ui.el('benefitSelect').children[1]?.value||'';await ui.el('benefitSelect').emit('input');}
+
 async function attemptTransaction(ui, page) {
   if (page === 'admin') { await ui.click('pause'); await ui.click('approveConfirm'); }
-  else { ui.el('memberLabel').value = 'alice'; await ui.click('verify'); await ui.acknowledgeUsage(); await ui.click('claim'); }
+  else { ui.el('benefitSelect').value=ui.el('benefitSelect').children[1]?.value||'';await ui.el('benefitSelect').emit('input');ui.el('memberLabel').value = 'alice'; await ui.click('verify'); await ui.acknowledgeUsage(); await ui.click('claim'); }
 }
 
 for (const page of ['admin', 'member']) {
@@ -251,7 +256,7 @@ test('admin: reconnecting during gas estimation cannot submit the old transactio
 test('member: editing the membership during inspection discards the old eligibility', async () => {
   const ui = fixture('member');
   await ui.click('connect');
-  ui.el('memberLabel').value = 'alice';
+  await chooseBenefit(ui);ui.el('memberLabel').value = 'alice';
   const inspection = ui.pause('claimability');
   const inspecting = ui.click('verify');
   await inspection.started;
@@ -268,7 +273,7 @@ test('member: editing the membership during inspection discards the old eligibil
 test('member: editing the membership during gas estimation cancels the old claim', async () => {
   const ui = fixture('member');
   await ui.click('connect');
-  ui.el('memberLabel').value = 'alice';
+  await chooseBenefit(ui);ui.el('memberLabel').value = 'alice';
   await ui.click('verify');
   const estimation = ui.pause('claim.estimateGas');
   await ui.acknowledgeUsage();
@@ -283,7 +288,7 @@ test('member: editing the membership during gas estimation cancels the old claim
 
 test('member: public reads need no acknowledgement but a claim does', async () => {
   const ui=fixture('member');await ui.click('connect');
-  ui.el('memberLabel').value='alice';await ui.click('verify');
+  await chooseBenefit(ui);ui.el('memberLabel').value='alice';await ui.click('verify');
   assert.equal(ui.el('usageConsent').checked,false);
   await ui.click('claim');assert.equal(ui.sent.length,0);
   assert(!ui.calls.includes('claim.staticCall'));
@@ -293,7 +298,7 @@ test('member: public reads need no acknowledgement but a claim does', async () =
 for(const cancel of ['withdraw','withdraw and acknowledge again','clear','pagehide','pageshow','beforeunload']) {
  test('member: '+cancel+' during gas estimation invalidates the pending claim',async()=>{
   const ui=fixture('member');await ui.click('connect');
-  ui.el('memberLabel').value='alice';await ui.click('verify');await ui.acknowledgeUsage();
+  await chooseBenefit(ui);ui.el('memberLabel').value='alice';await ui.click('verify');await ui.acknowledgeUsage();
   const estimation=ui.pause('claim.estimateGas'),claiming=ui.click('claim');await estimation.started;
   if(cancel.startsWith('withdraw')){ui.el('usageConsent').checked=false;await ui.el('usageConsent').emit('change');if(cancel.endsWith('again'))await ui.acknowledgeUsage();}
   else if(cancel==='clear')await ui.click('clearPrivate');
@@ -304,4 +309,31 @@ for(const cancel of ['withdraw','withdraw and acknowledge again','clear','pagehi
 for(const event of ['accountsChanged','chainChanged','disconnect'])test('member: '+event+' clears the reading acknowledgement',async()=>{
  const ui=fixture('member');await ui.click('connect');await ui.acknowledgeUsage();
  ui.walletEvent(event);assert.equal(ui.el('usageConsent').checked,false);
+});
+
+test('member: empty registry is usable without offering or selecting a fictitious event',async()=>{
+ const ui=fixture('member');ui.config.entitlementMode='registry';ui.config.allowedEntitlements=[];
+ await ui.click('connect');assert.equal(ui.el('benefitSelect').disabled,true);assert.equal(ui.el('verify').disabled,true);assert.equal(ui.el('claim').disabled,true);
+ assert.equal(ui.el('refreshBenefits').disabled,false);assert.match(ui.el('catalogStatus').textContent,/registre est vide/);
+ ui.state.catalogCount=1;await ui.click('refreshBenefits');assert.equal(ui.el('benefitSelect').children.length,2);assert.equal(ui.el('benefitSelect').value,'');
+ await attemptTransaction(ui,'member');assert.equal(ui.sent.length,1);
+});
+test('member: catalogue pages preserve selection and reflect admin title changes on refresh',async()=>{
+ const ui=fixture('member');ui.config.entitlementMode='registry';ui.config.allowedEntitlements=[];ui.state.catalogCount=61;
+ await ui.click('connect');assert.equal(ui.el('benefitSelect').children.length,26);assert.equal(ui.el('verify').disabled,true);
+ await ui.click('loadBenefits');await ui.click('loadBenefits');assert.equal(ui.el('benefitSelect').children.length,62);
+ ui.el('benefitSelect').value=ui.el('benefitSelect').children[60].value;await ui.el('benefitSelect').emit('input');const selected=ui.el('benefitSelect').value;
+ ui.state.catalogTitle='Modified public title';await ui.click('refreshBenefits');assert.equal(ui.el('benefitSelect').value,selected);assert.equal(ui.el('benefitSelect').children.length,62);
+ assert.match(ui.el('benefitSelect').children[60].textContent,/Modified public title/);assert.equal(ui.el('loadBenefits').disabled,true);
+});
+test('member: failed page can be retried without skipping benefits',async()=>{
+ const ui=fixture('member');ui.config.entitlementMode='registry';ui.config.allowedEntitlements=[];ui.state.catalogCount=31;
+ await ui.click('connect');ui.state.failCatalog=true;await ui.click('loadBenefits');assert.equal(ui.el('benefitSelect').children.length,26);
+ assert.match(ui.el('status').textContent,/Catalogue indisponible/);
+ ui.state.failCatalog=false;await ui.click('loadBenefits');assert.equal(ui.el('benefitSelect').children.length,32);
+});
+test('member: disconnect during a catalogue page cannot restore the old options or status',async()=>{
+ const ui=fixture('member');ui.config.entitlementMode='registry';ui.config.allowedEntitlements=[];ui.state.catalogCount=31;
+ await ui.click('connect');const paused=ui.pause('catalogPage'),loading=ui.click('loadBenefits');await paused.started;ui.walletEvent('disconnect');const status=ui.el('status').textContent;
+ paused.release();await loading;assert.equal(ui.el('benefitSelect').children.length,1);assert.equal(ui.el('benefitSelect').disabled,true);assert.equal(ui.el('status').textContent,status);
 });

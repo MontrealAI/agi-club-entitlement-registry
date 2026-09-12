@@ -4,6 +4,7 @@ const iface = new ethers.Interface(EXPLORER_ABI);
 let language = 'fr', prepared = null, generation = 0;
 const french = Object.fromEntries([...document.querySelectorAll('[data-i18n]')].map(el => [el.dataset.i18n, el.textContent]));
 const english = {
+  skipContent:'Skip to content', footerPrivacy:'Privacy', footerLegal:'Terms · Legal', footerVerify:'Verify a receipt', footerDeployment:'Deployment',
   home:'Home', admin:'Administration', member:'Members', title:'Your registry, through Etherscan.',
   intro:'Prepare exact values to read, configure or use the verified contract. Every operation remains subject to registry rules and your wallet confirmation.',
   privacy:'Public parameters only. No participant names, email addresses, private receipts or secrets. This helper connects to no wallet and sends no transaction.',
@@ -56,7 +57,7 @@ function fields() {
   for (const [i,p] of f.inputs.entries()) {
     const label = document.createElement('label'); label.htmlFor = 'parameter-' + i; label.textContent = (p.name || 'entitlementId') + ' (' + p.type + ')';
     const input = document.createElement(p.type === 'string[]' ? 'textarea' : p.type === 'bool' || ['initialState','newState'].includes(p.name) ? 'select' : 'input'); input.id = label.htmlFor; input.autocomplete = 'off'; input.spellcheck = false;
-    if (input.tagName === 'SELECT') for (const v of p.type === 'bool' ? ['false','true'] : ['1','2','3','4']) { const option = document.createElement('option'); option.value = v; option.textContent = v; input.append(option); }
+    if (input.tagName === 'SELECT') for (const v of p.type === 'bool' ? ['false','true'] : ['1','2','3','4']) { const option = document.createElement('option'); option.value = v; option.textContent = p.type==='bool'?v:v+' — '+tr(['','Brouillon','Ouvert','Fermé','Archivé'][Number(v)],['','Draft','Open','Closed','Archived'][Number(v)]); input.append(option); }
     input.value = defaultValue(p, f.name); input.addEventListener('input', invalidate);
     const help = document.createElement('p'); help.id = 'hint-' + i; help.className = 'small muted'; help.textContent = hint(p); input.setAttribute('aria-describedby', help.id);
     $('parameters').append(label, input, help);
@@ -100,8 +101,13 @@ $('operation').addEventListener('change', fields); $('registry').addEventListene
 function clear() { invalidate(); $('registry').value = ''; for (const el of $('parameters').querySelectorAll('input,textarea,select')) el.value = ''; }
 $('clear').addEventListener('click', clear); window.addEventListener('pagehide', clear); window.addEventListener('pageshow', event => { if (event.persisted) clear(); });
 $('language').addEventListener('click', () => {
+  const inputs=iface.getFunction($('operation').value).inputs.map((_,i)=>$('parameter-'+i).value);
   language = language === 'fr' ? 'en' : 'fr'; document.documentElement.lang = language; $('language').textContent = language === 'fr' ? 'English' : 'Français';
   for (const el of document.querySelectorAll('[data-i18n]')) el.textContent = (language === 'fr' ? french : english)[el.dataset.i18n];
+  document.querySelector('.brand').setAttribute('aria-label',tr('AGI Club — Accueil','AGI Club — Home'));
+  document.querySelector('.header-tail').setAttribute('aria-label',tr('Navigation principale','Main navigation'));
+  document.querySelector('.footer-links').setAttribute('aria-label',tr('Ressources du Club','Club resources'));
   populate();
+  inputs.forEach((value,i)=>{$('parameter-'+i).value=value;});
 });
 $('registry').value = window.AGI_CONFIG?.registryAddress || ''; populate();

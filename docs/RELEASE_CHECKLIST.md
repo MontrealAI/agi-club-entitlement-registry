@@ -12,6 +12,7 @@
 - [ ] Clean npm installation and advisory review pass.
 - [ ] Solidity compiles with recorded compiler/profile/hashes and size limits.
 - [ ] EVM tests and real ethers request journey pass.
+- [ ] Production constructor and local deployment start with zero benefits; no event is created by deployment or prefilled in creation forms.
 - [ ] Hosted built assets and privacy instrumentation pass; test-device scope recorded.
 - [ ] Canonical ENS mainnet fork passes on representative real memberships.
 - [ ] Independent security review findings resolved against the exact bytes.
@@ -19,6 +20,8 @@
 - [ ] Actual root/member wallets, intended mobile path and Safe if used are rehearsed.
 - [ ] Static no-PII-persistence and commitment-only signing verified on those devices.
 - [ ] Private copy/email/manual Eventbrite process staged using fictitious data.
+- [ ] Copied email visibly includes the full AGI Club subname; the organizer result shows the same verified identity. Both the legacy JSON and formatted email path are tested, including a misleading heading.
+- [ ] Create and update an explicitly approved canary through the actual admin wallet; confirm member catalogue refresh shows the changes without per-event website edits in registry mode. No event or quota is assumed for launch.
 - [ ] Current root holder explicitly approves exact deployment plan and fee ceiling.
 - [ ] Broadcast once; inspect transaction, runtime, admin, finality and explorer verification.
 - [ ] Preserve the recovery checkpoint; confirm finalized code and ENS authority through `inspect:mainnet` before retiring the disposable deployer.
