@@ -1,7 +1,7 @@
 /** Real local EVM + genuine ethers. Static-only recipient commitment; no email or Eventbrite. */
 import assert from 'node:assert/strict';import {randomBytes} from 'node:crypto';
 import {network,artifacts} from 'hardhat';import {ethers} from 'ethers';
-import {ENS,WRAPPER,ROOT,PROD,deploy,receipt,save} from './runtime.mjs';import {sourceDigest} from './source-digest.mjs';
+import {ENS,WRAPPER,ROOT,PROD,deploy,receipt,save,checkProduction} from './runtime.mjs';import {sourceDigest} from './source-digest.mjs';
 import {SCHEMA,REGISTRY_VERSION,requestMessage,preparePacket,verifyTicketRequest} from '../shared/ticket-request.mjs';
 import {createEthersIO} from '../shared/ethers-adapter.mjs';
 import {revertData} from '../test/revert-data.mjs';
@@ -61,6 +61,17 @@ try {
    await receipt(registry.connect(admin).unpause());assert.equal(await registry.paused(),false);
    assert.equal(await registry.isAdmin(deployerAddress),false);
   } finally {await raw.request({method:'hardhat_stopImpersonatingAccount',params:[expected]});}
+ });
+ await check('Locally signed creation has its recovery hash before submission and pins real ethers identity reads',async()=>{
+  // Random test key and funds exist only in this asserted local EVM model.
+  const disposable=new ethers.Wallet(ethers.hexlify(randomBytes(32))),from=await disposable.getAddress();
+  await raw.request({method:'hardhat_setBalance',params:[from,ethers.toQuantity(ethers.parseEther('1'))]});
+  const data=(await artifacts.readArtifact(PROD)).bytecode,request={type:2,chainId:1,nonce:0,data,value:0,gasLimit:6000000n,maxFeePerGas:10000000000n,maxPriorityFeePerGas:1000000000n};
+  const signed=await disposable.signTransaction(request),hash=ethers.keccak256(signed),parsed=ethers.Transaction.from(signed);
+  assert.equal(parsed.hash,hash);assert.equal(parsed.from,from);assert.equal(parsed.to,null);assert.equal(parsed.data,data);
+  const sent=await provider.broadcastTransaction(signed);assert.equal(sent.hash,hash);
+  const mined=await receipt(sent);assert.equal(mined.contractAddress,ethers.getCreateAddress({from,nonce:0}));
+  await checkProduction(provider,mined.contractAddress,await admin.getAddress(),policy.registryCodeHash,mined.blockNumber);
  });
  r.status='PASS';r.passed=r.results.length;r.sourceSha256=sourceDigest().sourceSha256;r.ticketIssued=false;r.externalEmailSent=false;
 } catch(e){r.status='FAIL_OR_BLOCKED';r.error=e.shortMessage||e.message;process.exitCode=1;}

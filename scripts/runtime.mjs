@@ -29,15 +29,16 @@ export async function canonicalAdmin(provider,blockTag='latest') {
  if(owner===ethers.ZeroAddress || (expiry<BigInt(block.timestamp) && (fuses&65536n)!==0n))throw Error('Root wrapped ownership unavailable');
  return owner;
 }
-export async function checkProduction(provider,address,expectedAdmin,expectedHash) {
+export async function checkProduction(provider,address,expectedAdmin,expectedHash,blockTag='latest') {
  assert.equal((await provider.getNetwork()).chainId,1n,'Ethereum mainnet chainId required');
- const code=await provider.getCode(address); assert(code!=='0x','No deployed code'); const runtimeCodeHash=ethers.keccak256(code);
+ const code=await provider.getCode(address,blockTag); assert(code!=='0x','No deployed code'); const runtimeCodeHash=ethers.keccak256(code);
  if(expectedHash)assert.equal(runtimeCodeHash.toLowerCase(),expectedHash.toLowerCase(),'Runtime bytecode mismatch');
  const c=new ethers.Contract(address,abi,provider);
- assert.equal(await c.VERSION(),'2.1.1'); assert.equal(await c.CLUB_AGI_ETH_NODE(),ROOT);
- assert.equal((await c.ensRegistry()).toLowerCase(),ENS.toLowerCase());
- assert.equal((await c.adminNameWrapper()).toLowerCase(),WRAPPER.toLowerCase());
- const admin=await c.admin();assert.equal(admin.toLowerCase(),(await canonicalAdmin(provider)).toLowerCase());
+ const at={blockTag};
+ assert.equal(await c.VERSION(at),'2.1.1'); assert.equal(await c.CLUB_AGI_ETH_NODE(at),ROOT);
+ assert.equal((await c.ensRegistry(at)).toLowerCase(),ENS.toLowerCase());
+ assert.equal((await c.adminNameWrapper(at)).toLowerCase(),WRAPPER.toLowerCase());
+ const admin=await c.admin(at);assert.equal(admin.toLowerCase(),(await canonicalAdmin(provider,blockTag)).toLowerCase());
  if(expectedAdmin)assert.equal(admin.toLowerCase(),ethers.getAddress(expectedAdmin).toLowerCase(),'Unexpected root administrator');
  return {address:ethers.getAddress(address),chainId:1,runtimeCodeHash,admin,contractVersion:'2.1.1',root:ROOT,ens:ENS,wrapper:WRAPPER};
 }
