@@ -106,6 +106,65 @@ try{
   assert.equal(await registry.claimantOf(ethers.id(id),ethers.namehash('explorer-c.club.agi.eth')),ethers.ZeroAddress);
   assert.equal(await registry.admin(),aa);assert.equal(await registry.isAdmin(da),false);
  });
+ // These transactions bypass gas estimation so rejection is proved by a mined
+ // receipt, including nonpayable/fallback failures with empty revert data.
+ async function minedRejection(signer,target,data,value=0n,errorName){
+  const before=BigInt(await rpc.request({method:'eth_blockNumber',params:[]}));let caught;
+  try{await rpc.request({method:'eth_sendTransaction',params:[{from:await signer.getAddress(),to:target,data,value:ethers.toQuantity(value),gas:'0x1e8480'}]});}catch(error){caught=error;}
+  const after=BigInt(await rpc.request({method:'eth_blockNumber',params:[]}));assert.equal(after,before+1n,'Rejection must execute in one local block');
+  const block=await rpc.request({method:'eth_getBlockByNumber',params:[ethers.toQuantity(after),false]});assert.equal(block.transactions.length,1);
+  const receipt=await rpc.request({method:'eth_getTransactionReceipt',params:[block.transactions[0]]});assert.equal(receipt.status,'0x0');assert.deepEqual(receipt.logs,[]);
+  if(errorName)assert.equal(c.interface.parseError(revertData(caught))?.name,errorName);
+ }
+ await run('Malformed owner, fuse, expiry and length words cannot confer root or membership authority',async()=>{
+  const localENS=await deploy('QualificationENS'),localWrapper=await deploy('QualificationWrapper');
+  const wrapperAddress=await localWrapper.getAddress(),localRoot=ethers.id('ABI_BOUNDARY'),label='abi-boundary',memberNode=ethers.namehash(label+'.club.agi.eth');
+  await tx(localENS.setOwner(root,aa));await tx(localENS.setOwner(memberNode,wrapperAddress));
+  const registry=await deploy('AGIClubEntitlementRegistry',[await localENS.getAddress(),[wrapperAddress]]);
+  await tx(registry.connect(admin).createEntitlement(localRoot,cat,1,0,0,2,ethers.ZeroHash));await tx(localENS.setOwner(root,wrapperAddress));
+  // TEST ONLY runtime returns controlled ABI words. It is installed only in the
+  // guarded in-process chain; production sources and infrastructure are untouched.
+  const runtime=(words,length=96)=>'0x'+words.map((word,i)=>'7f'+ethers.toBeHex(word,32).slice(2)+'60'+(32*i).toString(16).padStart(2,'0')+'52').join('')+'60'+length.toString(16).padStart(2,'0')+'6000f3';
+  const good=[BigInt(aa),0n,0n];
+  const setCode=code=>rpc.request({method:'hardhat_setCode',params:[wrapperAddress,code]});
+  await setCode(runtime(good));assert.equal(await registry.admin(),aa);assert.equal((await registry.membershipInfo(label))[1],aa);
+  for(const [words,length]of [[[(1n<<160n)|BigInt(aa),0n,0n],96],[[BigInt(aa),1n<<32n,0n],96],[[BigInt(aa),0n,1n<<64n],96],[good,95],[good,97],[good,0]]){
+   await setCode(runtime(words,length));assert.equal(await registry.admin(),ethers.ZeroAddress);assert.equal((await registry.membershipInfo(label))[1],ethers.ZeroAddress);
+   await minedRejection(admin,await registry.getAddress(),registry.interface.encodeFunctionData('pause'),0n,'AdminUnavailable');
+   await minedRejection(admin,await registry.getAddress(),registry.interface.encodeFunctionData('claim',[localRoot,label]),0n,'ClaimRejected');
+   assert.equal(await registry.wasEverClaimed(localRoot,memberNode),false);assert.equal((await registry.entitlement(localRoot))[3],0n);
+  }
+  await setCode(runtime(good));await tx(registry.connect(admin).claim(localRoot,label));assert.equal(await registry.claimantOf(localRoot,memberNode),aa);
+ });
+ await run('Forwarders cannot borrow the originating root or member wallet authority',async()=>{
+  const forwarder=await deploy('QualificationWallet',[aa]),target=await c.getAddress(),label='forwarded-owner',memberNode=ethers.namehash(label+'.club.agi.eth');
+  await tx(ens.setOwner(memberNode,aa));assert.equal(await c.admin(),aa);
+  for(const [method,args,errorName]of [['pause',[],'NotClubAdmin'],['claim',[id,label],'ClaimRejected']]){
+   const data=forwarder.interface.encodeFunctionData('execute',[target,c.interface.encodeFunctionData(method,args)]);
+   await minedRejection(admin,await forwarder.getAddress(),data,0n,errorName);
+  }
+  assert.equal(await c.paused(),false);assert.equal(await c.wasEverClaimed(id,memberNode),false);
+  // Positive control: when ENS actually assigns ownership to that wallet, its
+  // execution is authorized. A contract wallet is supported without tx.origin.
+  await tx(ens.setOwner(root,await forwarder.getAddress()));await tx(forwarder.connect(admin).execute(target,c.interface.encodeFunctionData('pause')));assert.equal(await c.paused(),true);
+  await tx(forwarder.connect(admin).execute(target,c.interface.encodeFunctionData('unpause')));await tx(ens.setOwner(root,aa));
+ });
+ await run('Payments and unknown selectors revert without creating claims, benefits or logs',async()=>{
+  const registry=await deploy('AGIClubEntitlementRegistry',[await ens.getAddress(),[await wrapper.getAddress()]]),target=await registry.getAddress();
+  const benefit=ethers.id('PAYMENT_BOUNDARY'),label='payment-boundary',memberNode=ethers.namehash(label+'.club.agi.eth');
+  await tx(ens.setOwner(memberNode,ma));await tx(registry.connect(admin).createEntitlement(benefit,cat,1,0,0,2,ethers.ZeroHash));
+  assert(artifact('AGIClubEntitlementRegistryMainnet').abi.filter(x=>x.type==='function').every(x=>x.stateMutability!=='payable'));
+  const attempts=[
+   [member,'0x',1n,'PaymentsNotAccepted'],[member,'0xffffffff',0n],
+   [member,registry.interface.encodeFunctionData('claim',[benefit,label]),1n],
+   [admin,registry.interface.encodeFunctionData('createEntitlement',[ethers.id('REJECTED_PAYMENT'),cat,0,0,0,1,ethers.ZeroHash]),1n],
+  ];
+  for(const [actor,data,value,errorName]of attempts){
+   await minedRejection(actor,target,data,value,errorName);assert.equal(await provider.getBalance(target),0n);
+   assert.equal(await registry.entitlementCount(),1n);assert.equal(await registry.claimNodeCount(benefit),0n);assert.equal(await registry.wasEverClaimed(benefit,memberNode),false);
+  }
+  await tx(registry.connect(member).claim(benefit,label));assert.equal(await registry.claimantOf(benefit,memberNode),ma);
+ });
  await run('Production constructor rejects chain 31337 even with canonical-shaped local fixtures',async()=>{
   const E='0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e',W='0xD4416b13d2b3a9aBae7AcD5D6C2BbDBE25686401';
   await rpc.request({method:'hardhat_setCode',params:[E,await provider.getCode(await ens.getAddress())]});
