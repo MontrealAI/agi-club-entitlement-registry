@@ -178,6 +178,8 @@ The final `qualification/mainnet-fork.json` includes an attempt identifier and c
 
 While the runner owns `.local/mainnet-fork.lock`, the release gate blocks fork evidence. Normal completion/failure releases the lock after saving its report. A process killed before cleanup or an unsuccessful evidence write can leave it in place. If a later run reports a lock, first confirm in your operating-system process monitor that the original runner and its Hardhat child processes have stopped. Preserve the lock and reports privately, then remove only the stale lock and rerun the rehearsal. Do not remove a live lock, promote an attempt file to `PASS`, or delete the deployment broadcast checkpoint as part of fork recovery. A late child report cannot overwrite the final qualification report.
 
+After reading the private review reports, the gate rechecks the fork-report hash and checks the lock before and after that final read. A new lock or changed report blocks the result and removes the stale fork's bytecode and approval-evidence entry. If this check fails, let the rehearsal finish, inspect its result and rerun `npm run release:gate`. The gate observes evidence at check time; its result does not reserve the files or prevent another rehearsal from starting later.
+
 ## F. Independent review and real-device rehearsal
 
 Complete the [legal release review](LEGAL_RELEASE_REVIEW.md) with qualified counsel and the actual operator. Review the real offering, membership arrangements, French/English notices, provider information and email/Eventbrite privacy operations. Publish any required operational facts before the final source fingerprint. The member acknowledgement is temporary and is not a retained contractual acceptance record.

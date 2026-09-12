@@ -96,3 +96,23 @@ test('A symlinked evidence directory cannot substitute other files',t=>{
 });
 
 test('A running or interrupted fork blocks otherwise complete evidence',t=>{const f=fixture(t);f.write('.local/mainnet-fork.lock','SYNTHETIC INTERRUPTED RUN');assert(f.gate().blockers.some(x=>x.includes('running or interrupted')));f.blocked();});
+
+for(const [name,whenRead,occurrence,replaceReport] of [
+ ['lock acquired after the initial lock check',forkFile,1,false],
+ ['lock acquired while external evidence is read','.local/eventbriteStaging.txt',1,false],
+ ['failed attempt completes after the fork report was read','.local/eventbriteStaging.txt',1,true],
+ ['lock acquired during the final fork-report read',forkFile,2,false],
+])test('Concurrent fork evidence rejects '+name,t=>{
+ const f=fixture(t),previous=f.read(forkFile),original=fs.readFileSync;
+ const watched=path.join(f.root,whenRead);let count=0,triggered=false;
+ t.mock.method(fs,'readFileSync',function(file,...args){
+  const bytes=original.call(this,file,...args);
+  if(file===watched&&++count===occurrence){
+   triggered=true;f.write('.local/mainnet-fork.lock','SYNTHETIC CONCURRENT ATTEMPT');
+   if(replaceReport){f.write(forkFile,{...previous,status:'FAIL_OR_BLOCKED'});f.remove('.local/mainnet-fork.lock');}
+  }
+  return bytes;
+ });
+ const g=f.gate();assert(triggered,'The intended filesystem interleaving must execute');
+ assert.equal(g.status,'BLOCKED');assert.equal(g.qualifiedBytecode,null);assert(!g.checks.some(x=>x.type==='fork'),'A stale fork must not contribute to approval evidence');
+});

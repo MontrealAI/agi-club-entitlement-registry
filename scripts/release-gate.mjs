@@ -91,6 +91,19 @@ export function releaseGate(root=process.cwd()) {
       checks.push({type:name,reviewer:x.reviewer,sha256:x.sha256});
     }
   } catch { blockers.push('External evidence unavailable, empty or outside the private evidence directory'); }
+  // The runner may start after the first lock check, including while private reports are read.
+  // Recheck the exact fork bytes as well: a failed attempt can finish and remove its lock.
+  if(qualifiedBytecode) {
+    const lock=path.join(root,'.local/mainnet-fork.lock'),index=checks.findIndex(x=>x.type==='fork');
+    try {
+      assert(!fs.existsSync(lock),'Fork rehearsal started');
+      assert.equal(sha256(readFile('qualification/mainnet-fork.json','qualification')),checks[index].sha256,'Fork report changed');
+      assert(!fs.existsSync(lock),'Fork rehearsal started during final read');
+    } catch {
+      qualifiedBytecode=null;checks.splice(index,1);
+      blockers.push('Fork evidence changed or a rehearsal started during the release check; rerun release:gate after completion and inspect any retained fork lock');
+    }
+  }
   return {schema:'AGIClubDeploymentGate/1',sourceSha256:source,status:blockers.length?'BLOCKED':'EVIDENCE_READY_FOR_PRINCIPAL_REVIEW',deploymentAuthorized:false,blockers,checks,qualifiedBytecode,evidenceSha256:sha256(JSON.stringify(checks)),note:'Checks bind documents; they do not prove the truth of external assertions. Root-holder approval is a separate step. Broad launch requires the subsequent real production canary.'};
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)) {
