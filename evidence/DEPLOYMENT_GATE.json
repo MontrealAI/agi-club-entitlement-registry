@@ -1,0 +1,14 @@
+{
+  "schema": "AGIClubDeploymentGate/1",
+  "sourceSha256": "38e65eb3bb7ebc803d609a116da184962953ba696cdbd933aed0ace0a911baa9",
+  "status": "BLOCKED",
+  "deploymentAuthorized": false,
+  "blockers": [
+    "Current source has not passed the complete local qualification",
+    "Missing mainnet-fork qualification",
+    "External evidence unavailable or invalid: ENOENT: no such file or directory, open '/mnt/data/agi_static_release/agi-club-entitlement-registry/.local/external-evidence.json'"
+  ],
+  "checks": [],
+  "evidenceSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "note": "Checks bind documents; they do not prove the truth of external assertions. Root-holder approval is a separate step. Broad launch requires the subsequent real production canary."
+}

@@ -1,0 +1,111 @@
+{
+  "schema": "AGIClubStaticPrivacyDelivery/1",
+  "repository": "MontrealAI/agi-club-entitlement-registry",
+  "repositoryVersion": "2.3.0-rc.1",
+  "contractVersion": "2.1.1",
+  "requestSchema": "AGIClubTicketRequest/3",
+  "preparedAt": "2026-09-12T00:49:26.334928+00:00",
+  "sourceSha256": "38e65eb3bb7ebc803d609a116da184962953ba696cdbd933aed0ace0a911baa9",
+  "classification": "STATIC_PRIVACY_SOURCE_CANDIDATE_NOT_MAINNET_CLEARED",
+  "productionReady": false,
+  "deploymentAuthorized": false,
+  "broadLaunchAuthorized": false,
+  "privacyImplementation": {
+    "mailRelayIncluded": false,
+    "contactDatabaseIncluded": false,
+    "automaticEmailIncluded": false,
+    "contactBearingMailtoIncluded": false,
+    "privateReceiptDownloadsIncluded": false,
+    "plaintextContactsSignedByWallet": false,
+    "contactCommitment": "SHA-256; random private 256-bit salt; versioned canonical preimage",
+    "explicitClipboardHandoff": true,
+    "pageRefsClearedAfterCopy": true,
+    "scope": "No application-level persistence of entered member name/email. Browser/OS/extensions/clipboard/mail/provider/Eventbrite retention and compromise are outside this guarantee."
+  },
+  "executedChecks": {
+    "offlineRegressions": {
+      "status": "PASS",
+      "tests": 109,
+      "pass": 109,
+      "fail": 0,
+      "skipped": 0,
+      "command": "npm run test:offline",
+      "scope": "Test-only Ethereum cryptography/chain fixtures plus real WebCrypto SHA-256 and actual source checks. Not real ethers, wallets, EVM, hosted browser or Eventbrite."
+    },
+    "syntax": {
+      "status": "PASS",
+      "passed": 41,
+      "failed": 0,
+      "scope": "JS/Python syntax and TypeScript syntax stripping only; not Hardhat resolution or type checking."
+    },
+    "preservedOnChainArchitecture": {
+      "status": "PASS",
+      "scope": "Byte-for-byte comparison of all three baseline Solidity source files. Not execution qualification."
+    },
+    "inMemoryUI": {
+      "status": "PASS_IN_MEMORY_ONLY",
+      "layoutCases": 8,
+      "viewports": [
+        1400,
+        390
+      ],
+      "demoClearCase": 1,
+      "horizontalOverflow": false,
+      "scope": "HTML/CSS rendered in memory; one imports-flattened demo/clear rehearsal. No hosted assets or wallet transactions."
+    },
+    "hostedPrivacyBrowser": {
+      "status": "BLOCKED",
+      "checksPassed": 0,
+      "reason": "net::ERR_BLOCKED_BY_ADMINISTRATOR",
+      "scope": "Actual member/verify page code on local HTTPS; ETHEREUM, WALLET AND SIGNATURE VERIFICATION ARE TEST DOUBLES. No real contacts, external mail, tickets or mainnet transactions."
+    },
+    "dependencyLookup": {
+      "status": "BLOCKED",
+      "reason": "EAI_AGAIN registry.npmjs.org; no genuine dependency lock or ethers distribution generated."
+    },
+    "cleanInstall": {
+      "status": "BLOCKED",
+      "exitCode": 1,
+      "reason": "Missing genuine package-lock.json"
+    },
+    "hardhatCompilation": {
+      "status": "BLOCKED_NOT_EXECUTED",
+      "exitCode": 127,
+      "reason": "hardhat executable unavailable"
+    },
+    "publicAssetBuild": {
+      "status": "BLOCKED",
+      "exitCode": 1,
+      "reason": "Genuine ethers@6.15.0 not installed; no dist/site delivered"
+    },
+    "fullLocalQualification": {
+      "status": "BLOCKED",
+      "sourceUnchanged": true,
+      "reason": "Required lock gate not met"
+    }
+  },
+  "notExecuted": [
+    "Full Hardhat EVM suite",
+    "Local EVM journey using genuine ethers",
+    "Mainnet fork tests",
+    "Hosted built frontend with genuine ethers",
+    "Real Ledger/Safe/member wallet and mobile acceptance",
+    "Real manual email handoff and inbox receipt",
+    "Actual Eventbrite issuance and participant receipt",
+    "Independent security review",
+    "Any Ethereum deployment"
+  ],
+  "externalActions": {
+    "githubWrites": false,
+    "onChainTransactions": false,
+    "externalEmail": false,
+    "eventbriteChanges": false
+  },
+  "nextStep": "Upload a clean source extraction under MontrealAI. Run workflow 01 on a network-enabled runner, review/commit the genuine lock, then run and inspect workflow 02. Complete independent and real-device/manual-fulfilment gates before considering a limited canary.",
+  "notes": [
+    "No relay-staging gate remains because no relay is shipped.",
+    "Old /2.2 receipts are rejected; re-sign a new /3 request without a second claim.",
+    "Source upload does not deploy a website or authorize mainnet.",
+    "No synthetic dependency lock, compiled bytecode or fake send/delivery status is supplied."
+  ]
+}

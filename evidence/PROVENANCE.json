@@ -1,0 +1,17 @@
+{
+  "baselineArchive": "AGI_CLUB_ENTITLEMENT_REGISTRY_GITHUB_2_2_0_RC1.zip",
+  "baselineArchiveSha256": "29af8e70fe77de50158c34c93846e7935f320a49a144246e47efbfcbb677c3da",
+  "preservedContracts": {
+    "contracts/AGIClubEntitlementRegistry.sol": "1e2c6e1bcfc08e6d2602ea44417a293a1827f963cbd2ad7f40e4736305048530",
+    "contracts/AGIClubEntitlementRegistryMainnet.sol": "b5fa998c699be9131c195f72962fa48853f17c30ed5563e23b995ae551c8afa0",
+    "contracts/QualificationMocks.sol": "858638269272c4a70e894fb857676925740a400e3f06ad2bb7c2015fd12ce02e"
+  },
+  "changes": [
+    "Removed relay and D1 database",
+    "Removed automatic email and private receipt downloads",
+    "Salted recipient commitment, static-only protocol /3",
+    "Memory-only member and operator paths",
+    "Explicit clipboard handoff; no private mailto body",
+    "New privacy regression and browser rehearsal tests"
+  ]
+}

@@ -1,0 +1,28 @@
+import {verifyTicketRequest,REGISTRY_VERSION,MAX_PACKET_BYTES} from './shared/ticket-request.mjs';
+import {createEthersIO} from './shared/ethers-adapter.mjs';
+const $=id=>document.getElementById(id),cfg=window.AGI_CONFIG||{};
+let epoch=0,timer=null;
+function clear(){epoch++;$('packetText').value='';$('verifyResult').textContent='';$('verifyStatus').textContent='Données effacées de cette page.';clearTimeout(timer);}
+$('clearReceipt').addEventListener('click',clear);
+$('packetText').addEventListener('input',()=>{epoch++;$('verifyResult').textContent='';clearTimeout(timer);timer=setTimeout(clear,600000);});
+for(const e of ['pagehide','pageshow','beforeunload'])window.addEventListener(e,clear);
+if(window.ethereum?.on)for(const e of ['accountsChanged','chainChanged','disconnect'])window.ethereum.on(e,clear);
+$('verifyReceipt').addEventListener('click',async()=>{
+ const button=$('verifyReceipt');if(button.disabled)return;button.disabled=true;const at=epoch;
+ try{
+  if(!window.ethers||!window.ethereum?.request)throw Error('WALLET_OR_LIBRARY_UNAVAILABLE');
+  if(location.origin!==cfg.expectedOrigin||!cfg.expectedOrigin?.startsWith('https://'))throw Error('WRONG_ORIGIN');
+  const raw=$('packetText').value;if(new TextEncoder().encode(raw).length>MAX_PACKET_BYTES)throw Error('BODY_TOO_LARGE');
+  let packet;try{packet=JSON.parse(raw);}catch{throw Error('INVALID_JSON');}
+  await window.ethereum.request({method:'eth_requestAccounts'});
+  const provider=new ethers.BrowserProvider(window.ethereum);
+  try{
+   const policy={origin:cfg.expectedOrigin,chainId:1,registry:cfg.registryAddress.toLowerCase(),registryCodeHash:cfg.registryCodeHash,version:REGISTRY_VERSION,entitlements:cfg.allowedEntitlements.map(x=>x.startsWith('0x')?x:ethers.id(x))};
+   const result=await verifyTicketRequest(packet,policy,createEthersIO(ethers,provider,cfg.registryAddress));
+   if(at!==epoch)throw Error('INPUT_CHANGED');
+   $('verifyResult').textContent=JSON.stringify({status:result.status,claimKey:result.claimKey,claimRevision:result.payload.claimRevision,name:result.recipient.name,email:result.recipient.email,finalizedBlock:result.finalizedBlock,ticketIssued:false,mailboxControlVerified:false},null,2);
+   $('verifyStatus').textContent='Signature et droit vérifiés. Contrôlez les doublons dans votre registre privé AVANT de créer un billet.';
+  }finally{provider.destroy();}
+ }catch(e){if(at===epoch){$('verifyResult').textContent='';$('verifyStatus').textContent='NON VALIDÉ : '+(/^[A-Z_]{3,80}$/.test(e.code||e.message)?(e.code||e.message):'Vérification indisponible. Aucun billet autorisé.');}}
+ finally{button.disabled=false;clearTimeout(timer);timer=setTimeout(clear,600000);}
+});

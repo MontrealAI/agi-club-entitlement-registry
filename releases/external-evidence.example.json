@@ -1,0 +1,27 @@
+{
+  "sourceSha256": "REPLACE_WITH_CURRENT_REVIEWED_SOURCE_SHA256",
+  "independentSecurityReview": {
+    "status": "NOT_EXECUTED",
+    "reviewer": "",
+    "file": ".local/security-review.json",
+    "sha256": ""
+  },
+  "realWalletStaging": {
+    "status": "NOT_EXECUTED",
+    "reviewer": "",
+    "file": ".local/wallet-staging.json",
+    "sha256": ""
+  },
+  "eventbriteStaging": {
+    "status": "NOT_EXECUTED",
+    "reviewer": "",
+    "file": ".local/eventbrite-staging.json",
+    "sha256": ""
+  },
+  "privateRequestStaging": {
+    "status": "NOT_EXECUTED",
+    "reviewer": "",
+    "file": ".local/private-request-staging.json",
+    "sha256": ""
+  }
+}

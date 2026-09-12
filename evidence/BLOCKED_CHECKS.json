@@ -1,0 +1,66 @@
+{
+  "clean-install": {
+    "command": "npm ci --ignore-scripts --no-audit --no-fund",
+    "exitCode": 1,
+    "log": "clean-install.log",
+    "recordedOutput": "npm error code EUSAGE\nnpm error\nnpm error The `npm ci` command can only install with an existing package-lock.json or\nnpm error npm-shrinkwrap.json with lockfileVersion >= 1. Run an install with npm@5 or\nnpm error later to generate a package-lock.json file, then try again.\nnpm error\nnpm error Clean install a project\nnpm error\nnpm error Usage:\nnpm error npm ci\nnpm error\nnpm error Options:\nnpm error [--install-strategy <hoisted|nested|shallow|linked>] [--legacy-bundling]\nnpm error [--global-style] [--omit <dev|optional|peer> [--omit <dev|optional|peer> ...]]\nnpm error [--include <prod|dev|optional|peer> [--include <prod|dev|optional|peer> ...]]\nnpm error [--strict-peer-deps] [--foreground-scripts] [--ignore-scripts] [--no-audit]\nnpm error [--no-bin-links] [--no-fund] [--dry-run]\nnpm error [-w|--workspace <workspace-name> [-w|--workspace <workspace-name> ...]]\nnpm error [-ws|--workspaces] [--include-workspace-root] [--install-links]\nnpm error\nnpm error aliases: clean-install, ic, install-clean, isntall-clean\nnpm error\nnpm error Run \"npm help ci\" for more info\nnpm error A complete log of this run can be found in: /home/oai/.npm/_logs/2026-09-12T00_48_33_507Z-debug-0.log\n"
+  },
+  "hardhat-compilation": {
+    "command": "npm run compile",
+    "exitCode": 127,
+    "log": "hardhat-compilation.log",
+    "recordedOutput": "\n> agi-club-entitlement-registry@2.3.0-rc.1 compile\n> hardhat build --build-profile production && node scripts/check-build.mjs\n\nsh: 1: hardhat: not found\n"
+  },
+  "asset-build": {
+    "command": "npm run build:site",
+    "exitCode": 1,
+    "log": "asset-build.log",
+    "recordedOutput": "\n> agi-club-entitlement-registry@2.3.0-rc.1 build:site\n> node scripts/package.mjs\n\nethers@6.15.0 not installed\n"
+  },
+  "deployment-gate": {
+    "command": "npm run release:gate",
+    "exitCode": 1,
+    "log": "deployment-gate.log",
+    "recordedOutput": "\n> agi-club-entitlement-registry@2.3.0-rc.1 release:gate\n> node scripts/release-gate.mjs\n\n{\n  \"schema\": \"AGIClubDeploymentGate/1\",\n  \"sourceSha256\": \"38e65eb3bb7ebc803d609a116da184962953ba696cdbd933aed0ace0a911baa9\",\n  \"status\": \"BLOCKED\",\n  \"deploymentAuthorized\": false,\n  \"blockers\": [\n    \"Current source has not passed the complete local qualification\",\n    \"Missing mainnet-fork qualification\",\n    \"External evidence unavailable or invalid: ENOENT: no such file or directory, open '/mnt/data/agi_static_release/agi-club-entitlement-registry/.local/external-evidence.json'\"\n  ],\n  \"checks\": [],\n  \"evidenceSha256\": \"4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945\",\n  \"note\": \"Checks bind documents; they do not prove the truth of external assertions. Root-holder approval is a separate step. Broad launch requires the subsequent real production canary.\"\n}\n"
+  },
+  "npm-registry-lookup": {
+    "command": "npm view ethers@6.15.0 version --fetch-retries=0 --fetch-timeout=7000",
+    "exitCode": 1,
+    "recordedOutput": "npm error code EAI_AGAIN\nnpm error syscall getaddrinfo\nnpm error errno EAI_AGAIN\nnpm error request to https://registry.npmjs.org/ethers failed, reason: getaddrinfo EAI_AGAIN registry.npmjs.org\nnpm error A complete log of this run can be found in: /home/oai/.npm/_logs/2026-09-12T00_44_00_339Z-debug-0.log\n",
+    "scope": "Bounded registry reachability/dependency lookup, not a lock generation or download."
+  },
+  "hosted-privacy-browser": {
+    "status": "FAIL_OR_BLOCKED",
+    "scope": "Actual member/verify page code on local HTTPS; ETHEREUM, WALLET AND SIGNATURE VERIFICATION ARE TEST DOUBLES. No real contacts, external mail, tickets or mainnet transactions.",
+    "sourceMode": true,
+    "checks": [],
+    "error": "Hosted navigation failed: net::ERR_BLOCKED_BY_ADMINISTRATOR"
+  },
+  "full-qualification": {
+    "repositoryVersion": "2.3.0-rc.1",
+    "contractVersion": "2.1.1",
+    "status": "BLOCKED",
+    "sourceSha256": "38e65eb3bb7ebc803d609a116da184962953ba696cdbd933aed0ace0a911baa9",
+    "sourceUnchanged": true,
+    "at": "2026-09-12T00:48:34.450Z",
+    "results": [
+      {
+        "name": "check:repo",
+        "status": "PASS",
+        "exitCode": 0,
+        "log": "qualification/check-repo.log"
+      },
+      {
+        "name": "check:lock",
+        "status": "FAIL_OR_BLOCKED",
+        "exitCode": 1,
+        "log": "qualification/check-lock.log"
+      }
+    ],
+    "mainnetAuthorization": false,
+    "notes": [
+      "All local suites must pass; report does not replace fork, independent review, real wallets and private-message/ticket acceptance.",
+      "Asset build must not modify canonical sources."
+    ]
+  }
+}

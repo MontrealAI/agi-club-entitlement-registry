@@ -1,0 +1,212 @@
+{
+  "status": "PASS",
+  "passed": 41,
+  "failed": 0,
+  "results": [
+    {
+      "file": "frontend/app.js",
+      "status": "PASS",
+      "kind": "JS syntax"
+    },
+    {
+      "file": "frontend/config.js",
+      "status": "PASS",
+      "kind": "JS syntax"
+    },
+    {
+      "file": "frontend/contract-abi.mjs",
+      "status": "PASS",
+      "kind": "JS syntax"
+    },
+    {
+      "file": "frontend/deployment.js",
+      "status": "PASS",
+      "kind": "JS syntax"
+    },
+    {
+      "file": "frontend/member.js",
+      "status": "PASS",
+      "kind": "JS syntax"
+    },
+    {
+      "file": "frontend/private-memory.mjs",
+      "status": "PASS",
+      "kind": "JS syntax"
+    },
+    {
+      "file": "frontend/shared/deployment-policy.mjs",
+      "status": "PASS",
+      "kind": "JS syntax"
+    },
+    {
+      "file": "frontend/shared/ethers-adapter.mjs",
+      "status": "PASS",
+      "kind": "JS syntax"
+    },
+    {
+      "file": "frontend/shared/ticket-request.mjs",
+      "status": "PASS",
+      "kind": "JS syntax"
+    },
+    {
+      "file": "frontend/verify.js",
+      "status": "PASS",
+      "kind": "JS syntax"
+    },
+    {
+      "file": "hardhat.config.ts",
+      "status": "PASS",
+      "kind": "TypeScript syntax/strip only, not typecheck or dependency resolution"
+    },
+    {
+      "file": "scripts/bootstrap-lock.mjs",
+      "status": "PASS",
+      "kind": "JS syntax"
+    },
+    {
+      "file": "scripts/browser-check.mjs",
+      "status": "PASS",
+      "kind": "JS syntax"
+    },
+    {
+      "file": "scripts/browser-privacy.mjs",
+      "status": "PASS",
+      "kind": "JS syntax"
+    },
+    {
+      "file": "scripts/check-build.mjs",
+      "status": "PASS",
+      "kind": "JS syntax"
+    },
+    {
+      "file": "scripts/check-lock.mjs",
+      "status": "PASS",
+      "kind": "JS syntax"
+    },
+    {
+      "file": "scripts/check-repository.mjs",
+      "status": "PASS",
+      "kind": "JS syntax"
+    },
+    {
+      "file": "scripts/configure.py",
+      "status": "PASS",
+      "kind": "Python syntax"
+    },
+    {
+      "file": "scripts/deploy-local.mjs",
+      "status": "PASS",
+      "kind": "JS syntax"
+    },
+    {
+      "file": "scripts/deploy-mainnet.mjs",
+      "status": "PASS",
+      "kind": "JS syntax"
+    },
+    {
+      "file": "scripts/evm-tests.mjs",
+      "status": "PASS",
+      "kind": "JS syntax"
+    },
+    {
+      "file": "scripts/fork-tests.mjs",
+      "status": "PASS",
+      "kind": "JS syntax"
+    },
+    {
+      "file": "scripts/inspect-mainnet.mjs",
+      "status": "PASS",
+      "kind": "JS syntax"
+    },
+    {
+      "file": "scripts/journey-tests.mjs",
+      "status": "PASS",
+      "kind": "JS syntax"
+    },
+    {
+      "file": "scripts/package.mjs",
+      "status": "PASS",
+      "kind": "JS syntax"
+    },
+    {
+      "file": "scripts/prepare-mainnet.mjs",
+      "status": "PASS",
+      "kind": "JS syntax"
+    },
+    {
+      "file": "scripts/qualify.mjs",
+      "status": "PASS",
+      "kind": "JS syntax"
+    },
+    {
+      "file": "scripts/release-gate.mjs",
+      "status": "PASS",
+      "kind": "JS syntax"
+    },
+    {
+      "file": "scripts/runtime.mjs",
+      "status": "PASS",
+      "kind": "JS syntax"
+    },
+    {
+      "file": "scripts/serve.mjs",
+      "status": "PASS",
+      "kind": "JS syntax"
+    },
+    {
+      "file": "scripts/source-digest.mjs",
+      "status": "PASS",
+      "kind": "JS syntax"
+    },
+    {
+      "file": "shared/deployment-policy.mjs",
+      "status": "PASS",
+      "kind": "JS syntax"
+    },
+    {
+      "file": "shared/ethers-adapter.mjs",
+      "status": "PASS",
+      "kind": "JS syntax"
+    },
+    {
+      "file": "shared/ticket-request.mjs",
+      "status": "PASS",
+      "kind": "JS syntax"
+    },
+    {
+      "file": "test/assets.test.mjs",
+      "status": "PASS",
+      "kind": "JS syntax"
+    },
+    {
+      "file": "test/crypto-reference.mjs",
+      "status": "PASS",
+      "kind": "JS syntax"
+    },
+    {
+      "file": "test/fixtures.mjs",
+      "status": "PASS",
+      "kind": "JS syntax"
+    },
+    {
+      "file": "test/privacy.test.mjs",
+      "status": "PASS",
+      "kind": "JS syntax"
+    },
+    {
+      "file": "test/protocol.test.mjs",
+      "status": "PASS",
+      "kind": "JS syntax"
+    },
+    {
+      "file": "test/repository.test.mjs",
+      "status": "PASS",
+      "kind": "JS syntax"
+    },
+    {
+      "file": "tools/verify_ticket_request.mjs",
+      "status": "PASS",
+      "kind": "JS syntax"
+    }
+  ]
+}

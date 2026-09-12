@@ -1,0 +1,668 @@
+
+> agi-club-entitlement-registry@2.3.0-rc.1 test:offline
+> node --test test/protocol.test.mjs test/privacy.test.mjs test/assets.test.mjs test/repository.test.mjs
+
+TAP version 13
+# Subtest: Each interactive HTML entrypoint loads its owned code as a module
+ok 1 - Each interactive HTML entrypoint loads its owned code as a module
+  ---
+  duration_ms: 2.234
+  type: 'test'
+  ...
+# Subtest: Browser verifier source byte-identical to canonical source
+ok 2 - Browser verifier source byte-identical to canonical source
+  ---
+  duration_ms: 0.396045
+  type: 'test'
+  ...
+# Subtest: Member, operator and CLI use the same canonical protocol and production adapter
+ok 3 - Member, operator and CLI use the same canonical protocol and production adapter
+  ---
+  duration_ms: 0.265732
+  type: 'test'
+  ...
+# Subtest: Configurator writes only trusted public settings, no request endpoint
+ok 4 - Configurator writes only trusted public settings, no request endpoint
+  ---
+  duration_ms: 626.384827
+  type: 'test'
+  ...
+# Subtest: Configurator rejects incomplete, insecure or backend-enabled configuration
+ok 5 - Configurator rejects incomplete, insecure or backend-enabled configuration
+  ---
+  duration_ms: 2351.135977
+  type: 'test'
+  ...
+# Subtest: Public build copies only named shared/vendor assets, never whole directories
+ok 6 - Public build copies only named shared/vendor assets, never whole directories
+  ---
+  duration_ms: 0.257721
+  type: 'test'
+  ...
+# Subtest: PrivateMemory clear invalidates prior pending preparation
+ok 7 - PrivateMemory clear invalidates prior pending preparation
+  ---
+  duration_ms: 0.850526
+  type: 'test'
+  ...
+# Subtest: PrivateMemory stores only a volatile reference until explicit clear
+ok 8 - PrivateMemory stores only a volatile reference until explicit clear
+  ---
+  duration_ms: 0.192544
+  type: 'test'
+  ...
+# Subtest: No relay or private database shipped
+ok 9 - No relay or private database shipped
+  ---
+  duration_ms: 0.127078
+  type: 'test'
+  ...
+# Subtest: member.js does not use persistent browser stores or telemetry sinks
+ok 10 - member.js does not use persistent browser stores or telemetry sinks
+  ---
+  duration_ms: 0.475452
+  type: 'test'
+  ...
+# Subtest: private-memory.mjs does not use persistent browser stores or telemetry sinks
+ok 11 - private-memory.mjs does not use persistent browser stores or telemetry sinks
+  ---
+  duration_ms: 0.232263
+  type: 'test'
+  ...
+# Subtest: verify.js does not use persistent browser stores or telemetry sinks
+ok 12 - verify.js does not use persistent browser stores or telemetry sinks
+  ---
+  duration_ms: 0.177191
+  type: 'test'
+  ...
+# Subtest: app.js does not use persistent browser stores or telemetry sinks
+ok 13 - app.js does not use persistent browser stores or telemetry sinks
+  ---
+  duration_ms: 0.329207
+  type: 'test'
+  ...
+# Subtest: Member page has no submit form and suppresses field autocomplete
+ok 14 - Member page has no submit form and suppresses field autocomplete
+  ---
+  duration_ms: 0.305291
+  type: 'test'
+  ...
+# Subtest: Email link is fixed and contains no body or recipient data
+ok 15 - Email link is fixed and contains no body or recipient data
+  ---
+  duration_ms: 0.372069
+  type: 'test'
+  ...
+# Subtest: No member file download and no network endpoint in config
+ok 16 - No member file download and no network endpoint in config
+  ---
+  duration_ms: 0.519547
+  type: 'test'
+  ...
+# Subtest: Wallet signs commitment-only message rather than a raw contact packet
+ok 17 - Wallet signs commitment-only message rather than a raw contact packet
+  ---
+  duration_ms: 0.189299
+  type: 'test'
+  ...
+# Subtest: Private state reset on navigation, BFCache return, account and input changes
+ok 18 - Private state reset on navigation, BFCache return, account and input changes
+  ---
+  duration_ms: 0.166185
+  type: 'test'
+  ...
+# Subtest: User acknowledgement precedes clipboard handoff and success clears page
+ok 19 - User acknowledgement precedes clipboard handoff and success clears page
+  ---
+  duration_ms: 0.765731
+  type: 'test'
+  ...
+# Subtest: All application HTML pages forbid form submission and direct network connections
+ok 20 - All application HTML pages forbid form submission and direct network connections
+  ---
+  duration_ms: 0.271781
+  type: 'test'
+  ...
+# Subtest: Clear control is not blocked by an outstanding wallet operation
+ok 21 - Clear control is not blocked by an outstanding wallet operation
+  ---
+  duration_ms: 0.159716
+  type: 'test'
+  ...
+# Subtest: Known Ethereum vectors, TEST-ONLY reference not production ethers
+ok 22 - Known Ethereum vectors, TEST-ONLY reference not production ethers
+  ---
+  duration_ms: 242.600364
+  type: 'test'
+  ...
+# Subtest: Valid v3 receipt binds recipient; not a ticket or mailbox verification
+ok 23 - Valid v3 receipt binds recipient; not a ticket or mailbox verification
+  ---
+  duration_ms: 406.527423
+  type: 'test'
+  ...
+# Subtest: WebCrypto commitment independently matches node crypto SHA-256
+ok 24 - WebCrypto commitment independently matches node crypto SHA-256
+  ---
+  duration_ms: 59.703241
+  type: 'test'
+  ...
+# Subtest: Wallet message excludes recipient text AND the private salt
+ok 25 - Wallet message excludes recipient text AND the private salt
+  ---
+  duration_ms: 56.523665
+  type: 'test'
+  ...
+# Subtest: RPC IO sees no plaintext recipient or private salt
+ok 26 - RPC IO sees no plaintext recipient or private salt
+  ---
+  duration_ms: 380.581998
+  type: 'test'
+  ...
+# Subtest: Same recipient gets distinct commitments with independent salts
+ok 27 - Same recipient gets distinct commitments with independent salts
+  ---
+  duration_ms: 114.760351
+  type: 'test'
+  ...
+# Subtest: Reject invalid schema / UNSUPPORTED_SCHEMA
+ok 28 - Reject invalid schema / UNSUPPORTED_SCHEMA
+  ---
+  duration_ms: 56.730661
+  type: 'test'
+  ...
+# Subtest: Reject invalid origin / WRONG_SCOPE
+ok 29 - Reject invalid origin / WRONG_SCOPE
+  ---
+  duration_ms: 55.333357
+  type: 'test'
+  ...
+# Subtest: Reject invalid chainId / WRONG_SCOPE
+ok 30 - Reject invalid chainId / WRONG_SCOPE
+  ---
+  duration_ms: 55.180842
+  type: 'test'
+  ...
+# Subtest: Reject invalid registry / WRONG_SCOPE
+ok 31 - Reject invalid registry / WRONG_SCOPE
+  ---
+  duration_ms: 54.757266
+  type: 'test'
+  ...
+# Subtest: Reject invalid entitlementId / ENTITLEMENT_NOT_ENABLED
+ok 32 - Reject invalid entitlementId / ENTITLEMENT_NOT_ENABLED
+  ---
+  duration_ms: 60.123913
+  type: 'test'
+  ...
+# Subtest: Reject invalid membershipLabel / INVALID_MEMBERSHIP
+ok 33 - Reject invalid membershipLabel / INVALID_MEMBERSHIP
+  ---
+  duration_ms: 58.020286
+  type: 'test'
+  ...
+# Subtest: Reject invalid membershipNode / INVALID_MEMBERSHIP
+ok 34 - Reject invalid membershipNode / INVALID_MEMBERSHIP
+  ---
+  duration_ms: 60.847672
+  type: 'test'
+  ...
+# Subtest: Reject invalid claimRevision / INVALID_CLAIM
+ok 35 - Reject invalid claimRevision / INVALID_CLAIM
+  ---
+  duration_ms: 59.428415
+  type: 'test'
+  ...
+# Subtest: Reject invalid claimRevision / INVALID_CLAIM
+ok 36 - Reject invalid claimRevision / INVALID_CLAIM
+  ---
+  duration_ms: 57.443243
+  type: 'test'
+  ...
+# Subtest: Reject invalid claimant / INVALID_CLAIM
+ok 37 - Reject invalid claimant / INVALID_CLAIM
+  ---
+  duration_ms: 57.263648
+  type: 'test'
+  ...
+# Subtest: Reject invalid issuedAt / INVALID_TIME
+ok 38 - Reject invalid issuedAt / INVALID_TIME
+  ---
+  duration_ms: 57.124983
+  type: 'test'
+  ...
+# Subtest: Reject invalid issuedAt / INVALID_TIME
+ok 39 - Reject invalid issuedAt / INVALID_TIME
+  ---
+  duration_ms: 59.797481
+  type: 'test'
+  ...
+# Subtest: Reject invalid expiresAt / REQUEST_EXPIRED
+ok 40 - Reject invalid expiresAt / REQUEST_EXPIRED
+  ---
+  duration_ms: 58.852514
+  type: 'test'
+  ...
+# Subtest: Reject invalid expiresAt / INVALID_TIME
+ok 41 - Reject invalid expiresAt / INVALID_TIME
+  ---
+  duration_ms: 56.241468
+  type: 'test'
+  ...
+# Subtest: Reject invalid nonce / INVALID_NONCE
+ok 42 - Reject invalid nonce / INVALID_NONCE
+  ---
+  duration_ms: 66.74979
+  type: 'test'
+  ...
+# Subtest: Reject invalid recipientCommitment / INVALID_COMMITMENT
+ok 43 - Reject invalid recipientCommitment / INVALID_COMMITMENT
+  ---
+  duration_ms: 59.577515
+  type: 'test'
+  ...
+# Subtest: Reject unsafe private name INVALID_CONTACT
+ok 44 - Reject unsafe private name INVALID_CONTACT
+  ---
+  duration_ms: 84.500416
+  type: 'test'
+  ...
+# Subtest: Reject unsafe private email INVALID_CONTACT
+ok 45 - Reject unsafe private email INVALID_CONTACT
+  ---
+  duration_ms: 63.204052
+  type: 'test'
+  ...
+# Subtest: Reject unsafe private email INVALID_CONTACT
+ok 46 - Reject unsafe private email INVALID_CONTACT
+  ---
+  duration_ms: 59.774116
+  type: 'test'
+  ...
+# Subtest: Reject unsafe private name INVALID_CONTACT
+ok 47 - Reject unsafe private name INVALID_CONTACT
+  ---
+  duration_ms: 60.492347
+  type: 'test'
+  ...
+# Subtest: Reject unsafe private salt INVALID_SALT
+ok 48 - Reject unsafe private salt INVALID_SALT
+  ---
+  duration_ms: 60.345784
+  type: 'test'
+  ...
+# Subtest: Reject unsafe private salt INVALID_SALT
+ok 49 - Reject unsafe private salt INVALID_SALT
+  ---
+  duration_ms: 54.973776
+  type: 'test'
+  ...
+# Subtest: Changed private name rejected without contacting chain
+ok 50 - Changed private name rejected without contacting chain
+  ---
+  duration_ms: 63.237301
+  type: 'test'
+  ...
+# Subtest: Recomputed commitment cannot reuse signature after changing name
+ok 51 - Recomputed commitment cannot reuse signature after changing name
+  ---
+  duration_ms: 380.488369
+  type: 'test'
+  ...
+# Subtest: Changed private email rejected without contacting chain
+ok 52 - Changed private email rejected without contacting chain
+  ---
+  duration_ms: 63.280635
+  type: 'test'
+  ...
+# Subtest: Recomputed commitment cannot reuse signature after changing email
+ok 53 - Recomputed commitment cannot reuse signature after changing email
+  ---
+  duration_ms: 364.486484
+  type: 'test'
+  ...
+# Subtest: Changed private salt rejected without contacting chain
+ok 54 - Changed private salt rejected without contacting chain
+  ---
+  duration_ms: 56.33074
+  type: 'test'
+  ...
+# Subtest: Recomputed commitment cannot reuse signature after changing salt
+ok 55 - Recomputed commitment cannot reuse signature after changing salt
+  ---
+  duration_ms: 371.743794
+  type: 'test'
+  ...
+# Subtest: Unsigned scoped nonce alteration rejected
+ok 56 - Unsigned scoped nonce alteration rejected
+  ---
+  duration_ms: 57.963001
+  type: 'test'
+  ...
+# Subtest: Unsigned scoped claimRevision alteration rejected
+ok 57 - Unsigned scoped claimRevision alteration rejected
+  ---
+  duration_ms: 58.031462
+  type: 'test'
+  ...
+# Subtest: Unsigned scoped issuedAt alteration rejected
+ok 58 - Unsigned scoped issuedAt alteration rejected
+  ---
+  duration_ms: 57.962841
+  type: 'test'
+  ...
+# Subtest: Unsigned scoped expiresAt alteration rejected
+ok 59 - Unsigned scoped expiresAt alteration rejected
+  ---
+  duration_ms: 56.077797
+  type: 'test'
+  ...
+# Subtest: Extra top-level email field rejected
+ok 60 - Extra top-level email field rejected
+  ---
+  duration_ms: 54.263997
+  type: 'test'
+  ...
+# Subtest: Extra payload and private recipient fields rejected
+ok 61 - Extra payload and private recipient fields rejected
+  ---
+  duration_ms: 59.5805
+  type: 'test'
+  ...
+# Subtest: Legacy flat and v2 packet structures fail closed
+ok 62 - Legacy flat and v2 packet structures fail closed
+  ---
+  duration_ms: 54.004474
+  type: 'test'
+  ...
+# Subtest: Canonical key order is independent of JSON insertion order
+ok 63 - Canonical key order is independent of JSON insertion order
+  ---
+  duration_ms: 367.795407
+  type: 'test'
+  ...
+# Subtest: Wrong signing key rejected
+ok 64 - Wrong signing key rejected
+  ---
+  duration_ms: 410.618681
+  type: 'test'
+  ...
+# Subtest: Bad signature format rejected
+ok 65 - Bad signature format rejected
+  ---
+  duration_ms: 57.076842
+  type: 'test'
+  ...
+# Subtest: Wrong provider chain rejected
+ok 66 - Wrong provider chain rejected
+  ---
+  duration_ms: 54.7599
+  type: 'test'
+  ...
+# Subtest: Wrong deployed identity version rejected
+ok 67 - Wrong deployed identity version rejected
+  ---
+  duration_ms: 54.764928
+  type: 'test'
+  ...
+# Subtest: Wrong deployed identity ens rejected
+ok 68 - Wrong deployed identity ens rejected
+  ---
+  duration_ms: 54.899036
+  type: 'test'
+  ...
+# Subtest: Wrong deployed identity wrapper rejected
+ok 69 - Wrong deployed identity wrapper rejected
+  ---
+  duration_ms: 53.698883
+  type: 'test'
+  ...
+# Subtest: Wrong deployed identity root rejected
+ok 70 - Wrong deployed identity root rejected
+  ---
+  duration_ms: 55.790192
+  type: 'test'
+  ...
+# Subtest: Wrong deployed identity codeHash rejected
+ok 71 - Wrong deployed identity codeHash rejected
+  ---
+  duration_ms: 54.440388
+  type: 'test'
+  ...
+# Subtest: Changed current claim status blocks issuance
+ok 72 - Changed current claim status blocks issuance
+  ---
+  duration_ms: 54.340149
+  type: 'test'
+  ...
+# Subtest: Changed current claim revision blocks issuance
+ok 73 - Changed current claim revision blocks issuance
+  ---
+  duration_ms: 55.605479
+  type: 'test'
+  ...
+# Subtest: Changed current claim claimant blocks issuance
+ok 74 - Changed current claim claimant blocks issuance
+  ---
+  duration_ms: 54.663818
+  type: 'test'
+  ...
+# Subtest: Pending finality is not invalid recipient identity
+ok 75 - Pending finality is not invalid recipient identity
+  ---
+  duration_ms: 55.125459
+  type: 'test'
+  ...
+# Subtest: Contract-wallet policy changed in latest state rejected
+ok 76 - Contract-wallet policy changed in latest state rejected
+  ---
+  duration_ms: 56.633778
+  type: 'test'
+  ...
+# Subtest: Reorganization detected on read-back
+ok 77 - Reorganization detected on read-back
+  ---
+  duration_ms: 362.952289
+  type: 'test'
+  ...
+# Subtest: No server acceptance or expiry-bypass option in static-only protocol
+ok 78 - No server acceptance or expiry-bypass option in static-only protocol
+  ---
+  duration_ms: 56.524606
+  type: 'test'
+  ...
+# Subtest: Missing runtime hash cannot disable verifier
+ok 79 - Missing runtime hash cannot disable verifier
+  ---
+  duration_ms: 54.934197
+  type: 'test'
+  ...
+# Subtest: Noncanonical policy origin rejected: http://claims.example.org
+ok 80 - Noncanonical policy origin rejected: http://claims.example.org
+  ---
+  duration_ms: 55.017651
+  type: 'test'
+  ...
+# Subtest: Noncanonical policy origin rejected: https://claims.example.org/path
+ok 81 - Noncanonical policy origin rejected: https://claims.example.org/path
+  ---
+  duration_ms: 79.701587
+  type: 'test'
+  ...
+# Subtest: Noncanonical policy origin rejected: https://u:p@claims.example.org
+ok 82 - Noncanonical policy origin rejected: https://u:p@claims.example.org
+  ---
+  duration_ms: 57.968468
+  type: 'test'
+  ...
+# Subtest: Noncanonical policy origin rejected: https://claims.example.org/
+ok 83 - Noncanonical policy origin rejected: https://claims.example.org/
+  ---
+  duration_ms: 52.745393
+  type: 'test'
+  ...
+# Subtest: Claim key cannot be reset by a new signature, recipient or revision
+ok 84 - Claim key cannot be reset by a new signature, recipient or revision
+  ---
+  duration_ms: 108.838646
+  type: 'test'
+  ...
+# Subtest: Safe error codes do not echo supplied private fields
+ok 85 - Safe error codes do not echo supplied private fields
+  ---
+  duration_ms: 56.590633
+  type: 'test'
+  ...
+# Subtest: Canary plan has canonical field ordering regardless of JSON insertion order
+ok 86 - Canary plan has canonical field ordering regardless of JSON insertion order
+  ---
+  duration_ms: 1.915749
+  type: 'test'
+  ...
+# Subtest: Exact limited scope and no implied launch included in approval message
+ok 87 - Exact limited scope and no implied launch included in approval message
+  ---
+  duration_ms: 0.186476
+  type: 'test'
+  ...
+# Subtest: Malformed plan rejected: schema=OTHER
+ok 88 - Malformed plan rejected: schema=OTHER
+  ---
+  duration_ms: 0.244931
+  type: 'test'
+  ...
+# Subtest: Malformed plan rejected: chainId=31337
+ok 89 - Malformed plan rejected: chainId=31337
+  ---
+  duration_ms: 0.118435
+  type: 'test'
+  ...
+# Subtest: Malformed plan rejected: contract=QualificationENS
+ok 90 - Malformed plan rejected: contract=QualificationENS
+  ---
+  duration_ms: 0.08085
+  type: 'test'
+  ...
+# Subtest: Malformed plan rejected: sourceSha256=bad
+ok 91 - Malformed plan rejected: sourceSha256=bad
+  ---
+  duration_ms: 0.062582
+  type: 'test'
+  ...
+# Subtest: Malformed plan rejected: admin=0x0000000000000000000000000000000000000000
+ok 92 - Malformed plan rejected: admin=0x0000000000000000000000000000000000000000
+  ---
+  duration_ms: 0.122311
+  type: 'test'
+  ...
+# Subtest: Malformed plan rejected: nonce=-1
+ok 93 - Malformed plan rejected: nonce=-1
+  ---
+  duration_ms: 0.072097
+  type: 'test'
+  ...
+# Subtest: Malformed plan rejected: gasLimit=0
+ok 94 - Malformed plan rejected: gasLimit=0
+  ---
+  duration_ms: 0.267325
+  type: 'test'
+  ...
+# Subtest: Malformed plan rejected: maxFeePerGas=0
+ok 95 - Malformed plan rejected: maxFeePerGas=0
+  ---
+  duration_ms: 0.426019
+  type: 'test'
+  ...
+# Subtest: Malformed plan rejected: maxPriorityFeePerGas=6
+ok 96 - Malformed plan rejected: maxPriorityFeePerGas=6
+  ---
+  duration_ms: 0.209129
+  type: 'test'
+  ...
+# Subtest: Malformed plan rejected: maxCostWei=499
+ok 97 - Malformed plan rejected: maxCostWei=499
+  ---
+  duration_ms: 0.078255
+  type: 'test'
+  ...
+# Subtest: Malformed plan rejected: createdAt=1789156861
+ok 98 - Malformed plan rejected: createdAt=1789156861
+  ---
+  duration_ms: 0.064245
+  type: 'test'
+  ...
+# Subtest: Malformed plan rejected: expiresAt=1789156800
+ok 99 - Malformed plan rejected: expiresAt=1789156800
+  ---
+  duration_ms: 0.05389
+  type: 'test'
+  ...
+# Subtest: Malformed plan rejected: expiresAt=1789160401
+ok 100 - Malformed plan rejected: expiresAt=1789160401
+  ---
+  duration_ms: 0.048141
+  type: 'test'
+  ...
+# Subtest: Unknown plan fields cannot sneak extra authority into approved packet
+ok 101 - Unknown plan fields cannot sneak extra authority into approved packet
+  ---
+  duration_ms: 0.08845
+  type: 'test'
+  ...
+# Subtest: Removing any field fails closed
+ok 102 - Removing any field fails closed
+  ---
+  duration_ms: 0.377658
+  type: 'test'
+  ...
+# Subtest: Deployment helper cannot broadcast from CI and requires exact mainnet acknowledgement
+ok 103 - Deployment helper cannot broadcast from CI and requires exact mainnet acknowledgement
+  ---
+  duration_ms: 0.131555
+  type: 'test'
+  ...
+# Subtest: GitHub workflows never deploy or use repository signing secrets
+ok 104 - GitHub workflows never deploy or use repository signing secrets
+  ---
+  duration_ms: 0.14893
+  type: 'test'
+  ...
+# Subtest: Missing external qualification cannot authorize production
+ok 105 - Missing external qualification cannot authorize production
+  ---
+  duration_ms: 5.603507
+  type: 'test'
+  ...
+# Subtest: Public builder includes genuine ethers and deployment protocol without test crypto
+ok 106 - Public builder includes genuine ethers and deployment protocol without test crypto
+  ---
+  duration_ms: 0.100269
+  type: 'test'
+  ...
+# Subtest: Deployment model and fork are separate from HTTP mainnet network
+ok 107 - Deployment model and fork are separate from HTTP mainnet network
+  ---
+  duration_ms: 0.082903
+  type: 'test'
+  ...
+# Subtest: Plan rejects a nonce which would lose precision when constructing the transaction
+ok 108 - Plan rejects a nonce which would lose precision when constructing the transaction
+  ---
+  duration_ms: 0.104244
+  type: 'test'
+  ...
+# Subtest: Plan rejects gas values beyond the uint256 range
+ok 109 - Plan rejects gas values beyond the uint256 range
+  ---
+  duration_ms: 0.108521
+  type: 'test'
+  ...
+1..109
+# tests 109
+# suites 0
+# pass 109
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 6675.700603

@@ -1,0 +1,55 @@
+# Privacy boundary — ZERO MEMBER-CONTACT PERSISTENCE IN THE STATIC APP
+
+## The implementable promise
+
+The application does not persist the member's entered name or email, does not submit them to the static host, and does not write them to Ethereum. They exist temporarily in browser fields, JavaScript references and the private receipt preview.
+
+This release **removes** the optional relay, contact database, automatic sending and private receipt downloads. There is no server-side retention setting because there is no server-side contact service in this product.
+
+## Data flow
+
+| Boundary | What crosses it |
+|---|---|
+| Public host → browser | Public HTML/CSS/JS/configuration. No external fonts or analytics. The host may record technical access logs such as IP and user agent. |
+| Browser → wallet for claim | Public entitlement ID, membership label and transaction. No member name/email. |
+| Browser → wallet for request signature | Scope, wallet, membership, claim revision, times, nonce and salted recipient commitment. **No name, email or private salt.** |
+| Browser → Ethereum reads | Registry/claim identifiers; ERC-1271 receives a message digest/signature only. No recipient object is passed to chain IO. |
+| Browser → clipboard | Complete private receipt, **only after a click and an explicit acknowledgement**. The application clears its references after successful copying. |
+| Member's mail application → organizer | Private receipt and contacts, when the member sends them. A mail application/provider may retain drafts even before Send. |
+| Organizer → Eventbrite | Recipient information required for manual ticket issuance. This is outside the webpage. |
+
+The receipt's signature authenticates a binding. **It does not encrypt the receipt.** A published receipt would reveal the contacts and association with a wallet. Keep it private.
+
+## Why the salt matters
+
+The browser generates 32 cryptographically random bytes with WebCrypto. SHA-256 covers a fixed protocol-domain string, the salt, normalized name and exact email. The wallet signs only that commitment and the public request scope. The private salt stays with the private recipient object, not in the message sent to the wallet/RPC. This reduces offline guessing from the commitment alone. It is not anonymous cryptography, a zero-knowledge proof, or protection against a compromised browser.
+
+## No intentional persistence
+
+No name/email/receipt is written through localStorage, sessionStorage, IndexedDB, cookies, Cache Storage, a service worker, browser file APIs, application logs, analytics, error reporting or public metadata. There is no recipient-bearing `mailto:` body/query, website query parameter or URL fragment. No form element or form submission is provided.
+
+The static member page explicitly releases private references and empties inputs on clear, successful clipboard handoff, navigation/pagehide, pageshow including cache restoration, account/network changes and after 10 minutes of inactivity. Contact edits invalidate the old packet and an in-flight signature's epoch. Autocomplete and spellcheck are disabled as hints.
+
+**JavaScript cannot guarantee physical erasure of RAM, browser crash dumps, swap, backups, screenshots, keyboard services, extensions, browser autofill or device clipboard history.** The operating system/mail application can persist copies after user-directed handoff. Do not promise “completely private” or that nobody besides the organizer sees the address.
+
+## No unnecessary disclosure
+
+The page does not prefill the email body. Its mailto link contains only the public organizer mailbox and a fixed subject. The user explicitly copies, pastes and sends. The page cannot verify sending, delivery, mailbox control or ticket issuance. “Verified request” is not “message sent.”
+
+## Public information and metadata
+
+Wallets, memberships and claim logs are public and potentially identifiable. The promise above concerns the member's entered contact fields. Admin descriptor fields are public strings: never type contact data into an entitlement title, URI, audit reason or other on-chain field. An unconstrained admin cannot be made incapable of deliberately publishing information just by adding a privacy label.
+
+## Hosting requirements
+
+Use a dedicated, reviewed HTTPS origin without analytics, injected scripts, pre-existing service workers or shared untrusted apps. `frontend/_headers` is a template for hosts that support it. The CSP forbids direct page network connections and form submissions; wallet-extension transport operates outside the page. The real wallet/hosting combination must be tested rather than assuming CSP compatibility.
+
+Static hosting and IPFS are not automatic confidentiality guarantees. A compromised host, dependency, wallet or device can change behavior. A GitHub repository may hold code publicly; never commit real requests, mailbox exports, receipts, screenshots, keys or private issuance records. Git ignore rules are a guardrail, not access control.
+
+## Organizer handling
+
+Use a private mailbox and restricted Eventbrite account. Keep a separate private issuance register keyed by chain + registry + entitlement + membership node. Do not treat a new nonce, new email or new revision as another ticket. A revoke on Ethereum does not revoke an Eventbrite order. Define mailbox/Eventbrite retention and deletion separately; this code does not automate or certify those policies.
+
+## Suggested participant wording
+
+> Votre nom et votre courriel ne sont ni sauvegardés par cette page ni écrits sur Ethereum. Ils restent temporairement dans votre navigateur. Le wallet signe une empreinte salée, sans recevoir ces coordonnées en clair. Vous choisissez de copier votre demande dans votre propre messagerie ; cette copie et les brouillons peuvent être conservés par votre appareil ou votre fournisseur. Après votre envoi, l’organisateur et Eventbrite les traitent pour émettre le billet. Votre wallet et votre claim Ethereum sont publics.

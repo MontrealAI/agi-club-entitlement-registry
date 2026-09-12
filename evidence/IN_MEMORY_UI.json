@@ -1,0 +1,67 @@
+{
+  "status": "PASS_IN_MEMORY_ONLY",
+  "scope": "In-memory HTML/CSS rendering; scripts removed for previews. One demo/clear handler rehearsal with imports flattened. Not a hosted browser, real wallet or E2E test.",
+  "results": [
+    {
+      "width": 1400,
+      "scrollWidth": 1400,
+      "height": 3633,
+      "page": "START_HERE.html",
+      "horizontalOverflow": false
+    },
+    {
+      "width": 390,
+      "scrollWidth": 390,
+      "height": 6201,
+      "page": "START_HERE.html",
+      "horizontalOverflow": false
+    },
+    {
+      "width": 1400,
+      "scrollWidth": 1400,
+      "height": 2273,
+      "page": "frontend/member.html",
+      "horizontalOverflow": false
+    },
+    {
+      "name": "In-memory demo and immediate field clearing",
+      "pass": true,
+      "scope": "Imports flattened for isolated DOM rehearsal; no wallet, crypto execution, network or hosted-module qualification."
+    },
+    {
+      "width": 390,
+      "scrollWidth": 390,
+      "height": 3783,
+      "page": "frontend/member.html",
+      "horizontalOverflow": false
+    },
+    {
+      "width": 1400,
+      "scrollWidth": 1400,
+      "height": 3181,
+      "page": "frontend/admin.html",
+      "horizontalOverflow": false
+    },
+    {
+      "width": 390,
+      "scrollWidth": 390,
+      "height": 5089,
+      "page": "frontend/admin.html",
+      "horizontalOverflow": false
+    },
+    {
+      "width": 1400,
+      "scrollWidth": 1400,
+      "height": 1195,
+      "page": "frontend/verify.html",
+      "horizontalOverflow": false
+    },
+    {
+      "width": 390,
+      "scrollWidth": 390,
+      "height": 1592,
+      "page": "frontend/verify.html",
+      "horizontalOverflow": false
+    }
+  ]
+}

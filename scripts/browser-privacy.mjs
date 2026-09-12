@@ -1,0 +1,64 @@
+/** Rehearsal of the ACTUAL static UI, with explicitly simulated Ethereum/crypto.
+ * This is NOT genuine ethers, chain, wallet, mail or Eventbrite qualification.
+ * Uses temporary localhost HTTPS, a temporary test certificate and fictitious contacts.
+ */
+import fs from 'node:fs';import path from 'node:path';import os from 'node:os';import https from 'node:https';import assert from 'node:assert/strict';import {spawn,spawnSync} from 'node:child_process';
+import {id,namehash,walletAddress} from '../test/crypto-reference.mjs';
+const source=process.argv.includes('--source'),root=path.resolve(source?'frontend':'dist/site');
+const report={status:'NOT_EXECUTED',scope:'Actual member/verify page code on local HTTPS; ETHEREUM, WALLET AND SIGNATURE VERIFICATION ARE TEST DOUBLES. No real contacts, external mail, tickets or mainnet transactions.',sourceMode:source,checks:[]};
+let server,child,ws,tmp;const sleep=n=>new Promise(r=>setTimeout(r,n));
+try{
+ tmp=fs.mkdtempSync(path.join(os.tmpdir(),'agi-privacy-'));
+ const ssl=spawnSync('openssl',['req','-x509','-newkey','rsa:2048','-nodes','-keyout',path.join(tmp,'key.pem'),'-out',path.join(tmp,'cert.pem'),'-days','1','-subj','/CN=localhost'],{encoding:'utf8'});assert.equal(ssl.status,0,'OpenSSL required for a throwaway local HTTPS certificate');
+ const A=walletAddress(1n),E=id('IA101_2026_09_22'),N=namehash('alice.club.agi.eth'),CODE='0x'+'22'.repeat(32);let base;
+ const fixture=`window.__calls=[];window.__clipboard=[];window.ethereum={request:async r=>{window.__calls.push(r);if(r.method==='eth_chainId')return '0x1';return ['${A}'];},on:()=>{}};
+ window.ethers={id:()=> '${E}',namehash:n=>n==='club.agi.eth'?'${namehash('club.agi.eth')}':'${N}',isAddress:x=>/^0x[0-9a-f]{40}$/i.test(x),keccak256:()=> '${CODE}',ZeroAddress:'0x'+'0'.repeat(40),verifyMessage:()=> '${A}',hashMessage:()=> '${id('mock-hash')}',
+ BrowserProvider:class{async getSigner(){return{getAddress:async()=> '${A}',signMessage:async m=>{window.__calls.push({method:'personal_sign',message:m});return '0x'+'11'.repeat(65);}};}async getCode(a){window.__calls.push({method:'getCode',a});return a.toLowerCase()==='${A}'?'0x':'0x6000';}async getNetwork(){return{chainId:1n};}async getBlock(t){return{number:t==='finalized'||t===100?100:104,hash:'0x'+(t==='finalized'||t===100?'aa':'bb').repeat(32)};}destroy(){}},
+ Contract:class{async VERSION(){return '2.1.1';}async CANONICAL_ENS(){return '0x00000000000c2e074ec69a0dfb2997ba6c7d2e1e';}async CANONICAL_WRAPPER(){return '0xd4416b13d2b3a9abae7acd5d6c2bbdbe25686401';}async CLUB_AGI_ETH_NODE(){return '${namehash('club.agi.eth')}';}async admin(){return '${A}';}async titleFR(){return 'TEST FICTIF — IA 101';}async claimability(){return[9,'${N}','${A}','${A}',1,false,false,0,1,50,2];}async claimRecord(...args){window.__calls.push({method:'claimRecord',args});return ['${A}',1n,1n,0n,1n,1n];}}};
+ Object.defineProperty(navigator,'clipboard',{value:{writeText:async t=>{window.__clipboard.push(t);}},configurable:true});
+ Object.defineProperty(Storage.prototype,'setItem',{value(){throw Error('FORBIDDEN_PERSISTENCE');}});
+ `;
+ const requests=[];
+ server=https.createServer({key:fs.readFileSync(path.join(tmp,'key.pem')),cert:fs.readFileSync(path.join(tmp,'cert.pem'))},(req,res)=>{
+  requests.push({url:req.url,method:req.method});const u=new URL(req.url,'https://localhost');
+  if(!['GET','HEAD'].includes(req.method)){res.writeHead(405);return res.end();}
+  if(u.pathname==='/config.js'){res.setHeader('Content-Type','text/javascript');return res.end('window.AGI_CONFIG='+JSON.stringify({registryAddress:'0x'+'11'.repeat(20),registryCodeHash:CODE,expectedOrigin:base,chainId:1,allowedEntitlements:['IA101_2026_09_22']})+';');}
+  if(u.pathname==='/vendor/ethers.umd.min.js'){res.setHeader('Content-Type','text/javascript');return res.end(fixture);}
+  const f=path.resolve(root,'.'+decodeURIComponent(u.pathname));if(!f.startsWith(root+path.sep)||!fs.existsSync(f)||!fs.statSync(f).isFile()){res.writeHead(404);return res.end();}
+  res.setHeader('Cache-Control','no-store');res.setHeader('Content-Type',f.endsWith('.html')?'text/html':/\.(js|mjs)$/.test(f)?'text/javascript':f.endsWith('.css')?'text/css':'text/plain');res.end(fs.readFileSync(f));
+ });await new Promise(r=>server.listen(0,'127.0.0.1',r));base='https://127.0.0.1:'+server.address().port;
+ const chrome=[process.env.CHROME_BIN,'/usr/bin/chromium','/usr/bin/google-chrome','/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'].filter(Boolean).find(fs.existsSync);assert(chrome,'Chrome/Chromium executable required');
+ child=spawn(chrome,['--headless=new','--no-sandbox','--ignore-certificate-errors','--disable-dev-shm-usage','--remote-debugging-port=0','--user-data-dir='+path.join(tmp,'browser'),'about:blank'],{stdio:'ignore'});
+ const portFile=path.join(tmp,'browser','DevToolsActivePort'),start=Date.now();while(!fs.existsSync(portFile)){assert(Date.now()-start<20000,'Browser start timeout');await sleep(100);}
+ const port=fs.readFileSync(portFile,'utf8').split('\n')[0],pages=await(await fetch('http://127.0.0.1:'+port+'/json/list')).json();
+ ws=new WebSocket(pages.find(p=>p.type==='page').webSocketDebuggerUrl);await new Promise((r,j)=>{ws.addEventListener('open',r,{once:true});ws.addEventListener('error',j,{once:true});});
+ let n=0;const pending=new Map(),exceptions=[],network=[];
+ ws.addEventListener('message',e=>{const m=JSON.parse(e.data);if(m.id&&pending.has(m.id)){const p=pending.get(m.id);pending.delete(m.id);clearTimeout(p.timer);m.error?p.reject(Error(m.error.message)):p.resolve(m.result);}if(m.method==='Runtime.exceptionThrown')exceptions.push(m.params.exceptionDetails.text);if(m.method==='Network.requestWillBeSent')network.push(m.params.request);});
+ const command=(method,params={})=>new Promise((resolve,reject)=>{const id=++n,timer=setTimeout(()=>{pending.delete(id);reject(Error('CDP_TIMEOUT:'+method));},15000);pending.set(id,{resolve,reject,timer});ws.send(JSON.stringify({id,method,params}));});
+ const evaluate=async expression=>{const r=await command('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});if(r.exceptionDetails)throw Error(r.exceptionDetails.text);return r.result.value;};
+ const check=async(name,fn)=>{await fn();report.checks.push({name,status:'PASS'});};
+ await command('Page.enable');await command('Runtime.enable');await command('Network.enable');
+ const nav=await command('Page.navigate',{url:base+'/member.html'});assert(!nav.errorText,'Hosted navigation failed: '+nav.errorText);
+ for(let i=0;i<40;i++){if(await evaluate('!!document.getElementById("prepareRequest")'))break;await sleep(100);}
+ await check('Actual hosted member module loads',async()=>assert(await evaluate('!!document.getElementById("prepareRequest")'),'Hosted page unavailable: '+await evaluate('location.href+" | "+document.title')));
+ await evaluate('document.getElementById("connect").click()');await sleep(300);
+ await evaluate('document.getElementById("memberLabel").value="alice";document.getElementById("verify").click()');await sleep(300);
+ const fill=`document.getElementById('ticketName').value='PRIVATE FICTIVE MEMBER';document.getElementById('ticketName').dispatchEvent(new Event('input'));document.getElementById('ticketEmail').value='private-fixture@example.org';document.getElementById('ticketEmail').dispatchEvent(new Event('input'));document.getElementById('consent').checked=true;`;
+ await evaluate(fill);await evaluate('document.getElementById("prepareRequest").click()');await sleep(650);
+ await check('Actual sign and verify handlers prepare a bounded private receipt',async()=>assert(await evaluate('!document.getElementById("copyRequest").disabled'),await evaluate('document.getElementById("status").textContent')));
+ await check('No contact text sent to wallet or Ethereum adapter',async()=>{const v=await evaluate('JSON.stringify(window.__calls)');assert(!v.includes('PRIVATE FICTIVE MEMBER'));assert(!v.includes('private-fixture@example.org'));});
+ await check('Wallet message does not contain the private salt',async()=>assert(await evaluate(`!JSON.stringify(window.__calls).includes(JSON.parse(document.getElementById('requestPreview').value).recipient.salt)`)));
+ await check('Zero writes to cookie/local/session stores',async()=>assert(await evaluate('localStorage.length===0&&sessionStorage.length===0&&document.cookie===""')));
+ await check('No private request copied without explicit acknowledgement',async()=>{await evaluate('document.getElementById("copyRequest").click()');await sleep(100);assert.equal(await evaluate('window.__clipboard.length'),0);});
+ await check('Editing contacts invalidates the existing signed packet',async()=>{await evaluate('document.getElementById("ticketEmail").dispatchEvent(new Event("input"))');assert(await evaluate('document.getElementById("copyRequest").disabled&&document.getElementById("requestPreview").value===""'));});
+ await evaluate(fill);await evaluate('document.getElementById("prepareRequest").click()');await sleep(400);
+ await check('Explicit clipboard handoff clears page references and fields',async()=>{await evaluate('document.getElementById("copyConsent").checked=true;document.getElementById("copyRequest").click()');await sleep(150);assert(await evaluate('window.__clipboard.length===1 && document.getElementById("ticketName").value==="" && document.getElementById("ticketEmail").value==="" && document.getElementById("requestPreview").value==="" && document.getElementById("copyRequest").disabled'));});
+ await check('Return from page cache clears private fields',async()=>{await evaluate(fill+'window.dispatchEvent(new PageTransitionEvent("pageshow",{persisted:true}));');assert(await evaluate('document.getElementById("ticketEmail").value===""'));});
+ await check('Pagehide clears fields',async()=>{await evaluate(fill+'window.dispatchEvent(new Event("pagehide"));');assert(await evaluate('document.getElementById("ticketName").value===""'));});
+ await check('Mailto link has no private body or member address',async()=>{const h=await evaluate('document.querySelector("a[href^=mailto]").getAttribute("href")');assert(!h.includes('body='));assert(!h.includes('private-fixture'));});
+ for(const width of [1280,390])await check('Member layout '+width+'px fits viewport',async()=>{await command('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:false});await sleep(100);assert(await evaluate('document.documentElement.scrollWidth<=innerWidth+2'));});
+ await check('No contact-bearing network request or form submission',async()=>{const str=JSON.stringify(network);assert(!str.includes('PRIVATE FICTIVE MEMBER'));assert(!str.includes('private-fixture@example.org'));assert(!requests.some(r=>r.method==='POST'));});
+ await check('No uncaught JS errors',async()=>assert.equal(exceptions.length,0,exceptions.join(';')));
+ report.status='PASS';report.passed=report.checks.length;
+}catch(e){report.status='FAIL_OR_BLOCKED';report.error=e.message;process.exitCode=1;}
+finally{ws?.close();child?.kill();if(server)await new Promise(r=>server.close(r));if(tmp){await sleep(300);fs.rmSync(tmp,{recursive:true,force:true,maxRetries:3});}fs.mkdirSync('qualification',{recursive:true});fs.writeFileSync('qualification/browser-privacy.json',JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report,null,2));}
