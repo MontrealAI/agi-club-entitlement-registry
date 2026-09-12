@@ -25,9 +25,9 @@ export async function readCatalogPage(registry,cfg,ethers,offset=0,limit=25) {
   }else fail();
   if(!Array.isArray(ids)||ids.length!==Math.min(limit,Math.max(0,total-offset))||ids.some(id=>!validId(id))||new Set(ids).size!==ids.length)fail();
   const rows=await Promise.all(ids.map(async id=>{
-    const [e,title]=await Promise.all([registry.entitlement(id),registry.titleFR(id)]);
-    if(e[8]!==true||![1,2,3,4].includes(Number(e[7]))||typeof title!=='string')fail();
-    return {id:id.toLowerCase(),title,state:Number(e[7])};
+    const [e,title,en]=await Promise.all([registry.entitlement(id),registry.titleFR(id),registry.titleEN(id)]);
+    if(e[8]!==true||![1,2,3,4].includes(Number(e[7]))||typeof title!=='string'||typeof en!=='string')fail();
+    return {id:id.toLowerCase(),title,fr:title,en,state:Number(e[7])};
   }));
   return {rows,total,next:offset+rows.length};
   }catch{fail();}

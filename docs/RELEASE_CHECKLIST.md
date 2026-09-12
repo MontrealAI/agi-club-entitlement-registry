@@ -38,3 +38,11 @@
 - [ ] Principal records a separate broad-launch decision.
 
 Local tests cannot self-authorize real-world steps. Evidence presence/hash checks cannot prove an external assertion true. Never fill a NOT_EXECUTED field with PASS just to unblock a script.
+
+## Bilingual interface acceptance
+
+- Check all eight public pages in French and English, including keyboard use, mobile reflow, errors and notices. Automated browser qualification covers both languages.
+- Test language changes during actual wallet approval: temporary private data clears and stale requests cannot complete. Reject wallet prompts separately; submitted transactions cannot be cancelled by changing language.
+- Publish and verify both benefit titles through the approved administrator. An absent English title falls back to the published French title. No event is preconfigured.
+- Confirm the copied private email includes the full signed subname and that the fixed bilingual subject/link carries no member data. Preserve the exact signed protocol across languages.
+- Independent security and deployment-specific legal review, a pinned real mainnet fork, actual wallet/private-request/ticket acceptance and root-holder authorization remain release gates. Translation and passing CI do not clear those gates.

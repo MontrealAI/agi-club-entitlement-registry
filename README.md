@@ -13,6 +13,12 @@ The copy-ready email to **president@montreal.ai** visibly includes the full **`s
 >
 > Contact text is temporary browser state. After explicit consent, the member can copy the private receipt to the device clipboard and send it with their own mail application. Clipboard, wallet extensions, device, draft, email-provider and Eventbrite copies are outside the page's control. This is not anonymity or guaranteed erasure of RAM.
 
+### English / Français
+
+Every public page offers **English** and **Français**, including runtime notices, errors and approvals. The language choice follows internal links without cookies or browser storage. Public administration/Etherscan inputs remain intact; switching clears temporary private requests and invalidates pending approvals. Published benefit titles follow the selected language, with a French-title fallback when English is empty. The signed protocol remains identical. [English operator guide](docs/OPERATOR_GUIDE_EN.md) · [Guide français](docs/OPERATOR_GUIDE_FR.md).
+
+Toutes les pages publiques proposent **Français** et **English**, y compris les messages et confirmations. Aucun nom ni courriel n’est enregistré pour mémoriser ce choix. Le changement de langue efface les demandes privées temporaires et annule les autorisations préparées.
+
 ### Start here
 
 Open **[START_HERE.html](START_HERE.html)**. No installation is needed to read it.
@@ -20,11 +26,11 @@ Open **[START_HERE.html](START_HERE.html)**. No installation is needed to read i
 | I want to… | Read this |
 |---|---|
 | Upload through the GitHub website | [GitHub UI guide](docs/GITHUB_WEB_UPLOAD.md) |
-| See a local demo, rehearse a deployment or deploy an approved canary | [Step-by-step Hardhat guide and troubleshooting](docs/HARDHAT_DEPLOYMENT.md) |
+| See a local demo, rehearse a deployment or deploy an approved canary | [Hardhat English](docs/HARDHAT_DEPLOYMENT.md) / [Français](docs/HARDHAT_DEPLOYMENT_FR.md) |
 | Verify the source and operate every public function through Etherscan | [Bilingual Etherscan guide](docs/ETHERSCAN_GUIDE.md); open **Etherscan** in the built website for copy-ready values |
 | Understand exactly where contact data goes | [Privacy policy and implementation boundary](PRIVACY.md) |
 | Review conditions, regulatory exposure and legal release requirements | [Bilingual public notice](frontend/legal.html), [operator/counsel review](docs/LEGAL_RELEASE_REVIEW.md) |
-| Issue one complimentary ticket | [French operator guide](docs/OPERATOR_GUIDE_FR.md) |
+| Issue one complimentary ticket | [English](docs/OPERATOR_GUIDE_EN.md) / [Français](docs/OPERATOR_GUIDE_FR.md) |
 | Evaluate readiness | [Release checklist](docs/RELEASE_CHECKLIST.md), [actual evidence](evidence/RELEASE_STATUS.json) |
 
 ### Status — read before deployment
@@ -87,7 +93,7 @@ npm run build:site
 npm run serve
 ```
 
-Open **http://127.0.0.1:8080** and choose **Membres → Explorer sans wallet → Vérifier**. No funded wallet or RPC key is needed for this demonstration. Keep the terminal open; Ctrl+C stops the preview. This first preview is separate from the qualification below.
+Open **http://127.0.0.1:8080** and select your language. Choose **Members → Explore without a wallet → Verify**, or **Membres → Explorer sans portefeuille → Vérifier**. No funded wallet or RPC key is needed for this demonstration. Keep the terminal open; Ctrl+C stops the preview. This first preview is separate from the qualification below.
 
 Before deployment:
 

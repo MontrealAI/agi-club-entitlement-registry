@@ -120,7 +120,7 @@ section + section { margin-top: 24px; }
 .journey-nav { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-block: 1px solid var(--line); margin: 38px 0 30px; gap: 20px; }
 .journey-nav a { color: #546449; text-decoration: none; font-size: 12px; display: flex; align-items: center; min-height: 62px; gap: 12px; }
 .journey-nav a:hover { color: var(--gold); }
-.journey-nav span { font: 20px/1 var(--serif); color: var(--gold); }
+.journey-nav a > span:not([data-l10n]) { font: 20px/1 var(--serif); color: var(--gold); }
 .member-intro { position: relative; padding-right: 130px; }
 .member-intro::after { content: '∞'; position: absolute; right: 12px; top: 30px; width: 92px; height: 92px; border: 1px solid #b8a372; border-radius: 50%; color: #967a44; font: 80px/1 var(--serif); display: grid; place-items: center; padding-bottom: 10px; }
 .reading-page { max-width: 960px; }
@@ -157,7 +157,7 @@ body[data-page='home'] main { max-width: none; padding: 0; }
 .portal-card h2 { font-size: 32px; }
 .portal-card p { color: var(--muted); font-size: 14px; max-width: 400px; }
 .portal-card .portal-link { margin-top: auto; display: inline-flex; justify-content: space-between; align-items: center; min-height: 48px; border-top: 1px solid var(--line); padding-top: 18px; color: #324a36; font-size: 13px; font-weight: 600; text-decoration: none; }
-.portal-link span { font-size: 22px; font-weight: 400; }
+.portal-link span[aria-hidden] { font-size: 22px; font-weight: 400; }
 .portal-card.secondary { background: #ebece2; }
 .privacy-panel { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 60px; border-block: 1px solid #c9cebd; margin-top: 48px; padding: 40px 0; }
 .privacy-panel h2 { max-width: 430px; margin: 14px 0 0; font-size: 37px; }
@@ -252,3 +252,11 @@ body[data-page='home'] main { max-width: none; padding: 0; }
   .card { box-shadow: none; break-inside: avoid; }
   main { padding: 0; }
 }
+
+/* An explicit language choice, independent of wallet and private form state. */
+.language-choice { display: inline-flex; flex-shrink: 0; gap: 2px; border: 1px solid #637361; border-radius: 5px; padding: 3px; }
+.language-choice button { min-height: 44px; border: 0; padding: 9px 12px; border-radius: 2px; }
+.language-choice button[aria-pressed='true'] { color: #18291f; background: #e5d3aa; }
+.language-choice button[aria-pressed='true']:hover { color: #18291f; background: #f0dfb9; }
+@media (max-width: 820px) { header { gap: 18px; } .header-tail { order: 3; width: 100%; margin-left: 0; } .language-choice { margin-left: auto; } }
+@media (max-width: 420px) { .language-choice { margin-left: 0; } }

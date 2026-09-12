@@ -1,3 +1,4 @@
+import {languageFixture} from './language-fixture.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -7,6 +8,7 @@ import {deploymentMessage,validatePlan} from '../shared/deployment-policy.mjs';
 const hash=n=>'0x'+n.repeat(64),address=n=>'0x'+n.repeat(40);
 function plan(n='a') {const now=Math.floor(Date.now()/1000);return {schema:'AGIClubDeploymentPlan/1',chainId:1,contract:'contracts/AGIClubEntitlementRegistryMainnet.sol:AGIClubEntitlementRegistryMainnet',sourceSha256:n.repeat(64),creationCodeHash:hash('1'),runtimeCodeHash:hash('2'),deployer:address('3'),admin:address('4'),nonce:'0',predictedAddress:address('5'),gasLimit:'100',maxFeePerGas:'5',maxPriorityFeePerGas:'1',maxCostWei:'500',createdAt:now,expiresAt:now+1800,evidenceSha256:'b'.repeat(64)};}
 function fixture() {
+ const language=languageFixture('en');
  const elements=new Map(['plan','consent','sign','details','status'].map(id=>[id,{value:'',files:[],checked:false,disabled:id==='sign',textContent:'',listeners:new Map(),addEventListener(name,fn){this.listeners.set(name,fn);}}]));
  const events=new Map(),walletEvents=new Map(),waits=new Map(),providers=[],signatures=[],downloads=[],blobs=new Map();
  const state={account:address('4'),owner:address('4'),chain:1n,code:'0x',signatureValid:true,wrappedOwner:address('4'),fuses:0n,expiry:0n,timestamp:1000};
@@ -19,11 +21,11 @@ function fixture() {
  };
  const window={ethereum,ethers,addEventListener:(event,fn)=>events.set(event,fn)};
  const source=readFileSync(new URL('../frontend/deployment.js',import.meta.url),'utf8');
- runInNewContext(source.replace(/^import .*;\r?\n/gm,''),{window,ethers,deploymentMessage,validatePlan,Blob,location:{protocol:'https:',hostname:'claims.example.org'},
+ runInNewContext(source.replace(/^import .*;\r?\n/gm,''),{...language,window,ethers,deploymentMessage,validatePlan,Blob,location:{protocol:'https:',hostname:'claims.example.org'},
   document:{getElementById:id=>elements.get(id),createElement:()=>({click(){downloads.push(blobs.get(this.href));}})},
   URL:{createObjectURL:blob=>{const url='blob:fixture-'+blobs.size;blobs.set(url,blob);return url;},revokeObjectURL:url=>blobs.delete(url)},setTimeout:()=>1,clearTimeout(){},
  },{filename:'frontend/deployment.js'});
- return {state,providers,signatures,downloads,el:id=>elements.get(id),
+ return {changeLanguage:language.changeLanguage,state,providers,signatures,downloads,el:id=>elements.get(id),
   load:async(value,wait)=>{elements.get('plan').files=[{size:500,text:async()=>{if(wait){wait.started.resolve();await wait.pending.promise;}return JSON.stringify(value);}}];await elements.get('plan').listeners.get('change')();},
   consent:async checked=>{elements.get('consent').checked=checked;await elements.get('consent').listeners.get('change')();},
   sign:async()=>{if(!elements.get('sign').disabled)await elements.get('sign').listeners.get('click')();},
@@ -89,4 +91,14 @@ test('Repeated sign clicks while a wallet request is pending produce only one si
 test('A deployed contract wallet must validate the approval before download',async()=>{
  const ui=fixture();ui.state.code='0x6000';ui.state.signatureValid=false;await ui.load(plan());await ui.consent(true);await ui.sign();
  assert.equal(ui.downloads.length,0);assert(ui.providers.every(p=>p.destroyed));
+});
+
+test('Language change during deployment signing cancels approval but retains the reviewed plan',async()=>{
+ const ui=fixture(),p=plan();await ui.load(p);await ui.consent(true);
+ const wait=ui.pause('signature'),pending=ui.sign();await wait.started;
+ ui.changeLanguage('fr');wait.release();await pending;
+ assert.equal(ui.downloads.length,0);assert.equal(ui.el('consent').checked,false);
+ assert.deepEqual(JSON.parse(ui.el('details').textContent),p);assert.match(ui.el('status').textContent,/Langue modifiée/);
+ await ui.consent(true);await ui.sign();assert.equal(ui.downloads.length,1);
+ assert.equal(JSON.parse(await ui.downloads[0].text()).message,deploymentMessage(p));
 });

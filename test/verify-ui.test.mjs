@@ -1,3 +1,4 @@
+import {languageFixture} from './language-fixture.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -7,6 +8,7 @@ import {parseRequestEmail,membershipName,MAX_EMAIL_BYTES} from '../shared/reques
 import {requestPolicy} from '../frontend/member-catalog.mjs';
 
 function fixture() {
+ const language=languageFixture('fr');
  const ids=['packetText','verifyResult','verifyStatus','verifyReceipt','clearReceipt'];
  const elements=new Map(ids.map(id=>[id,{value:'',textContent:'',disabled:false,listeners:new Map(),addEventListener(event,fn){this.listeners.set(event,fn);}}]));
  const windowEvents=new Map(),walletEvents=new Map(),timers=new Map(),calls=[],providers=[];
@@ -16,13 +18,13 @@ function fixture() {
  const ethers={id:()=> '0x'+'33'.repeat(32),BrowserProvider:class{constructor(){providers.push(this);}destroy(){this.destroyed=true;}}};window.ethers=ethers;
  const source=readFileSync(new URL('../frontend/verify.js',import.meta.url),'utf8');
  runInNewContext(source.replace(/^import .*;\r?\n/gm,''),{
-  window,ethers,REGISTRY_VERSION,MAX_PACKET_BYTES,RequestError,TextEncoder,parseRequestEmail,membershipName,MAX_EMAIL_BYTES,requestPolicy,
+  ...language,window,ethers,REGISTRY_VERSION,MAX_PACKET_BYTES,RequestError,TextEncoder,parseRequestEmail,membershipName,MAX_EMAIL_BYTES,requestPolicy,
   location:{origin:window.AGI_CONFIG.expectedOrigin},document:{getElementById:id=>elements.get(id)},
   setTimeout:(fn,delay)=>{const id=++next;timers.set(id,{fn,at:now+delay});return id;},clearTimeout:id=>timers.delete(id),
   createEthersIO:()=>({}),verifyTicketRequest:async packet=>{await boundary('verification');if(error)throw error;return {status:'VERIFIED_REQUEST_NOT_A_TICKET',claimKey:'PUBLIC_FIXTURE',payload:{claimRevision:1,membershipLabel:'fictitious-member'},recipient:packet.recipient,finalizedBlock:100};},
  },{filename:'frontend/verify.js'});
  return {
-  calls,providers,el:id=>elements.get(id),
+  changeLanguage:language.changeLanguage,calls,providers,el:id=>elements.get(id),
   click:async id=>{const el=elements.get(id);if(!el.disabled)await el.listeners.get('click')?.();},
   input:async(name='FICTITIOUS_MEMBER')=>{const el=elements.get('packetText');el.value=JSON.stringify({recipient:{name,email:'fixture@example.org'}});await el.listeners.get('input')();},
   event:event=>(windowEvents.get(event)||walletEvents.get(event))?.(),

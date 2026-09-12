@@ -1,3 +1,4 @@
+import {t, tr, onLanguageChange} from './language.mjs';
 import {verifyTicketRequest,REGISTRY_VERSION} from './shared/ticket-request.mjs';
 import {createEthersIO} from './shared/ethers-adapter.mjs';
 import {parseRequestEmail,membershipName,MAX_EMAIL_BYTES} from './shared/request-email.mjs';
@@ -22,14 +23,14 @@ const errors={
  ENTITLEMENT_NOT_ENABLED:'Cet avantage ne figure pas dans la configuration approuvée.',
 };
 function touch(){clearTimeout(timer);timer=setTimeout(clear,600000);}
-function clear(){epoch++;$('packetText').value='';$('verifyResult').textContent='';$('verifyStatus').textContent='Données effacées de cette page.';clearTimeout(timer);}
+function clear(){epoch++;$('packetText').value='';$('verifyResult').textContent='';$('verifyStatus').textContent=t('Données effacées de cette page.');clearTimeout(timer);}
 $('clearReceipt').addEventListener('click',clear);
-$('packetText').addEventListener('input',()=>{epoch++;$('verifyResult').textContent='';$('verifyStatus').textContent='Reçu modifié. Relancez la vérification.';touch();});
+$('packetText').addEventListener('input',()=>{epoch++;$('verifyResult').textContent='';$('verifyStatus').textContent=t('Reçu modifié. Relancez la vérification.');touch();});
 for(const e of ['pagehide','pageshow','beforeunload'])window.addEventListener(e,clear);
 if(window.ethereum?.on)for(const e of ['accountsChanged','chainChanged','disconnect'])window.ethereum.on(e,clear);
 $('verifyReceipt').addEventListener('click',async()=>{
  const button=$('verifyReceipt');if(button.disabled)return;button.disabled=true;const at=epoch;
- touch();$('verifyResult').textContent='';$('verifyStatus').textContent='Vérification en cours. Aucun billet autorisé.';
+ touch();$('verifyResult').textContent='';$('verifyStatus').textContent=t('Vérification en cours. Aucun billet autorisé.');
  try{
   if(!window.ethers||!window.ethereum?.request)throw Error('WALLET_OR_LIBRARY_UNAVAILABLE');
   if(location.origin!==cfg.expectedOrigin||!cfg.expectedOrigin?.startsWith('https://'))throw Error('WRONG_ORIGIN');
@@ -43,8 +44,13 @@ $('verifyReceipt').addEventListener('click',async()=>{
    const result=await verifyTicketRequest(packet,policy,createEthersIO(ethers,provider,cfg.registryAddress));
    if(at!==epoch)throw Error('INPUT_CHANGED');
    $('verifyResult').textContent=JSON.stringify({status:result.status,membership:membershipName(result.payload.membershipLabel),claimKey:result.claimKey,claimRevision:result.payload.claimRevision,name:result.recipient.name,email:result.recipient.email,finalizedBlock:result.finalizedBlock,ticketIssued:false,mailboxControlVerified:false},null,2);
-   $('verifyStatus').textContent='Signature et droit vérifiés. Contrôlez les doublons dans votre registre privé AVANT de créer un billet.';
+   $('verifyStatus').textContent=t('Signature et droit vérifiés. Contrôlez les doublons dans votre registre privé AVANT de créer un billet.');
   }finally{provider.destroy();}
- }catch(e){if(at===epoch){$('verifyResult').textContent='';const code=Object.hasOwn(errors,e?.code)?e.code:Object.hasOwn(errors,e?.message)?e.message:null;$('verifyStatus').textContent='NON VALIDÉ : '+(code?errors[code]:'Reçu invalide ou vérification indisponible. Aucun billet autorisé.');}}
+ }catch(e){if(at===epoch){$('verifyResult').textContent='';const code=Object.hasOwn(errors,e?.code)?e.code:Object.hasOwn(errors,e?.message)?e.message:null;$('verifyStatus').textContent=t('NON VALIDÉ : ')+(code?t(errors[code]):t('Reçu invalide ou vérification indisponible. Aucun billet autorisé.'));}}
  finally{button.disabled=false;}
+});
+
+onLanguageChange(()=>{
+  clear();
+  $('verifyStatus').textContent=tr('Langue modifiée. Le reçu et le résultat privés sont effacés. Collez à nouveau le reçu pour le vérifier.','Language changed. The private receipt and result were cleared. Paste the receipt again to verify it.');
 });

@@ -1,5 +1,7 @@
 # Hardhat — from source to an explicitly approved deployment
 
+[Français](HARDHAT_DEPLOYMENT_FR.md) · [English operator guide](OPERATOR_GUIDE_EN.md)
+
 Start with a local preview. You need no funded wallet, RPC account, deployment key or member contact data for it. The contract intended for Ethereum mainnet is **`AGIClubEntitlementRegistryMainnet`**; the local rehearsal deliberately uses test contracts.
 
 | Your goal | Follow | Expected result |
@@ -94,7 +96,7 @@ npm run deploy:local
 
 This deploys mocks and an empty test core to chain 31337 and assigns a fictitious root/member. No benefit or claim is created by deployment. Output is `.local/local-rehearsal.json`. Use `npm test` for isolated claim and correction simulations with explicit test fixtures.
 
-**Success:** the report contains `chainId: 31337`, `claimed: true` and `scope: LOCAL_TEST_ONLY_NOT_A_MEMBERSHIP_OR_TICKET`. Keep Terminal 1 open until the rehearsal finishes. Restarting the node creates fresh local state; its addresses are not production configuration.
+**Success:** the report contains `chainId: 31337`, `entitlementCount: 0`, `claimsCreated: 0` and `scope: LOCAL_TEST_ONLY_NOT_A_MEMBERSHIP_OR_TICKET`. Keep Terminal 1 open until the rehearsal finishes. Restarting the node creates fresh local state; its addresses are not production configuration.
 
 **Never fund or reuse Hardhat's public test keys.** The production portal intentionally refuses this local network. For a local model of the production subclass and actual ethers request verification, run `npm run test:journey`. That model is still not real Ethereum finality, a physical wallet or Eventbrite.
 
@@ -119,7 +121,7 @@ npm run serve
 
 Open `http://127.0.0.1:8080`. Demo/layout only until a reviewed production contract and exact HTTPS origin are configured. The builder copies the genuine installed ethers distribution/licence and a strict public-file allowlist to `dist/site`. It never substitutes the test crypto facade.
 
-Choose **Membres → Explorer sans wallet → Vérifier** to explore the member demonstration. Use fictitious contacts only. The demonstration creates no signed receipt, claim, email or ticket. **Administration → Explorer la démonstration** opens the admin rehearsal. Open the HTTP address above; double-clicking source HTML is not the supported app launch method.
+Select **English** or **Français** in the header. Choose **Members → Explore without a wallet → Verify** or **Membres → Explorer sans portefeuille → Vérifier** to explore the member demonstration. Use fictitious contacts only. The demonstration creates no signed receipt, claim, email or ticket. **Administration → Explorer la démonstration** opens the admin rehearsal. Open the HTTP address above; double-clicking source HTML is not the supported app launch method.
 
 `npm run test:browser` needs Chrome/Chromium and OpenSSL; set `CHROME_BIN` if discovery fails. The privacy browser fixture simulates Ethereum to test leakage/clearing; it is not a real-wallet acceptance.
 
@@ -236,7 +238,7 @@ Open the built `deployment.html` from a trusted local server or approved HTTPS o
 
 For the local approval page, keep `npm run serve` running and open **`http://127.0.0.1:8080/deployment.html`**. Choose `.local/deployment-plan.json`, review the displayed fields, acknowledge them and sign. Move the downloaded `deployment-approval.json` from your browser's Downloads folder to `.local/deployment-approval.json` in this checkout. This is a deployment approval, not a member receipt. Its download is separate from the member/organizer pages, which provide no receipt-file export.
 
-The page signs the exact reviewed plan. Changing the file, wallet or network, leaving/restoring the page, or withdrawing consent cancels that attempt in the page. Reject any open wallet prompt, then review again. Only one signing attempt can run at a time; the account and current root holder are checked again before download. Unchecking the box cannot revoke a signed approval you have already shared: treat that file as active until its signed expiry or another deployment gate invalidates it.
+The page signs the exact reviewed plan. Changing the file, wallet, network or interface language, leaving/restoring the page, or withdrawing consent cancels that attempt in the page. Reject any open wallet prompt, then review again. Only one signing attempt can run at a time; the account and current root holder are checked again before download. Unchecking the box cannot revoke a signed approval you have already shared: treat that file as active until its signed expiry or another deployment gate invalidates it.
 
 The supplied broadcaster uses a locally encrypted **deployer** JSON keystore. Configure `DEPLOYER_KEYSTORE`. Provide its password locally for this one execution—never in GitHub, a command committed to source or shared logs. The environment-variable method is visible to processes with sufficient local privileges; use an isolated machine and clear it afterward.
 
