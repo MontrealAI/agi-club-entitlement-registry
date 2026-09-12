@@ -176,7 +176,7 @@ python3 scripts/configure.py --contract 0xYOUR_DEPLOYED_CONTRACT --runtime-code-
 npm run build:site
 ```
 
-On Windows replace `python3` with your installed `python` command. The origin is an example: replace it with the **exact real dedicated HTTPS origin**, no path/trailing slash. Only allowlisted entitlements can produce a request; repeat `--entitlement` when adding future benefits.
+On Windows replace `python3` with your installed `python` command. Keep the required Node.js 22 toolchain on `PATH`; the configurator uses the canonical receipt protocol to validate the origin offline. The origin is an example: replace it with the **exact real dedicated HTTPS origin**, no path/trailing slash. Use the browser's canonical form: lowercase hostname, an ASCII punycode hostname for an internationalized domain, and no explicit default `:443` port. Non-default HTTPS ports are supported. Invalid settings leave the existing configuration untouched. Only allowlisted entitlements can produce a request; repeat `--entitlement` when adding future benefits. Hexadecimal entitlement IDs are normalized to lowercase; canonical entitlement names keep their uppercase spelling.
 
 The new public contract/origin configuration changes the source/configuration fingerprint. Review the configuration diff and the new asset manifest; rerun build/privacy checks and bind real canary evidence to that exact published configuration. Do not reuse a pre-configuration browser approval as proof of the final site.
 

@@ -8,6 +8,8 @@ Wallet-session regressions execute the actual admin/member handler bodies with s
 
 Receipt regressions mutate caller-owned inputs during simulated asynchronous verification and advance the clock to the expiry boundary. They check that recipient, signature, policy and verified payload stay consistent. CLI input tests split a signed UTF-8 receipt at every byte boundary, enforce the input byte limit, and reject invalid encoding/JSON using non-sensitive error codes. The receipt format is unchanged.
 
+Public-tooling regressions run the Python configurator from outside the repository and validate its output against the receipt policy. They cover canonical HTTPS origins, hexadecimal entitlement IDs and preservation of an existing configuration after invalid input. Preview-server tests use actual loopback HTTP requests and temporary directory symlinks (junctions on Windows) to check public-root containment. Isolated child processes inject file-stream errors before and after response bytes to check error handling and continued server availability. Fixtures contain no private data.
+
 `npm run test:evm`: real Hardhat EVM, compiled contracts and local ENS/wrapper mocks.
 
 `npm run test:journey`: isolated chain-ID-1 model, actual ethers adapter, real WebCrypto recipient binding. No real ENS ownership, finality, mail or Eventbrite.
