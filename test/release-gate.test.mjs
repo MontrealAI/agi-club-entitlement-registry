@@ -24,7 +24,7 @@ function fixture(t) {
  const results=stages.map(name=>{const log='qualification/'+name.replaceAll(':','-')+'.log';write(log,'SYNTHETIC UNIT TEST LOG: '+name);return {name,status:'PASS',exitCode:0,log};});
  write(localFile,{repositoryVersion:pkg.version,contractVersion:REGISTRY_VERSION,status:'PASS',sourceSha256:source,sourceUnchanged:true,at:new Date().toISOString(),results,mainnetAuthorization:false});
  write(compilerFile,{status:'PASS',sourceSha256:source,compiler:pkg.devDependencies.solc+'+fixture',hardhat:pkg.devDependencies.hardhat,profile:'production',productionContract:'contracts/AGIClubEntitlementRegistryMainnet.sol:AGIClubEntitlementRegistryMainnet',creationBytes:100,runtimeBytes:80,creationCodeHash:hash('1'),templateRuntimeCodeHash:hash('2')});
- write(forkFile,{status:'PASS',scope:'LOCAL_FORK_OF_PINNED_MAINNET; no real transactions; not real-wallet acceptance',sourceSha256:source,creationCodeHash:hash('1'),forkBlock:{number:20000000,hash:hash('3')},identity:{chainId:1,contractVersion:REGISTRY_VERSION,runtimeCodeHash:hash('4'),root:ROOT,ens:ENS,wrapper:WRAPPER,address:address('5'),admin:address('6')},results:[{label:'fixture',status:'PASS',owner:address('7'),node:hash('8'),wrapped:true}]});
+ write(forkFile,{status:'PASS',attemptId:'00000000-0000-4000-8000-000000000001',completedAt:new Date().toISOString(),scope:'LOCAL_FORK_OF_PINNED_MAINNET; no real transactions; not real-wallet acceptance',sourceSha256:source,creationCodeHash:hash('1'),forkBlock:{number:20000000,hash:hash('3')},identity:{chainId:1,contractVersion:REGISTRY_VERSION,runtimeCodeHash:hash('4'),root:ROOT,ens:ENS,wrapper:WRAPPER,address:address('5'),admin:address('6')},results:[{label:'fixture',status:'PASS',owner:address('7'),node:hash('8'),wrapped:true}]});
  const external={sourceSha256:source};
  for(const kind of kinds) {const file='.local/'+kind+'.txt',report='SYNTHETIC UNIT TEST EVIDENCE: '+kind;write(file,report);external[kind]={status:'PASS',reviewer:'Fixture reviewer',file,sha256:sha256(report)};}
  write('.local/external-evidence.json',external);
@@ -50,6 +50,8 @@ test('Changed log changes the approval evidence fingerprint',t=>{
  const f=fixture(t),before=f.gate();f.write('qualification/test-browser.log','CHANGED SYNTHETIC LOG');const after=f.gate();assert.notEqual(after.evidenceSha256,before.evidenceSha256);
 });
 for(const [name,modify] of [
+ ['missing completion time',q=>{delete q.completedAt;}],
+ ['missing attempt identity',q=>{delete q.attemptId;}],
  ['missing block hash',q=>{delete q.forkBlock.hash;}],
  ['invalid block',q=>{q.forkBlock.number=-1;}],
  ['substitute ENS registry',q=>{q.identity.ens=address('9');}],
@@ -92,3 +94,5 @@ test('A symlinked evidence directory cannot substitute other files',t=>{
  const f=fixture(t),target=path.join(f.root,'outside');fs.renameSync(path.join(f.root,'.local'),target);
  fs.symlinkSync(target,path.join(f.root,'.local'),process.platform==='win32'?'junction':'dir');f.blocked();
 });
+
+test('A running or interrupted fork blocks otherwise complete evidence',t=>{const f=fixture(t);f.write('.local/mainnet-fork.lock','SYNTHETIC INTERRUPTED RUN');assert(f.gate().blockers.some(x=>x.includes('running or interrupted')));f.blocked();});
