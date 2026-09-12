@@ -1,8 +1,9 @@
 /** Exact local qualification, fail-closed. This never authorizes or deploys mainnet. */
 import fs from 'node:fs';import {spawnSync} from 'node:child_process';import {sourceDigest} from './source-digest.mjs';
+import {LOCAL_STAGES} from './release-gate.mjs';
 fs.mkdirSync('qualification',{recursive:true});const before=sourceDigest().sourceSha256,results=[];
 const npm=process.platform==='win32'?'npm.cmd':'npm';
-for(const name of ['check:repo','check:lock','test:offline','compile','test:evm','test:journey','build:site','test:browser']){
+for(const name of LOCAL_STAGES){
  const r=spawnSync(npm,['run',name],{encoding:'utf8',timeout:240000,shell:process.platform==='win32'});
  const log=(r.stdout||'')+(r.stderr||'')+(r.error?.message||'');const file='qualification/'+name.replaceAll(':','-')+'.log';fs.writeFileSync(file,log);
  results.push({name,status:r.status===0?'PASS':'FAIL_OR_BLOCKED',exitCode:r.status,log:file});console.log(name,results.at(-1).status);

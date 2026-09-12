@@ -9,15 +9,17 @@ const gate=releaseGate();assert.equal(gate.status,'EVIDENCE_READY_FOR_PRINCIPAL_
 const packet=JSON.parse(fs.readFileSync('.local/deployment-approval.json','utf8'));assert.deepEqual(Object.keys(packet).sort(),['message','plan','signature']);
 const plan=validatePlan(packet.plan),message=deploymentMessage(plan);assert.equal(packet.message,message);
 assert.equal(plan.sourceSha256,gate.sourceSha256);assert.equal(plan.evidenceSha256,gate.evidenceSha256);
-const connection=await network.create();const provider=new ethers.BrowserProvider(connection.provider);provider.pollingInterval=4000;
+assert.equal(plan.creationCodeHash,gate.qualifiedBytecode.creationCodeHash,'Approval does not match qualified creation code');assert.equal(plan.runtimeCodeHash,gate.qualifiedBytecode.runtimeCodeHash,'Approval does not match qualified runtime');assert.equal(plan.admin,gate.qualifiedBytecode.admin,'Approval does not match qualified root holder');
+const connection=await network.create();const provider=new ethers.BrowserProvider(connection.provider,undefined,{cacheTimeout:-1});provider.pollingInterval=4000;
 try {
  assert.equal(connection.networkName,'mainnet');assert.equal((await provider.getNetwork()).chainId,1n);
  const artifact=await artifacts.readArtifact(PROD);assert.equal(ethers.keccak256(artifact.bytecode),plan.creationCodeHash);
- for(const tag of ['finalized','latest']){
+ const checkApproval=async()=>{for(const tag of ['finalized','latest']){
   assert.equal((await canonicalAdmin(provider,tag)).toLowerCase(),plan.admin,'Root administrator changed');
   if(await provider.getCode(plan.admin,tag)==='0x')assert.equal(ethers.verifyMessage(message,packet.signature).toLowerCase(),plan.admin,'Wrong approval signer');
   else {const verifier=new ethers.Contract(plan.admin,['function isValidSignature(bytes32,bytes) view returns(bytes4)'],provider);assert.equal(await verifier.isValidSignature(ethers.hashMessage(message),packet.signature,{blockTag:tag}),'0x1626ba7e','Contract-wallet approval rejected');}
- }
+ }};
+ await checkApproval();
  assert(process.env.DEPLOYER_KEYSTORE&&process.env.DEPLOYER_KEYSTORE_PASSWORD,'Encrypted deployer keystore and local password required');
  const key=JSON.parse(fs.readFileSync(process.env.DEPLOYER_KEYSTORE,'utf8'));assert(key.crypto||key.Crypto,'Only encrypted JSON keystores accepted');
  const signer=(await ethers.Wallet.fromEncryptedJson(JSON.stringify(key),process.env.DEPLOYER_KEYSTORE_PASSWORD)).connect(provider);
@@ -28,9 +30,10 @@ try {
  const txRequest={type:2,chainId:1,nonce:Number(plan.nonce),data:artifact.bytecode,value:0,gasLimit:BigInt(plan.gasLimit),maxFeePerGas:BigInt(plan.maxFeePerGas),maxPriorityFeePerGas:BigInt(plan.maxPriorityFeePerGas)};
  assert((await provider.estimateGas({...txRequest,from:plan.deployer}))<=BigInt(plan.gasLimit),'Gas estimate exceeded signed limit');
  assert((await provider.getBalance(plan.deployer))>=BigInt(plan.maxCostWei),'Insufficient deployer balance');
- // Revalidate time and evidence immediately before the ONLY network write.
+ // ERC-1271 validity can change during keystore decryption and RPC preflight.
+ await checkApproval();
+ // Revalidate time and evidence after the final asynchronous reads, before the ONLY network write.
  validatePlan(plan);const finalGate=releaseGate();assert.equal(finalGate.status,'EVIDENCE_READY_FOR_PRINCIPAL_REVIEW');assert.equal(finalGate.sourceSha256,plan.sourceSha256);assert.equal(finalGate.evidenceSha256,plan.evidenceSha256);
- assert.equal((await canonicalAdmin(provider,'latest')).toLowerCase(),plan.admin,'Root changed immediately before broadcast');
  const tx=await signer.sendTransaction(txRequest);
  save('.local/deployment-broadcast.json',{chainId:1,transactionHash:tx.hash,predictedAddress:plan.predictedAddress,creationCodeHash:plan.creationCodeHash,status:'BROADCAST_NOT_FINALIZED'});
  console.log('Broadcast:',tx.hash,'Do not repeat this command if confirmation is interrupted.');

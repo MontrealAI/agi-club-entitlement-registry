@@ -1,22 +1,106 @@
 import { deploymentMessage, validatePlan } from './shared/deployment-policy.mjs';
-const $=id=>document.getElementById(id);let plan=null;
-$('plan').addEventListener('change',async()=>{plan=null;$('sign').disabled=true;$('consent').checked=false;try{const f=$('plan').files[0];if(!f||f.size>20000)throw Error('Invalid plan file');plan=validatePlan(JSON.parse(await f.text()));$('details').textContent=JSON.stringify(plan,null,2);$('status').textContent='Review every field before signing.';}catch(e){$('details').textContent='';$('status').textContent=e.message;}});
-$('consent').addEventListener('change',()=>{$('sign').disabled=!plan||!$('consent').checked;});
-$('sign').addEventListener('click',async()=>{
- $('sign').disabled=true;try{
- if(location.protocol!=='https:' && location.hostname!=='localhost' && location.hostname!=='127.0.0.1')throw Error('Use the official HTTPS origin, or a trusted local server.');
- if(!globalThis.ethers||!window.ethereum)throw Error('Open the built site using a compatible wallet-enabled browser');
- const e=globalThis.ethers,p=new e.BrowserProvider(window.ethereum);await p.send('eth_requestAccounts',[]);if((await p.getNetwork()).chainId!==1n)throw Error('Ethereum mainnet required');
- validatePlan(plan);const account=await(await p.getSigner()).getAddress();if(account.toLowerCase()!==plan.admin)throw Error('Connect the exact current root-holder account, not an individual Safe signer');
- const ens=new e.Contract('0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e',['function owner(bytes32) view returns(address)'],p);let owner=await ens.owner(e.namehash('club.agi.eth'));
- if(owner.toLowerCase()==='0xd4416b13d2b3a9abae7acd5d6c2bbdbe25686401'){
- const w=new e.Contract(owner,['function getData(uint256) view returns(address,uint32,uint64)'],p),r=await w.getData(BigInt(e.namehash('club.agi.eth'))),b=await p.getBlock('latest');
- owner=r[0];if(r[2]<BigInt(b.timestamp)&&(r[1]&65536n)!==0n)throw Error('Root ownership expired');}
- if(owner.toLowerCase()!==plan.admin)throw Error('Root holder changed; prepare a new plan');
- const message=deploymentMessage(plan),signature=await(await p.getSigner()).signMessage(message);validatePlan(plan);
- const code=await p.getCode(account);if(code==='0x'){if(e.verifyMessage(message,signature).toLowerCase()!==plan.admin)throw Error('Invalid approval signature');}
- else{const w=new e.Contract(account,['function isValidSignature(bytes32,bytes) view returns(bytes4)'],p);if(await w.isValidSignature(e.hashMessage(message),signature)!=='0x1626ba7e')throw Error('Contract-wallet approval not valid yet');}
- const url=URL.createObjectURL(new Blob([JSON.stringify({plan,message,signature},null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='deployment-approval.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);
- $('status').textContent='Signed approval downloaded. No deployment transaction was sent. This approval expires at '+new Date(plan.expiresAt*1000).toLocaleString();
- }catch(e){$('status').textContent=e.shortMessage||e.message;}finally{$('sign').disabled=!plan||!$('consent').checked;}
+const $ = id => document.getElementById(id);
+let plan = null, selection = 0, epoch = 0, busy = false, observedWallet;
+const downloads = new Set();
+const updateButton = () => { $('sign').disabled = busy || !plan || !$('consent').checked; };
+function invalidate(message) {
+  epoch++; $('consent').checked = false; updateButton();
+  $('status').textContent = message;
+}
+function observeWallet(wallet) {
+  if (!wallet || wallet === observedWallet) return;
+  observedWallet = wallet;
+  for (const event of ['accountsChanged', 'chainChanged', 'disconnect']) {
+    wallet.on?.(event, () => {
+      if (wallet === observedWallet) invalidate('Wallet changed. Reject any pending approval prompt, then review the plan again.');
+    });
+  }
+}
+observeWallet(window.ethereum);
+for (const event of ['pagehide', 'pageshow']) window.addEventListener(event, () => {
+  selection++; plan = null; $('plan').value = ''; $('details').textContent = 'No plan loaded.';
+  for (const url of downloads) URL.revokeObjectURL(url);
+  downloads.clear();
+  invalidate('Load and review the plan again before signing.');
+});
+$('plan').addEventListener('change', async () => {
+  const selected = ++selection;
+  plan = null; $('details').textContent = '';
+  invalidate('Loading plan…');
+  try {
+    const file = $('plan').files[0];
+    if (!file || file.size > 20000) throw Error('Invalid plan file');
+    const value = JSON.parse(await file.text());
+    if (selected !== selection) return;
+    plan = Object.freeze({ ...validatePlan(value) });
+    $('details').textContent = JSON.stringify(plan, null, 2);
+    $('status').textContent = 'Review every field before signing.';
+  } catch {
+    if (selected === selection) $('status').textContent = 'Invalid or expired plan. Prepare a fresh plan and load that file.';
+  } finally { updateButton(); }
+});
+$('consent').addEventListener('change', () => {
+  if (!$('consent').checked) invalidate('Approval cancelled. Reject any pending wallet prompt, then review the plan again.');
+  updateButton();
+});
+$('sign').addEventListener('click', async () => {
+  if (busy || !plan || !$('consent').checked) return;
+  const reviewed = plan, attempt = epoch, wallet = window.ethereum;
+  let provider;
+  busy = true; updateButton();
+  const current = () => {
+    if (attempt !== epoch || plan !== reviewed || !$('consent').checked || wallet !== window.ethereum) throw Error('Approval cancelled');
+    validatePlan(reviewed);
+  };
+  try {
+    if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') throw Error('Use a trusted HTTPS origin or local server');
+    const e = globalThis.ethers;
+    if (!e || !wallet) throw Error('Compatible wallet required');
+    observeWallet(wallet);
+    provider = new e.BrowserProvider(wallet, undefined, { cacheTimeout: -1 });
+    await provider.send('eth_requestAccounts', []); current();
+    const checkWallet = async () => {
+      const chain = await wallet.request({ method: 'eth_chainId' }); current();
+      if (BigInt(chain) !== 1n) throw Error('Ethereum mainnet required');
+      const accounts = await wallet.request({ method: 'eth_accounts' }); current();
+      if (!Array.isArray(accounts) || accounts[0]?.toLowerCase() !== reviewed.admin) throw Error('Root-holder account required');
+    };
+    const checkOwner = async () => {
+      const node = e.namehash('club.agi.eth');
+      const ens = new e.Contract('0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e', ['function owner(bytes32) view returns(address)'], provider);
+      let owner = await ens.owner(node); current();
+      if (owner.toLowerCase() === '0xd4416b13d2b3a9abae7acd5d6c2bbdbe25686401') {
+        const wrapper = new e.Contract(owner, ['function getData(uint256) view returns(address,uint32,uint64)'], provider);
+        const data = await wrapper.getData(BigInt(node)); current();
+        const block = await provider.getBlock('latest'); current();
+        if (!block || (data[2] < BigInt(block.timestamp) && (data[1] & 65536n) !== 0n)) throw Error('Root ownership unavailable');
+        owner = data[0];
+      }
+      if (owner.toLowerCase() !== reviewed.admin) throw Error('Root holder changed');
+    };
+    await checkWallet(); await checkOwner();
+    const signer = await provider.getSigner(reviewed.admin); current();
+    await checkWallet(); current();
+    const message = deploymentMessage(reviewed);
+    $('status').textContent = 'Check the exact plan in your wallet before approving.';
+    const signature = await signer.signMessage(message); current();
+    const code = await provider.getCode(reviewed.admin); current();
+    if (code === '0x') {
+      if (e.verifyMessage(message, signature).toLowerCase() !== reviewed.admin) throw Error('Invalid approval signature');
+    } else {
+      const verifier = new e.Contract(reviewed.admin, ['function isValidSignature(bytes32,bytes) view returns(bytes4)'], provider);
+      if (await verifier.isValidSignature(e.hashMessage(message), signature) !== '0x1626ba7e') throw Error('Contract-wallet approval rejected');
+      current();
+    }
+    await checkOwner(); await checkWallet(); current();
+    const url = URL.createObjectURL(new Blob([JSON.stringify({ plan: reviewed, message, signature }, null, 2)], { type: 'application/json' }));
+    downloads.add(url);
+    const a = document.createElement('a'); a.href = url; a.download = 'deployment-approval.json'; a.click();
+    setTimeout(() => { URL.revokeObjectURL(url); downloads.delete(url); }, 10000);
+    invalidate('Signed approval downloaded. No deployment transaction was sent. This approval expires at ' + new Date(reviewed.expiresAt * 1000).toLocaleString());
+  } catch {
+    if (attempt === epoch) invalidate('Approval stopped. Check mainnet, the current root-holder account and plan expiry, then review and try again. For a Safe, use its actual account and completed signature workflow.');
+  } finally {
+    try { provider?.destroy(); } finally { busy = false; updateButton(); }
+  }
 });
