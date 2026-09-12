@@ -5,7 +5,7 @@ import vm from 'node:vm';
 import {Readable} from 'node:stream';
 import {readCatalogPage,requestPolicy} from '../frontend/member-catalog.mjs';
 import {membershipName,formatRequestEmail,parseRequestEmail,MAX_EMAIL_BYTES} from '../shared/request-email.mjs';
-import {validatePolicy,verifyTicketRequest,validatePacket,requestMessage,REGISTRY_VERSION} from '../shared/ticket-request.mjs';
+import {validatePolicy,verifyEntitlementRequest,validatePacket,requestMessage,REGISTRY_VERSION} from '../shared/entitlement-request.mjs';
 import {defaultValue} from '../frontend/etherscan-tools.mjs';
 import {readReceipt} from '../tools/read-receipt.mjs';
 import {fixture,NOW} from './fixtures.mjs';
@@ -63,9 +63,9 @@ test('Catalogue mode and page bounds fail closed',async()=>{
 });
 test('Registry-mode policy accepts only a current authenticated claim on the pinned registry',async()=>{
   const f=await fixture(),policy={...f.policy,entitlementMode:'registry',entitlements:[]};
-  const result=await verifyTicketRequest(f.packet,policy,f.io,{now:NOW});assert.equal(result.status,'VERIFIED_REQUEST_NOT_A_TICKET');
-  await assert.rejects(()=>verifyTicketRequest(f.packet,policy,{...f.io,claim:async()=>({status:0,claimant:f.packet.payload.claimant,revision:1})},{now:NOW}),{code:'CLAIM_NOT_CURRENT'});
-  await assert.rejects(()=>verifyTicketRequest(f.packet,{...policy,registryCodeHash:id('different')},f.io,{now:NOW}),{code:'WRONG_REGISTRY'});
+  const result=await verifyEntitlementRequest(f.packet,policy,f.io,{now:NOW});assert.equal(result.status,'VERIFIED_REQUEST_NOT_FULFILLED');
+  await assert.rejects(()=>verifyEntitlementRequest(f.packet,policy,{...f.io,claim:async()=>({status:0,claimant:f.packet.payload.claimant,revision:1})},{now:NOW}),{code:'CLAIM_NOT_CURRENT'});
+  await assert.rejects(()=>verifyEntitlementRequest(f.packet,{...policy,registryCodeHash:id('different')},f.io,{now:NOW}),{code:'WRONG_REGISTRY'});
 });
 test('Empty legacy policy and unknown or ambiguous catalogue policy cannot authorize requests',async()=>{
   const f=await fixture();
@@ -75,7 +75,7 @@ test('Public configuration explicitly selects registry mode without borrowing ID
   const c={...cfg,registryAddress:'0x'+'11'.repeat(20),registryCodeHash:id('code'),expectedOrigin:'https://claims.example.org'};
   const p=requestPolicy(c,{id},'2.1.1');assert.equal(p.entitlementMode,'registry');assert.deepEqual(p.entitlements,[]);validatePolicy(p);
 });
-test('Email body visibly includes the full subname and preserves the signed v3 packet',async()=>{
+test('Email body visibly includes the full subname and preserves the signed v4 packet',async()=>{
   const f=await fixture(),body=formatRequestEmail(f.packet);
   assert(body.includes('AGI Club identity / Identité AGI Club: '+f.packet.payload.membershipLabel+'.club.agi.eth'));
   assert.deepEqual(parseRequestEmail(body),f.packet);assert.deepEqual(parseRequestEmail(JSON.stringify(f.packet)),f.packet);

@@ -7,7 +7,7 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {readReceipt} from '../tools/read-receipt.mjs';
-import {MAX_PACKET_BYTES,preparePacket,validatePacket} from '../shared/ticket-request.mjs';
+import {MAX_PACKET_BYTES,preparePacket,validatePacket} from '../shared/entitlement-request.mjs';
 import {MAX_EMAIL_BYTES} from '../shared/request-email.mjs';
 import {fixture,NOW} from './fixtures.mjs';
 import {signMessage} from './crypto-reference.mjs';
@@ -51,7 +51,7 @@ test('The operator CLI reports input failures without exposing receipt text or c
     writeFileSync(policyFile,JSON.stringify(f.policy));
     const env={...process.env};delete env.RPC_URL;
     for(const [input,code] of [[Buffer.from([34,0xc3,0x28,34]),'INVALID_UTF8'],[Buffer.from('{"name":"FICTITIOUS PRIVATE INPUT",bad}'),'INVALID_JSON']]) {
-      const run=spawnSync(process.execPath,[fileURLToPath(new URL('../tools/verify_ticket_request.mjs',import.meta.url)),policyFile],{input,env,encoding:'utf8',timeout:10000});
+      const run=spawnSync(process.execPath,[fileURLToPath(new URL('../tools/verify_entitlement_request.mjs',import.meta.url)),policyFile],{input,env,encoding:'utf8',timeout:10000});
       assert.equal(run.status,1);assert.equal(run.stdout,'');
       const result=JSON.parse(run.stderr.split('\n').find(line=>line.startsWith('{')));
       assert.equal(result.status,'NOT_VERIFIED');assert.equal(result.error,code);

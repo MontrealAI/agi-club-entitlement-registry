@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';import {randomBytes} from 'node:crypto';
 import {network,artifacts} from 'hardhat';import {ethers} from 'ethers';
 import {ENS,WRAPPER,ROOT,PROD,deploy,receipt,save,checkProduction} from './runtime.mjs';import {sourceDigest} from './source-digest.mjs';
-import {SCHEMA,REGISTRY_VERSION,requestMessage,preparePacket,verifyTicketRequest} from '../shared/ticket-request.mjs';
+import {SCHEMA,REGISTRY_VERSION,requestMessage,preparePacket,verifyEntitlementRequest} from '../shared/entitlement-request.mjs';
 import {createEthersIO} from '../shared/ethers-adapter.mjs';
 import {revertData} from '../test/revert-data.mjs';
 import {formatRequestEmail,parseRequestEmail,membershipName} from '../shared/request-email.mjs';
@@ -24,12 +24,12 @@ try {
  const payload={schema:SCHEMA,origin:policy.origin,chainId:1,registry:policy.registry,entitlementId:id,membershipLabel:'demo',membershipNode:ethers.namehash('demo.club.agi.eth'),claimant:(await member.getAddress()).toLowerCase(),claimRevision:1,issuedAt:now,expiresAt:now+3600,nonce:'0x'+randomBytes(16).toString('hex')};
  const prepared=await preparePacket(payload,{name:'Membre Fictif',email:'member@example.org'}),message=prepared.message,packet={...prepared,signature:await member.signMessage(message)},io=createEthersIO(ethers,provider,policy.registry);
  async function check(name,fn){await fn();r.results.push({name,status:'PASS'});}
- await check('Full local claim and real ethers receipt verification without a new transaction',async()=>{const block=await provider.getBlockNumber();assert.equal((await verifyTicketRequest(packet,policy,io)).status,'VERIFIED_REQUEST_NOT_A_TICKET');assert.equal(await provider.getBlockNumber(),block);});
- await check('Registry catalogue and full-subname email verify with genuine ethers without per-event site configuration',async()=>{
+ await check('Full local claim and real ethers receipt verification without a new transaction',async()=>{const block=await provider.getBlockNumber();assert.equal((await verifyEntitlementRequest(packet,policy,io)).status,'VERIFIED_REQUEST_NOT_FULFILLED');assert.equal(await provider.getBlockNumber(),block);});
+ await check('Registry catalogue and full-subname email verify with genuine ethers without per-benefit site configuration',async()=>{
   const config={entitlementMode:'registry',allowedEntitlements:[]},page=await readCatalogPage(c,config,ethers);
   assert.deepEqual(page.rows.map(row=>row.id),[id]);
   const body=formatRequestEmail(packet);assert(body.includes('demo.club.agi.eth'));
-  const verified=await verifyTicketRequest(parseRequestEmail(body),{...policy,entitlementMode:'registry',entitlements:[]},io);
+  const verified=await verifyEntitlementRequest(parseRequestEmail(body),{...policy,entitlementMode:'registry',entitlements:[]},io);
   assert.equal(membershipName(verified.payload.membershipLabel),'demo.club.agi.eth');
   const secondId=ethers.id('SECOND_LOCAL_JOURNEY_ONLY');await receipt(c.connect(admin).createEntitlement(secondId,ethers.id('PERK'),1,0,0,1,ethers.ZeroHash));
   await receipt(c.connect(admin).setDescriptor(secondId,'Titre modifié','Changed title','',ethers.ZeroHash));
@@ -43,16 +43,40 @@ try {
    assert(!encoded.includes(value.toLowerCase()));assert(!encoded.includes(Buffer.from(value).toString('hex')));
   }
  });
- for(const [field,value]of [['email','intruder@example.org'],['name','Other'],['claimRevision',2],['registry','0x'+'12'.repeat(20)],['origin','https://evil.example.org']])await check('Unsigned '+field+' tampering rejected',async()=>{const p=structuredClone(packet);if(field==='name'||field==='email')p.recipient[field]=value;else p.payload[field]=value;await assert.rejects(()=>verifyTicketRequest(p,policy,io));});
- await check('Wrong EOA signature rejected even with intact payload',async()=>{const p={...packet,signature:await attacker.signMessage(message)};await assert.rejects(()=>verifyTicketRequest(p,policy,io),e=>e.code==='INVALID_SIGNATURE');});
+ for(const [field,value]of [['email','intruder@example.org'],['name','Other'],['claimRevision',2],['registry','0x'+'12'.repeat(20)],['origin','https://evil.example.org']])await check('Unsigned '+field+' tampering rejected',async()=>{const p=structuredClone(packet);if(field==='name'||field==='email')p.recipient[field]=value;else p.payload[field]=value;await assert.rejects(()=>verifyEntitlementRequest(p,policy,io));});
+ await check('Wrong EOA signature rejected even with intact payload',async()=>{const p={...packet,signature:await attacker.signMessage(message)};await assert.rejects(()=>verifyEntitlementRequest(p,policy,io),e=>e.code==='INVALID_SIGNATURE');});
  await check('Actual deployed ERC-1271 fixture accepts signer, then revocation rejects it',async()=>{
   const w=await deploy(artifacts,deployer,'QualificationWallet',[await member.getAddress()]),node=ethers.namehash('contractdemo.club.agi.eth');await receipt(ens.setOwner(node,await w.getAddress()));
   await receipt(w.connect(member).execute(await c.getAddress(),c.interface.encodeFunctionData('claim',[id,'contractdemo'])));
   const p={...payload,membershipLabel:'contractdemo',membershipNode:node,claimant:(await w.getAddress()).toLowerCase(),nonce:'0x'+randomBytes(16).toString('hex')},up=await preparePacket(p,{name:'Contract Wallet Test',email:'contract@example.org'}),m=up.message,pk={...up,signature:await member.signMessage(m)};
-  assert.equal((await verifyTicketRequest(pk,policy,io)).status,'VERIFIED_REQUEST_NOT_A_TICKET');
-  await receipt(w.connect(member).setSignaturesEnabled(false));await assert.rejects(()=>verifyTicketRequest(pk,policy,io),e=>e.code==='INVALID_SIGNATURE');
+  assert.equal((await verifyEntitlementRequest(pk,policy,io)).status,'VERIFIED_REQUEST_NOT_FULFILLED');
+  await receipt(w.connect(member).setSignaturesEnabled(false));await assert.rejects(()=>verifyEntitlementRequest(pk,policy,io),e=>e.code==='INVALID_SIGNATURE');
  });
- await check('Actual claim revocation blocks already signed packet',async()=>{await receipt(c.connect(admin).revokeClaim(id,'demo',ethers.id('LOCAL_TEST')));await assert.rejects(()=>verifyTicketRequest(packet,policy,io),e=>e.code==='CLAIM_NOT_CURRENT');});
+ for(const [category,contact] of [
+  ['FICTITIOUS_RESOURCE',{name:'',email:''}],['FICTITIOUS_ACCESS',{name:'',email:''}],
+  ['FICTITIOUS_SERVICE',{name:'',email:'service@example.org'}],['FICTITIOUS_PRIORITY',{name:'',email:''}],
+  ['FICTITIOUS_RESERVATION',{name:'Fictitious Recipient',email:''}],['FICTITIOUS_PHYSICAL_PERK',{name:'Fictitious Recipient',email:'perk@example.org'}],
+ ])await check('General '+category+' claim and genuine signed fulfillment request',async()=>{
+  const benefit=ethers.id(category);await receipt(c.connect(admin).createEntitlement(benefit,ethers.id(category+'_CATEGORY'),2,0,0,1,ethers.ZeroHash));
+  await receipt(c.connect(admin).setDescriptor(benefit,'Avantage fictif','Fictitious benefit','',ethers.ZeroHash));
+  await receipt(c.connect(admin).setEntitlementState(benefit,2));await receipt(c.connect(member).claim(benefit,'demo'));
+  const scope={...payload,entitlementId:benefit,nonce:'0x'+randomBytes(16).toString('hex')},up=await preparePacket(scope,contact),request={...up,signature:await member.signMessage(up.message)};
+  const trusted={...policy,entitlementMode:'registry',entitlements:[]},v=await verifyEntitlementRequest(request,trusted,io);
+  assert.deepEqual(v.recipient,contact);assert.equal(v.fulfillmentConfirmed,false);assert.equal(v.payload.entitlementId,benefit);
+  // Closing the claim window is not access expiry; independent services must enforce their own terms.
+  await receipt(c.connect(admin).setEntitlementState(benefit,3));assert.equal((await verifyEntitlementRequest(request,trusted,io)).claimKey,v.claimKey);
+  await receipt(c.connect(admin).setEntitlementState(benefit,2));await assert.rejects(()=>c.connect(member).claim.staticCall(benefit,'demo'));
+  const renewed=await preparePacket({...scope,nonce:'0x'+randomBytes(16).toString('hex')},contact);
+  assert.equal((await verifyEntitlementRequest({...renewed,signature:await member.signMessage(renewed.message)},trusted,io)).claimKey,v.claimKey);
+  await receipt(c.connect(admin).revokeClaim(benefit,'demo',ethers.id('FICTITIOUS_CORRECTION')));
+  await assert.rejects(()=>verifyEntitlementRequest(request,trusted,io),e=>e.code==='CLAIM_NOT_CURRENT');
+ });
+ await check('Periodic allocations use distinct IDs and never reset an earlier claim',async()=>{
+  const first=ethers.id('FICTITIOUS_PERIOD_ONE'),second=ethers.id('FICTITIOUS_PERIOD_TWO');
+  for(const benefit of [first,second]){await receipt(c.connect(admin).createEntitlement(benefit,ethers.id('FICTITIOUS_ALLOWANCE'),0,0,0,2,ethers.ZeroHash));await receipt(c.connect(member).claim(benefit,'demo'));assert.equal((await c.claimRecord(benefit,payload.membershipNode))[5],1n);}
+  assert.notEqual(first,second);await assert.rejects(()=>c.connect(member).claim.staticCall(first,'demo'));
+ });
+ await check('Actual claim revocation blocks already signed packet',async()=>{await receipt(c.connect(admin).revokeClaim(id,'demo',ethers.id('LOCAL_TEST')));await assert.rejects(()=>verifyEntitlementRequest(packet,policy,io),e=>e.code==='CLAIM_NOT_CURRENT');});
  await check('Production constructor gives the designated ENS holder all administration and the disposable deployer none',async()=>{
   // This address is the operator's expected initial admin. Only the LOCAL ENS model is modified here.
   // This proves contract behavior, not live ENS ownership or real wallet control.
@@ -87,6 +111,6 @@ try {
   const mined=await receipt(sent);assert.equal(mined.contractAddress,ethers.getCreateAddress({from,nonce:0}));
   await checkProduction(provider,mined.contractAddress,await admin.getAddress(),policy.registryCodeHash,mined.blockNumber);
  });
- r.status='PASS';r.passed=r.results.length;r.sourceSha256=sourceDigest().sourceSha256;r.ticketIssued=false;r.externalEmailSent=false;
+ r.status='PASS';r.passed=r.results.length;r.sourceSha256=sourceDigest().sourceSha256;r.fulfillmentConfirmed=false;r.externalEmailSent=false;
 } catch(e){r.status='FAIL_OR_BLOCKED';r.error=e.shortMessage||e.message;process.exitCode=1;}
 finally{save('qualification/local-journey.json',r);console.log(JSON.stringify(r,null,2));provider?.destroy();if(connection)await connection.close();}

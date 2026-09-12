@@ -16,7 +16,7 @@ This release **removes** the optional relay, contact database, automatic sending
 | Browser → Ethereum reads | Registry/claim identifiers; ERC-1271 receives a message digest/signature only. No recipient object is passed to chain IO. |
 | Browser → clipboard | Complete private receipt, **only after a click and an explicit acknowledgement**. The application clears its references after successful copying. |
 | Member's mail application → organizer | Private receipt and contacts, when the member sends them. A mail application/provider may retain drafts even before Send. |
-| Organizer → Eventbrite | Recipient information required for manual ticket issuance. This is outside the webpage. |
+| Operator → chosen fulfillment provider, if needed | Only recipient information necessary for the chosen benefit. This is outside the webpage. |
 
 The receipt's signature authenticates a binding. **It does not encrypt the receipt.** A published receipt would reveal the contacts and association with a wallet. Keep it private.
 
@@ -38,7 +38,7 @@ Qualification exercises both pages in a real browser with fictitious receipts an
 
 ## No unnecessary disclosure
 
-The page does not prefill the email body. Its mailto link contains only the public organizer mailbox and a fixed subject. The user explicitly copies, pastes and sends. The page cannot verify sending, delivery, mailbox control or ticket issuance. “Verified request” is not “message sent.”
+The page does not prefill the email body. Its mailto link contains only the public organizer mailbox and a fixed subject. The user explicitly copies, pastes and sends. The page cannot verify sending, delivery, mailbox control or benefit fulfillment. “Verified request” is not “message sent.”
 
 ## Public information and metadata
 
@@ -52,13 +52,17 @@ Static hosting and IPFS are not automatic confidentiality guarantees. A compromi
 
 ## Organizer handling
 
-Use a private mailbox and restricted Eventbrite account. Keep a separate private issuance register keyed by chain + registry + entitlement + membership node. Do not treat a new nonce, new email or new revision as another ticket. A revoke on Ethereum does not revoke an Eventbrite order. Define mailbox/Eventbrite retention and deletion separately; this code does not automate or certify those policies.
+Use a private mailbox and restrict access to any fulfillment provider. Keep a separate private fulfillment register keyed by chain + registry + entitlement + membership node. A new nonce, email or revision is not another allocation. Revocation on Ethereum does not undo external delivery or access. Define retention and deletion for the mailbox, register and provider separately; this code does not automate or certify those policies.
 
 ## Suggested participant wording
 
-> Votre nom et votre courriel ne sont ni sauvegardés par cette page ni écrits sur Ethereum. Ils restent temporairement dans votre navigateur. Le wallet signe une empreinte salée, sans recevoir ces coordonnées en clair. Vous choisissez de copier votre demande dans votre propre messagerie ; cette copie et les brouillons peuvent être conservés par votre appareil ou votre fournisseur. Après votre envoi, l’organisateur et Eventbrite les traitent pour émettre le billet. Votre wallet et votre claim Ethereum sont publics.
+> Votre nom et votre courriel ne sont ni sauvegardés par cette page ni écrits sur Ethereum. Ils restent temporairement dans votre navigateur. Le wallet signe une empreinte salée, sans recevoir ces coordonnées en clair. Vous choisissez de copier votre demande dans votre propre messagerie ; cette copie et les brouillons peuvent être conservés par votre appareil ou votre fournisseur. Après votre envoi, le Club et, si nécessaire, le prestataire choisi traitent les coordonnées fournies pour cet avantage. Votre wallet et votre claim Ethereum sont publics.
 ## Legal acknowledgement and external responsibilities
 
 The member page's reading acknowledgement is volatile and starts unchecked. It is cleared with the private fields, including inactivity, navigation and wallet changes. It is not included in a receipt or wallet signature, and creates no persistent acceptance record. Withdrawal invalidates an outstanding claim preparation or private request; it cannot cancel a prompt already delivered to the wallet or undo a submitted transaction. Reject an outstanding prompt in the wallet itself.
 
-The static app's zero name/email persistence does not describe the organizer's email, ticket ledger, Eventbrite records, device clipboard or hosting access logs. Before a live service, the operator must complete the [legal/privacy release review](docs/LEGAL_RELEASE_REVIEW.md), publish the actual responsible privacy title/contact and applicable processing/retention information, and arrange requests, corrections, deletion and incident handling for the systems it controls. The existing public support mailbox is president@montreal.ai; this repository does not certify a privacy appointment or third-party retention policy. Do not submit member details in GitHub issues or review evidence.
+The static app's zero name/email persistence does not describe the organizer's email, fulfillment ledger, fulfillment-provider records, device clipboard or hosting access logs. Before a live service, the operator must complete the [legal/privacy release review](docs/LEGAL_RELEASE_REVIEW.md), publish the actual responsible privacy title/contact and applicable processing/retention information, and arrange requests, corrections, deletion and incident handling for the systems it controls. The existing public support mailbox is president@montreal.ai; this repository does not certify a privacy appointment or third-party retention policy. Do not submit member details in GitHub issues or review evidence.
+
+## Optional contact details
+
+Claims require no name or email. The general `/4` private request accepts either contact field, both or neither. Omitted values are empty strings covered by the same salted commitment. Never collect contacts merely to complete a claim. A signed name is not a verified legal identity; a supplied email is not proof of mailbox control. An emailed receipt still reveals its sender’s mailbox even if both contact fields are empty. Use the separate approved privacy process for information this form intentionally does not collect, such as a necessary delivery address.

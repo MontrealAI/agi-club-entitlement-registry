@@ -57,8 +57,8 @@ export const PAGE_MESSAGES = Object.freeze(Object.fromEntries(Object.entries({
     "en": "Your AGI Club name. Your wallet. Your choice."
   },
   "m014": {
-    "fr": "Aperçu du registre · 2.3.0-rc.1.",
-    "en": "Registry preview · 2.3.0-rc.1."
+    "fr": "Aperçu du registre · 2.4.0-rc.1.",
+    "en": "Registry preview · 2.4.0-rc.1."
   },
   "m015": {
     "fr": "Aucun déploiement n’est fourni. La qualification mainnet, les revues et la configuration restent nécessaires avant l’ouverture. Une démonstration ne crée aucun droit réel.",
@@ -141,8 +141,8 @@ export const PAGE_MESSAGES = Object.freeze(Object.fromEntries(Object.entries({
     "en": "Understand privacy and its limits"
   },
   "m035": {
-    "fr": "Aucun événement préconfiguré. Un claim n’est pas un billet : l’organisateur traite séparément toute demande de billet prévue par l’avantage.",
-    "en": "No event is preconfigured. A claim is not a ticket: the organizer separately handles any ticket request offered by the benefit."
+    "fr": "Aucun avantage préconfiguré. Accès, ressources, services, réservations ou autres privilèges : chaque avantage précise ses conditions et son mode de mise à disposition.",
+    "en": "No benefit is preconfigured. Access, resources, services, reservations or other privileges: each benefit sets out its terms and fulfillment method."
   },
   "m036": {
     "fr": "Utiliser Etherscan",
@@ -177,8 +177,8 @@ export const PAGE_MESSAGES = Object.freeze(Object.fromEntries(Object.entries({
     "en": ", Ethereum mainnet."
   },
   "m044": {
-    "fr": "Code du contrat 2.1.1 · Dépôt 2.3.0-rc.1 · Protocole de demande /3",
-    "en": "Contract code 2.1.1 · Repository 2.3.0-rc.1 · Request protocol /3"
+    "fr": "Code du contrat 2.1.1 · Dépôt 2.4.0-rc.1 · Protocole de demande /4",
+    "en": "Contract code 2.1.1 · Repository 2.4.0-rc.1 · Request protocol /4"
   },
   "m045": {
     "fr": "Les wallets et claims sont publics. Le code source publié n’est pas un service déployé.",
@@ -213,8 +213,8 @@ export const PAGE_MESSAGES = Object.freeze(Object.fromEntries(Object.entries({
     "en": "Zero name or email persistence in the application. These contact details are never written to Ethereum. You decide what to send."
   },
   "m053": {
-    "fr": "NON CONFIGURÉ PAR DÉFAUT. Aucun droit ni billet ne sont créés par une démonstration.",
-    "en": "UNCONFIGURED BY DEFAULT. A demonstration creates no entitlement or ticket."
+    "fr": "NON CONFIGURÉ PAR DÉFAUT. Une démonstration ne crée aucun droit et ne fournit aucun avantage.",
+    "en": "UNCONFIGURED BY DEFAULT. A demonstration creates no entitlement and provides no benefit."
   },
   "m054": {
     "fr": "Connecter le portefeuille",
@@ -241,8 +241,8 @@ export const PAGE_MESSAGES = Object.freeze(Object.fromEntries(Object.entries({
     "en": "Claim a benefit"
   },
   "m060": {
-    "fr": "Préparer ma demande",
-    "en": "Prepare my request"
+    "fr": "Demande privée, si nécessaire",
+    "en": "Private request, if needed"
   },
   "m061": {
     "fr": "Envoyer moi-même",
@@ -261,8 +261,8 @@ export const PAGE_MESSAGES = Object.freeze(Object.fromEntries(Object.entries({
     "en": "No benefits loaded"
   },
   "m065": {
-    "fr": "Aucun événement préconfiguré. Le catalogue sera lu sur le registre officiel.",
-    "en": "No event is preconfigured. The catalogue will be read from the official registry."
+    "fr": "Aucun avantage préconfiguré. Le catalogue sera lu sur le registre officiel.",
+    "en": "No benefit is preconfigured. The catalogue will be read from the official registry."
   },
   "m066": {
     "fr": "Actualiser le catalogue",
@@ -297,8 +297,8 @@ export const PAGE_MESSAGES = Object.freeze(Object.fromEntries(Object.entries({
     "en": "One transaction, if the entitlement has not already been granted."
   },
   "m074": {
-    "fr": "Le claim ne constitue pas un billet ni une confirmation de prestation. Vérifiez les conditions de l’avantage et sa disponibilité avant toute dépense. Ce registre ne promet aucun rendement ni avantage à vie. Effacer la page ne ferme pas une demande déjà ouverte dans votre wallet : refusez-la aussi dans le wallet pour l’annuler.",
-    "en": "A claim is neither a ticket nor confirmation of a service. Check the benefit’s terms and availability before spending anything. This registry promises no returns or lifetime benefits. Clearing the page does not close a request already open in your wallet: reject it in the wallet as well to cancel it."
+    "fr": "Le claim enregistre un droit ; il ne confirme ni livraison, ni accès, ni réservation. Lisez les conditions et la disponibilité de l’avantage avant toute dépense. Aucun rendement ni avantage à vie n’est promis. Effacer la page ne ferme pas une demande déjà ouverte dans le wallet : refusez-la aussi dans celui-ci.",
+    "en": "A claim records an entitlement; it does not confirm delivery, access or a reservation. Read the benefit’s terms and availability before spending anything. No returns or lifetime benefits are promised. Clearing the page does not close a request already open in your wallet: reject it there too."
   },
   "m075": {
     "fr": "J’ai lu les",
@@ -321,36 +321,36 @@ export const PAGE_MESSAGES = Object.freeze(Object.fromEntries(Object.entries({
     "en": "Each benefit has its own terms. Ethereum fees are separate, variable and may apply even if the transaction fails. The claim is public. Your name and email are not included in this transaction. A later membership transfer does not create a second entitlement."
   },
   "m080": {
-    "fr": "Préparer ma demande privée",
-    "en": "Prepare my private request"
+    "fr": "Demande privée, si nécessaire",
+    "en": "Private request, if needed"
   },
   "m081": {
-    "fr": "Ces champs ne sont ni enregistrés ni soumis à un serveur.",
-    "en": "These fields are neither saved nor submitted to a server."
+    "fr": "Si l’avantage nécessite une intervention du Club, préparez cette demande. Sinon, votre claim suffit pour l’étape du registre : suivez les instructions publiées pour utiliser l’avantage. Aucun nom ni courriel n’est obligatoire ici.",
+    "en": "If the benefit needs the Club’s assistance, prepare this request. Otherwise, your claim completes the registry step: follow the published instructions to use the benefit. Neither name nor email is required here."
   },
   "m082": {
-    "fr": "Coordonnées temporaires",
-    "en": "Temporary contact details"
+    "fr": "Coordonnées facultatives — uniquement si nécessaires",
+    "en": "Optional contact details — only if needed"
   },
   "m083": {
-    "fr": "Nom pour la demande de billet (si proposé)",
-    "en": "Name for the ticket request (if offered)"
+    "fr": "Nom pour cette demande — facultatif",
+    "en": "Name for this request — optional"
   },
   "m084": {
-    "fr": "Courriel pour cette demande",
-    "en": "Email for this request"
+    "fr": "Courriel pour cette demande — facultatif",
+    "en": "Email for this request — optional"
   },
   "m085": {
-    "fr": "Je souhaite préparer une demande signée pour ces coordonnées. Si je l’envoie, l’organisateur et, le cas échéant, son service de billetterie les traiteront pour le billet demandé. Je l’enverrai moi-même.",
-    "en": "I wish to prepare a signed request for these contact details. If I send it, the organizer and, where applicable, its ticketing service will process them for the requested ticket. I will send it myself."
+    "fr": "Je souhaite préparer cette demande privée. Si j’ajoute des coordonnées et l’envoie, le Club et, si nécessaire, son prestataire les traiteront pour cet avantage, selon les conditions publiées. Je l’enverrai moi-même.",
+    "en": "I wish to prepare this private request. If I add contact details and send it, the Club and, if needed, its provider will process them for this benefit under the published terms. I will send it myself."
   },
   "m086": {
     "fr": "Signer ma demande privée",
     "en": "Sign my private request"
   },
   "m087": {
-    "fr": "Le wallet reçoit une empreinte salée de vos coordonnées, pas leur texte. Signature sans gas ; ce n’est ni un paiement ni une autorisation de transfert. Le reçu complet contient les coordonnées en clair : ne le publiez pas.",
-    "en": "The wallet receives a salted commitment to your contact details, not their text. Signing uses no gas; it is neither a payment nor a transfer approval. The complete receipt contains your contact details in clear text: keep it private."
+    "fr": "Laissez les deux champs vides si aucune coordonnée n’est nécessaire. Le wallet signe une empreinte salée, sans recevoir leur texte. Signature sans gas, paiement ni autorisation de transfert. Le reçu contient en clair toute coordonnée fournie : gardez-le privé.",
+    "en": "Leave both fields blank if no contact details are needed. The wallet signs a salted commitment without receiving their text. Signing uses no gas and authorizes no payment or transfer. The receipt contains any supplied details in clear text: keep it private."
   },
   "m088": {
     "fr": "Votre demande, prête à envoyer.",
@@ -401,8 +401,8 @@ export const PAGE_MESSAGES = Object.freeze(Object.fromEntries(Object.entries({
     "en": "No member name, email or receipt is included in this email link. Paste the text, review it and send it yourself. The page cannot confirm sending or receipt. The full identity"
   },
   "m100": {
-    "fr": "est incluse dans le texte copié et liée au reçu signé. L’organisateur traite la demande ; un billet n’est émis que si cet avantage le prévoit.",
-    "en": "is included in the copied text and bound to the signed receipt. The organizer handles the request; a ticket is issued only if this benefit provides for one."
+    "fr": "est incluse dans le texte copié et liée au reçu signé. Le Club traite la demande selon les conditions de l’avantage. Cette page ne confirme pas sa mise à disposition.",
+    "en": "is included in the copied text and bound to the signed receipt. The Club handles the request under the benefit’s terms. This page does not confirm fulfillment."
   },
   "m101": {
     "fr": "Les références de l’application sont libérées à la fermeture/navigation, au retour du cache et après 10 minutes d’inactivité. Cela n’est pas une garantie d’effacement physique de la mémoire, du presse-papiers ou de votre appareil.",
@@ -413,12 +413,12 @@ export const PAGE_MESSAGES = Object.freeze(Object.fromEntries(Object.entries({
     "en": "Authority source: the effective owner of"
   },
   "m103": {
-    "fr": "Interface 2.3.0-rc.1 · Contrat 2.1.1 · Demande privée /3.",
-    "en": "Interface 2.3.0-rc.1 · Contract 2.1.1 · Private request /3."
+    "fr": "Interface 2.4.0-rc.1 · Contrat 2.1.1 · Demande privée /4.",
+    "en": "Interface 2.4.0-rc.1 · Contract 2.1.1 · Private request /4."
   },
   "m104": {
-    "fr": "Publication du code ≠ autorisation de déploiement. Aucun billet n’est émis par cette page.",
-    "en": "Code publication ≠ deployment authorization. This page issues no ticket."
+    "fr": "Publication du code ≠ autorisation de déploiement. La mise à disposition des avantages reste distincte du registre.",
+    "en": "Code publication ≠ deployment authorization. Benefit fulfillment remains separate from the registry."
   },
   "m105": {
     "fr": "AGI CLUB — Administration",
@@ -477,8 +477,8 @@ export const PAGE_MESSAGES = Object.freeze(Object.fromEntries(Object.entries({
     "en": "Benefit catalogue"
   },
   "m119": {
-    "fr": "Aucun événement préconfiguré. Créez un avantage avec vos propres paramètres, puis ouvrez-le après vérification.",
-    "en": "No event is preconfigured. Create a benefit with your own settings, then open it after review."
+    "fr": "Aucun avantage préconfiguré. Choisissez librement son type et ses paramètres ; créez un brouillon, puis ouvrez-le après vérification.",
+    "en": "No benefit is preconfigured. Choose its type and settings; create a draft, then open it after review."
   },
   "m120": {
     "fr": "Charger la suite",
@@ -493,8 +493,8 @@ export const PAGE_MESSAGES = Object.freeze(Object.fromEntries(Object.entries({
     "en": "Pause public claims"
   },
   "m123": {
-    "fr": "Les lectures et les réparations administratives restent disponibles. Cette pause n’annule aucun billet déjà délivré.",
-    "en": "Reads and administrative corrections remain available. This pause does not cancel any ticket already issued."
+    "fr": "Les lectures et corrections administratives restent disponibles. Cette pause n’annule aucune prestation et ne coupe aucun accès externe.",
+    "en": "Reads and administrative corrections remain available. This pause does not cancel fulfillment or disable external access."
   },
   "m124": {
     "fr": "Mettre en pause",
@@ -625,8 +625,8 @@ export const PAGE_MESSAGES = Object.freeze(Object.fromEntries(Object.entries({
     "en": "Save presentation"
   },
   "m156": {
-    "fr": "Tout ce bloc est public. Aucun nom de participant, courriel, numéro de billet ou secret.",
-    "en": "Everything in this section is public. No participant name, email, ticket number or secret."
+    "fr": "Tout ce bloc est public. Aucun nom de membre, courriel, code d’accès, référence privée de livraison ou secret.",
+    "en": "Everything in this section is public. No member name, email, access code, private delivery reference or secret."
   },
   "m157": {
     "fr": "Réclamations & corrections",
@@ -685,12 +685,12 @@ export const PAGE_MESSAGES = Object.freeze(Object.fromEntries(Object.entries({
     "en": "Export the record"
   },
   "m171": {
-    "fr": "Toute modification d’un droit déjà matérialisé exige une correction séparée dans Eventbrite. Le contrat ne retire pas un billet automatiquement.",
-    "en": "Changing an entitlement already used for a ticket requires a separate correction in Eventbrite. The contract does not cancel a ticket automatically."
+    "fr": "Une révocation ou réattribution exige un rapprochement séparé avec le service concerné. Le contrat ne retire ni fichier livré, ni réservation, ni accès externe automatiquement.",
+    "en": "Revocation or reassignment requires separate reconciliation with the relevant service. The contract does not automatically retract a delivered file, reservation or external access."
   },
   "m172": {
-    "fr": "Vérifier une demande de billet",
-    "en": "Verify a ticket request"
+    "fr": "Vérifier une demande privée",
+    "en": "Verify a private request"
   },
   "m173": {
     "fr": "Utilisez le vérificateur privé : coordonnées en mémoire seulement, aucun dépôt de reçu sur le site.",
@@ -733,8 +733,8 @@ export const PAGE_MESSAGES = Object.freeze(Object.fromEntries(Object.entries({
     "en": "on Ethereum mainnet. Request names and emails remain off-chain. Wallet addresses and claim proofs are public."
   },
   "m183": {
-    "fr": "v2.3.0-rc.1 · Aucun déploiement n’est fourni par défaut. Une interface ne constitue pas un audit.",
-    "en": "v2.3.0-rc.1 · No deployment is provided by default. An interface is not an audit."
+    "fr": "v2.4.0-rc.1 · Aucun déploiement n’est fourni par défaut. Une interface ne constitue pas un audit.",
+    "en": "v2.4.0-rc.1 · No deployment is provided by default. An interface is not an audit."
   },
   "m184": {
     "fr": "Vérifier la transaction",
@@ -769,8 +769,8 @@ export const PAGE_MESSAGES = Object.freeze(Object.fromEntries(Object.entries({
     "en": "Verify the receipt."
   },
   "m192": {
-    "fr": "Émettez un seul billet.",
-    "en": "Issue just one ticket."
+    "fr": "Puis traitez l’avantage choisi.",
+    "en": "Then fulfill the selected benefit."
   },
   "m193": {
     "fr": "Vérification locale du destinataire signé et lecture de l’état Ethereum. Aucune demande n’est envoyée au site.",
@@ -809,12 +809,12 @@ export const PAGE_MESSAGES = Object.freeze(Object.fromEntries(Object.entries({
     "en": "Contact details are validated locally. Ethereum reads and ERC-1271 verification receive only public identifiers, a message hash and the signature, not the name, email or salt."
   },
   "m202": {
-    "fr": "Avant émission :",
-    "en": "Before issuing:"
+    "fr": "Avant de fournir l’avantage :",
+    "en": "Before fulfilling the benefit:"
   },
   "m203": {
-    "fr": "recherchez la clé de claim dans votre registre privé. Une nouvelle signature ou un autre courriel ne crée pas une seconde admission. Vérification réussie ≠ boîte courriel vérifiée ≠ billet émis.",
-    "en": "look up the claim key in your private register. A new signature or another email does not create a second admission. Successful verification ≠ verified mailbox ≠ issued ticket."
+    "fr": "consultez les conditions de l’avantage et recherchez la claimKey dans votre registre privé. Une nouvelle signature, coordonnée ou révision ne crée pas une nouvelle allocation. Vérification réussie ≠ boîte courriel vérifiée ≠ avantage fourni.",
+    "en": "check the benefit’s terms and look up the claimKey in your private register. A new signature, contact detail or revision does not create a new allocation. Successful verification ≠ verified mailbox ≠ benefit fulfilled."
   },
   "m204": {
     "fr": "AGI CLUB — Confidentialité",
@@ -857,8 +857,8 @@ export const PAGE_MESSAGES = Object.freeze(Object.fromEntries(Object.entries({
     "en": "When you choose to copy"
   },
   "m214": {
-    "fr": "Votre action explicite exporte le reçu dans le presse-papiers. Vous le collez dans votre messagerie et choisissez de l’envoyer. Le fournisseur de messagerie, l’organisateur et ensuite Eventbrite peuvent alors traiter les coordonnées. Le presse-papiers, les brouillons et leurs sauvegardes ont leurs propres règles.",
-    "en": "Your explicit action exports the receipt to the clipboard. You paste it into your email application and choose whether to send it. The email provider, organizer and then Eventbrite may process those contact details. The clipboard, drafts and their backups have their own rules."
+    "fr": "Votre action explicite exporte le reçu dans le presse-papiers. Vous le collez dans votre messagerie et choisissez de l’envoyer. La messagerie, le Club et, si nécessaire, le prestataire de l’avantage peuvent alors traiter les coordonnées fournies. Le presse-papiers, les brouillons et leurs sauvegardes ont leurs propres règles.",
+    "en": "Your explicit action exports the receipt to the clipboard. You paste it into your email application and choose whether to send it. The email provider, Club and, if needed, the benefit provider may then process any supplied details. The clipboard, drafts and their backups have their own rules."
   },
   "m215": {
     "fr": "Ce qui demeure public",
@@ -877,8 +877,8 @@ export const PAGE_MESSAGES = Object.freeze(Object.fromEntries(Object.entries({
     "en": "The page cannot prevent copying by your browser, extensions, a malicious wallet, input tools, operating system, clipboard history, email service or a compromised device. The host may log technical access data, such as an IP address, but the code does not send the form’s contact details to the host."
   },
   "m219": {
-    "fr": "Cette application ne peut ni certifier l’identité civile ni prouver l’accès à une boîte courriel. Elle ne peut pas dédupliquer les billets déjà émis : l’organisateur tient un registre privé des émissions.",
-    "en": "This application can neither certify legal identity nor prove access to an email account. It cannot deduplicate tickets already issued: the organizer keeps a private issuance register."
+    "fr": "Cette application ne certifie ni l’identité civile ni l’accès à une boîte courriel. Elle ne contrôle pas les prestations déjà fournies : le Club tient un registre privé pour éviter les doublons.",
+    "en": "This application certifies neither legal identity nor access to a mailbox. It does not track fulfillment: the Club keeps a private register to prevent duplicates."
   },
   "m220": {
     "fr": "Ne publiez jamais un reçu membre dans GitHub, une issue, IPFS, un explorateur blockchain ou une capture publique.",
@@ -889,8 +889,8 @@ export const PAGE_MESSAGES = Object.freeze(Object.fromEntries(Object.entries({
     "en": "Get help or exercise your rights"
   },
   "m222": {
-    "fr": "Pour une correction, une question de confidentialité ou le contact responsable, écrivez à president@montreal.ai depuis votre propre messagerie. Limitez les détails au nécessaire. Les demandes concernant un courriel envoyé ou un billet sont traitées par les responsables de ces systèmes ; vider cette page ne les efface pas.",
-    "en": "For a correction, a privacy question or the responsible contact, write to president@montreal.ai from your own email application. Include only necessary details. Requests about a sent email or a ticket are handled by those systems’ responsible parties; clearing this page does not erase them."
+    "fr": "Pour une correction ou une question de confidentialité, écrivez à president@montreal.ai depuis votre messagerie. Limitez les détails au nécessaire. Les demandes concernant un courriel envoyé ou une prestation sont traitées par les responsables des systèmes concernés ; vider cette page ne les efface pas.",
+    "en": "For a correction or privacy question, write to president@montreal.ai from your email application. Include only necessary details. Requests about a sent email or fulfillment are handled by those systems’ responsible parties; clearing this page does not erase them."
   },
   "m223": {
     "fr": "La confirmation de lecture des conditions est temporaire et effacée avec les données de la page. Aucun registre d’acceptation, cookie de consentement ou lien entre identité et acceptation n’est créé. Consultez aussi les",
@@ -917,8 +917,8 @@ export const PAGE_MESSAGES = Object.freeze(Object.fromEntries(Object.entries({
     "en": "you confirm."
   },
   "m229": {
-    "fr": "Un droit enregistré sur Ethereum, une demande privée, puis un billet émis séparément par l’organisateur.",
-    "en": "An entitlement recorded on Ethereum, a private request, then a ticket issued separately by the organizer."
+    "fr": "Un registre pour vos avantages. Un claim public ; une demande privée seulement si le mode de mise à disposition le nécessite.",
+    "en": "One registry for your benefits. A public claim; a private request only when the fulfillment method needs one."
   },
   "m230": {
     "fr": "Avis AGI Club 1 · 12 septembre 2026. Les deux versions intégrales sont accessibles avec le choix de langue en haut de page.",
@@ -1152,7 +1152,7 @@ export const PAGE_MESSAGES = Object.freeze(Object.fromEntries(Object.entries({
     "fr": "Préparation locale de paramètres publics · Ethereum mainnet, chaîne 1 · La vérification du code sur Etherscan ne constitue pas un audit ou une autorisation de lancement.",
     "en": "Local preparation of public parameters · Ethereum mainnet, chain 1 · Etherscan code verification is not an audit or launch authorization."
   }
-}).map(([key, value]) => [key, Object.freeze(value)])));
+}).map(([key,value])=>[key,Object.freeze(value)])));
 
 export const RUNTIME_MESSAGES = Object.freeze(Object.fromEntries(Object.entries({
   "Non connecté": {
@@ -1231,10 +1231,6 @@ export const RUNTIME_MESSAGES = Object.freeze(Object.fromEntries(Object.entries(
     "fr": "Aucune demande conservée par la page. Vous pouvez préparer une nouvelle demande sans refaire le claim.",
     "en": "No request is retained by the page. You can prepare a new request without claiming again."
   },
-  "Les coordonnées ont été effacées après 10 minutes d’inactivité. Aucun billet n’a été envoyé par cette page.": {
-    "fr": "Les coordonnées ont été effacées après 10 minutes d’inactivité. Aucun billet n’a été envoyé par cette page.",
-    "en": "Contact details were cleared after 10 minutes of inactivity. This page has sent no ticket."
-  },
   "Connectez le wallet pour vérifier le réseau et le contrat.": {
     "fr": "Connectez le wallet pour vérifier le réseau et le contrat.",
     "en": "Connect your wallet to verify the network and contract."
@@ -1254,14 +1250,6 @@ export const RUNTIME_MESSAGES = Object.freeze(Object.fromEntries(Object.entries(
   " avantage(s) chargé(s) sur ": {
     "fr": " avantage(s) chargé(s) sur ",
     "en": " benefit(s) loaded out of "
-  },
-  "Le registre est vide. Aucun événement ou avantage n’a été créé. Revenez après la publication par l’administrateur.": {
-    "fr": "Le registre est vide. Aucun événement ou avantage n’a été créé. Revenez après la publication par l’administrateur.",
-    "en": "The registry is empty. No event or benefit has been created. Return after the administrator publishes one."
-  },
-  "Connectez le wallet pour lire le catalogue officiel. Aucun événement n’est préconfiguré.": {
-    "fr": "Connectez le wallet pour lire le catalogue officiel. Aucun événement n’est préconfiguré.",
-    "en": "Connect your wallet to read the official catalogue. No event is preconfigured."
   },
   "Choisissez un avantage puis vérifiez votre membership.": {
     "fr": "Choisissez un avantage puis vérifiez votre membership.",
@@ -1290,10 +1278,6 @@ export const RUNTIME_MESSAGES = Object.freeze(Object.fromEntries(Object.entries(
   "Le wallet a changé. Reconnectez-vous.": {
     "fr": "Le wallet a changé. Reconnectez-vous.",
     "en": "The wallet changed. Reconnect to continue."
-  },
-  "Vérifiez le nom et le courriel, sans saut de ligne ni donnée supplémentaire.": {
-    "fr": "Vérifiez le nom et le courriel, sans saut de ligne ni donnée supplémentaire.",
-    "en": "Check the name and email, with no line breaks or additional data."
   },
   "Le claim attend la finalité Ethereum. Revenez un peu plus tard et préparez une nouvelle demande ; ne réclamez pas une seconde fois.": {
     "fr": "Le claim attend la finalité Ethereum. Revenez un peu plus tard et préparez une nouvelle demande ; ne réclamez pas une seconde fois.",
@@ -1327,17 +1311,9 @@ export const RUNTIME_MESSAGES = Object.freeze(Object.fromEntries(Object.entries(
     "fr": "Le contrat et son origine officielle ne sont pas configurés. La démonstration reste disponible.",
     "en": "The contract and its official origin are not configured. The demonstration remains available."
   },
-  "Confirmez la préparation locale de vos coordonnées.": {
-    "fr": "Confirmez la préparation locale de vos coordonnées.",
-    "en": "Confirm local preparation of your contact details."
-  },
   "Lisez les conditions et confirmez les frais réseau et le caractère public du claim avant de poursuivre.": {
     "fr": "Lisez les conditions et confirmez les frais réseau et le caractère public du claim avant de poursuivre.",
     "en": "Read the terms and acknowledge network fees and the public claim before continuing."
-  },
-  "Confirmez que la copie place vos coordonnées dans le presse-papiers de votre appareil.": {
-    "fr": "Confirmez que la copie place vos coordonnées dans le presse-papiers de votre appareil.",
-    "en": "Confirm that copying places your contact details in your device’s clipboard."
   },
   "Copie automatique indisponible. Sélectionnez la demande dans le cadre, copiez-la vous-même puis effacez les données.": {
     "fr": "Copie automatique indisponible. Sélectionnez la demande dans le cadre, copiez-la vous-même puis effacez les données.",
@@ -1346,10 +1322,6 @@ export const RUNTIME_MESSAGES = Object.freeze(Object.fromEntries(Object.entries(
   "Préparez d’abord la demande signée.": {
     "fr": "Préparez d’abord la demande signée.",
     "en": "Prepare the signed request first."
-  },
-  "Opération non confirmée. Vérifiez votre wallet et réessayez. Aucune demande de billet n’a été envoyée.": {
-    "fr": "Opération non confirmée. Vérifiez votre wallet et réessayez. Aucune demande de billet n’a été envoyée.",
-    "en": "Operation unconfirmed. Check your wallet and try again. No ticket request has been sent."
   },
   "Choisissez un avantage du catalogue avant de vérifier votre membership.": {
     "fr": "Choisissez un avantage du catalogue avant de vérifier votre membership.",
@@ -1391,10 +1363,6 @@ export const RUNTIME_MESSAGES = Object.freeze(Object.fromEntries(Object.entries(
     "fr": "Droit actif pour ce wallet",
     "en": "Active entitlement for this wallet"
   },
-  "Le claim existe déjà. Préparez seulement la demande de billet.": {
-    "fr": "Le claim existe déjà. Préparez seulement la demande de billet.",
-    "en": "The claim already exists. Only prepare the ticket request."
-  },
   "Vérification terminée.": {
     "fr": "Vérification terminée.",
     "en": "Verification complete."
@@ -1423,10 +1391,6 @@ export const RUNTIME_MESSAGES = Object.freeze(Object.fromEntries(Object.entries(
     "fr": "Demande vérifiée, uniquement dans cette page. Copiez-la vous-même dans un courriel à president@montreal.ai. Le site ne l’envoie pas.",
     "en": "Request verified, within this page only. Copy it yourself into an email to president@montreal.ai. The site does not send it."
   },
-  "Prête à copier. Ce reçu contient vos coordonnées en clair : gardez-le privé.": {
-    "fr": "Prête à copier. Ce reçu contient vos coordonnées en clair : gardez-le privé.",
-    "en": "Ready to copy. This receipt contains your contact details in clear text: keep it private."
-  },
   "Copiée dans le presse-papiers. Les champs et références de la page ont été effacés. Collez la demande dans votre messagerie puis envoyez-la à president@montreal.ai. Envoi non confirmé par le site.": {
     "fr": "Copiée dans le presse-papiers. Les champs et références de la page ont été effacés. Collez la demande dans votre messagerie puis envoyez-la à president@montreal.ai. Envoi non confirmé par le site.",
     "en": "Copied to the clipboard. The page’s fields and references were cleared. Paste the request into your email application, then send it to president@montreal.ai. The site cannot confirm sending."
@@ -1442,14 +1406,6 @@ export const RUNTIME_MESSAGES = Object.freeze(Object.fromEntries(Object.entries(
   "Démonstration": {
     "fr": "Démonstration",
     "en": "Demonstration"
-  },
-  "DÉMONSTRATION — sans événement, sans wallet, sans transaction et sans envoi. Utilisez des données fictives.": {
-    "fr": "DÉMONSTRATION — sans événement, sans wallet, sans transaction et sans envoi. Utilisez des données fictives.",
-    "en": "DEMONSTRATION — no event, wallet, transaction or sending. Use fictitious data."
-  },
-  "Cliquez sur Vérifier pour explorer la confidentialité avec un droit fictif. Aucun événement n’est créé.": {
-    "fr": "Cliquez sur Vérifier pour explorer la confidentialité avec un droit fictif. Aucun événement n’est créé.",
-    "en": "Click Verify to explore privacy with a fictitious entitlement. No event is created."
   },
   "Vérifiez de nouveau le membership et l’avantage sélectionnés.": {
     "fr": "Vérifiez de nouveau le membership et l’avantage sélectionnés.",
@@ -1767,10 +1723,6 @@ export const RUNTIME_MESSAGES = Object.freeze(Object.fromEntries(Object.entries(
     "fr": "EXCEPTION ADMINISTRATIVE : ce droit peut être attribué sans preuve de détention du membership. Ne pas présenter cette opération comme une auto-réclamation membre.",
     "en": "ADMINISTRATIVE EXCEPTION: this entitlement may be granted without proof of membership ownership. Do not present this operation as a member’s self-claim."
   },
-  "Révoquer les droits actifs. Les billets Eventbrite déjà émis doivent être traités séparément.": {
-    "fr": "Révoquer les droits actifs. Les billets Eventbrite déjà émis doivent être traités séparément.",
-    "en": "Revoke active entitlements. Eventbrite tickets already issued must be handled separately."
-  },
   "Rétablir le droit révoqué du même bénéficiaire, sous réserve du quota.": {
     "fr": "Rétablir le droit révoqué du même bénéficiaire, sous réserve du quota.",
     "en": "Reinstate the same beneficiary’s revoked entitlement, subject to capacity."
@@ -1883,21 +1835,9 @@ export const RUNTIME_MESSAGES = Object.freeze(Object.fromEntries(Object.entries(
     "fr": "Reçu modifié. Relancez la vérification.",
     "en": "Receipt changed. Run verification again."
   },
-  "Vérification en cours. Aucun billet autorisé.": {
-    "fr": "Vérification en cours. Aucun billet autorisé.",
-    "en": "Verification in progress. No ticket authorized."
-  },
-  "Signature et droit vérifiés. Contrôlez les doublons dans votre registre privé AVANT de créer un billet.": {
-    "fr": "Signature et droit vérifiés. Contrôlez les doublons dans votre registre privé AVANT de créer un billet.",
-    "en": "Signature and entitlement verified. Check for duplicates in your private register BEFORE creating a ticket."
-  },
   "NON VALIDÉ : ": {
     "fr": "NON VALIDÉ : ",
     "en": "NOT VALIDATED: "
-  },
-  "Reçu invalide ou vérification indisponible. Aucun billet autorisé.": {
-    "fr": "Reçu invalide ou vérification indisponible. Aucun billet autorisé.",
-    "en": "Invalid receipt or verification unavailable. No ticket authorized."
   },
   "Wallet changed. Reject any pending approval prompt, then review the plan again.": {
     "en": "Wallet changed. Reject any pending approval prompt, then review the plan again.",
@@ -2014,6 +1954,69 @@ export const RUNTIME_MESSAGES = Object.freeze(Object.fromEntries(Object.entries(
   "Changer de langue efface les données privées temporaires et annule les autorisations préparées. Refusez séparément toute demande déjà ouverte dans le portefeuille.": {
     "fr": "Changer de langue efface les données privées temporaires et annule les autorisations préparées. Refusez séparément toute demande déjà ouverte dans le portefeuille.",
     "en": "Changing language clears temporary private data and cancels prepared approvals. Separately reject any request already open in your wallet."
+  },
+  "Les coordonnées ont été effacées après 10 minutes d’inactivité. Aucune demande n’a été envoyée par cette page.": {
+    "fr": "Les coordonnées ont été effacées après 10 minutes d’inactivité. Aucune demande n’a été envoyée par cette page.",
+    "en": "Contact details were cleared after 10 minutes of inactivity. This page has sent no request."
+  },
+  "Le registre est vide. Aucun avantage n’a été créé. Revenez après sa publication par l’administrateur.": {
+    "fr": "Le registre est vide. Aucun avantage n’a été créé. Revenez après sa publication par l’administrateur.",
+    "en": "The registry is empty. No benefit has been created. Return after the administrator publishes one."
+  },
+  "Connectez le wallet pour lire le catalogue officiel. Aucun avantage n’est préconfiguré.": {
+    "fr": "Connectez le wallet pour lire le catalogue officiel. Aucun avantage n’est préconfiguré.",
+    "en": "Connect your wallet to read the official catalogue. No benefit is preconfigured."
+  },
+  "Opération non confirmée. Vérifiez votre wallet et réessayez. Aucune demande n’a été envoyée.": {
+    "fr": "Opération non confirmée. Vérifiez votre wallet et réessayez. Aucune demande n’a été envoyée.",
+    "en": "Operation unconfirmed. Check your wallet and try again. No request has been sent."
+  },
+  "Votre droit est actif. Suivez les conditions de l’avantage ; préparez une demande privée uniquement si nécessaire. Aucun nouveau claim n’est requis.": {
+    "fr": "Votre droit est actif. Suivez les conditions de l’avantage ; préparez une demande privée uniquement si nécessaire. Aucun nouveau claim n’est requis.",
+    "en": "Your entitlement is active. Follow the benefit’s terms; prepare a private request only if needed. No new claim is required."
+  },
+  "DÉMONSTRATION — catalogue vide, sans wallet, transaction ni envoi. Utilisez des données fictives.": {
+    "fr": "DÉMONSTRATION — catalogue vide, sans wallet, transaction ni envoi. Utilisez des données fictives.",
+    "en": "DEMONSTRATION — empty catalogue, no wallet, transaction or sending. Use fictitious data."
+  },
+  "Cliquez sur Vérifier pour explorer la confidentialité avec un droit fictif. Aucun avantage n’est créé.": {
+    "fr": "Cliquez sur Vérifier pour explorer la confidentialité avec un droit fictif. Aucun avantage n’est créé.",
+    "en": "Click Verify to explore privacy with a fictitious entitlement. No benefit is created."
+  },
+  "Révoquer les droits actifs. Rapprochez séparément les prestations, réservations ou accès déjà accordés.": {
+    "fr": "Révoquer les droits actifs. Rapprochez séparément les prestations, réservations ou accès déjà accordés.",
+    "en": "Revoke active entitlements. Separately reconcile any fulfillment, reservations or access already provided."
+  },
+  "Vérification en cours. Aucune mise à disposition confirmée.": {
+    "fr": "Vérification en cours. Aucune mise à disposition confirmée.",
+    "en": "Verification in progress. No fulfillment confirmed."
+  },
+  "Signature et droit vérifiés. Consultez les conditions et contrôlez les doublons dans votre registre privé AVANT de fournir l’avantage.": {
+    "fr": "Signature et droit vérifiés. Consultez les conditions et contrôlez les doublons dans votre registre privé AVANT de fournir l’avantage.",
+    "en": "Signature and entitlement verified. Check the terms and your private register for duplicates BEFORE fulfilling the benefit."
+  },
+  "Reçu invalide ou vérification indisponible. Aucune mise à disposition autorisée.": {
+    "fr": "Reçu invalide ou vérification indisponible. Aucune mise à disposition autorisée.",
+    "en": "Invalid receipt or verification unavailable. No fulfillment authorized."
+  },
+  "Laissez les coordonnées inutiles vides. Vérifiez le nom ou le courriel fourni, sans saut de ligne.": {
+    "fr": "Laissez les coordonnées inutiles vides. Vérifiez le nom ou le courriel fourni, sans saut de ligne.",
+    "en": "Leave unnecessary contact details blank. Check any supplied name or email, without line breaks."
+  },
+  "Confirmez la préparation locale de cette demande.": {
+    "fr": "Confirmez la préparation locale de cette demande.",
+    "en": "Confirm local preparation of this request."
+  },
+  "Confirmez que la copie place le reçu privé dans le presse-papiers de votre appareil.": {
+    "fr": "Confirmez que la copie place le reçu privé dans le presse-papiers de votre appareil.",
+    "en": "Confirm that copying places the private receipt in your device’s clipboard."
+  },
+  "Prête à copier. Le reçu contient en clair toute coordonnée fournie : gardez-le privé.": {
+    "fr": "Prête à copier. Le reçu contient en clair toute coordonnée fournie : gardez-le privé.",
+    "en": "Ready to copy. The receipt contains any supplied details in clear text: keep it private."
+  },
+  "Ce reçu utilise un autre format. Demandez une nouvelle demande depuis le site à jour, pour le même claim, sans nouvelle transaction.": {
+    "fr": "Ce reçu utilise un autre format. Demandez une nouvelle demande depuis le site à jour, pour le même claim, sans nouvelle transaction.",
+    "en": "This receipt uses a different format. Ask for a fresh request from the updated site for the same claim, without another transaction."
   }
-}).map(([key, value]) => [key, Object.freeze(value)])));
-
+}).map(([key,value])=>[key,Object.freeze(value)])));

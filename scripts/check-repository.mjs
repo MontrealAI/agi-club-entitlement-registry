@@ -1,6 +1,6 @@
 /** Public repository boundaries and preserved on-chain source. Not an audit. */
 import fs from 'node:fs';import path from 'node:path';import assert from 'node:assert/strict';import {sha256} from './source-digest.mjs';
-const required=['README.md','START_HERE.html','LICENSE','SECURITY.md','PRIVACY.md','CONTRIBUTING.md','package.json','hardhat.config.ts','.github/workflows/bootstrap-lock.yml','.github/workflows/ci.yml','.gitignore','.env.example','contracts/AGIClubEntitlementRegistryMainnet.sol','docs/GITHUB_WEB_UPLOAD.md','docs/HARDHAT_DEPLOYMENT.md','shared/ticket-request.mjs','evidence/PROVENANCE.json'];
+const required=['README.md','START_HERE.html','LICENSE','SECURITY.md','PRIVACY.md','CONTRIBUTING.md','package.json','hardhat.config.ts','.github/workflows/bootstrap-lock.yml','.github/workflows/ci.yml','.gitignore','.env.example','contracts/AGIClubEntitlementRegistryMainnet.sol','docs/GITHUB_WEB_UPLOAD.md','docs/HARDHAT_DEPLOYMENT.md','shared/entitlement-request.mjs','evidence/PROVENANCE.json'];
 for(const f of required)assert(fs.existsSync(f),'Missing '+f);
 for(const f of ['worker','frontend/worker','docs/CLOUD_RELAY.md'])assert(!fs.existsSync(f),'Removed backend must not return: '+f);
 // Normal qualification permits the documented ignored local environment file.

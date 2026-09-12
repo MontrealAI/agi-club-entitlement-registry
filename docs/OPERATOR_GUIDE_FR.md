@@ -12,49 +12,35 @@ Le protocole signé, les noms des champs JSON, les fonctions du contrat et les i
 
 Dans ce guide, **wallet** désigne le portefeuille Ethereum, **membership** le nom de membre AGI Club, et **claim** la réclamation enregistrée pour un avantage.
 
-## La règle en une ligne
+## Réclamer, puis demander une intervention privée seulement si nécessaire
 
-**Un droit vérifié, une demande privée, un seul billet Eventbrite.**
+Consultez le [guide de conception des avantages](ENTITLEMENT_DESIGN_FR.md) pour les modèles pratiques et leurs limites. Le registre n’est lié ni à un événement ni à un prestataire de billetterie. Un membre peut réclamer sans nom ni courriel. Si aucune demande privée n’est nécessaire, il suit directement les instructions d’accès ou d’utilisation publiées après l’étape du claim.
 
-Le membre doit posséder un claim actif. La signature de sa demande lie le destinataire à ce claim, mais ne prouve ni identité civile ni contrôle de la boîte courriel. Elle n’empêche pas le partage ultérieur du billet final.
+## Traiter une demande privée
 
-## Émettre un billet
+1. Recevez le courriel dans **president@montreal.ai** et gardez-le privé. Le texte préparé contient le sous-nom AGI Club complet.
+2. Ouvrez **le vérificateur de votre origine officielle**, jamais un outil fourni par l’expéditeur. Collez le courriel préparé complet ou son JSON original. Un en-tête d’identité trompeur est rejeté.
+3. Cliquez **Vérifier via mon portefeuille**. Exigez `VERIFIED_REQUEST_NOT_FULFILLED` et le `membership` complet attendu. Vérifiez l’identifiant d’avantage, la révision du claim et les coordonnées fournies. Un nom ou courriel vide signifie non fourni ; ni identité civile ni contrôle de boîte ne sont certifiés. Attente de finalité, révocation ou signature invalide bloquent la mise à disposition.
+4. Consultez les conditions et recherchez la **claimKey** dans le registre privé et les dossiers du prestataire concerné. Verrouillez cette allocation avant traitement. Un autre nonce, destinataire ou numéro de révision désigne toujours la même allocation.
+5. Si le droit est admissible et non déjà matérialisé, fournissez la ressource, l’accès, le service, la réservation ou l’avantage convenu par le canal choisi. Pour un billet seulement, un prestataire tel qu’Eventbrite peut être utilisé. N’utilisez que les coordonnées nécessaires ; demandez les informations réellement manquantes par votre procédure privée approuvée.
+6. Notez hors du dépôt la claimKey, la révision, le statut et une référence privée du prestataire. Confirmez réception ou utilisation pendant l’essai d’acceptation. Effacez le vérificateur après usage.
 
-1. Recevez le courriel dans `president@montreal.ai`. Ne publiez pas son contenu ni sa pièce jointe.
-2. Ouvrez **le vérificateur de votre origine officielle**, jamais un lien fourni comme “outil de vérification” par l’expéditeur. Collez le texte complet préparé pour le courriel, avec son en-tête d’identité et son reçu JSON, ou le JSON original. Il reste en mémoire dans cette page.
-3. Cliquez **Vérifier via mon portefeuille**. Le résultat doit être `VERIFIED_REQUEST_NOT_A_TICKET`, avec le sous-nom complet `membership: exemple.club.agi.eth` et le nom/courriel attendus. Le sous-nom est dérivé du label signé ; un en-tête de courriel contradictoire est rejeté. Attente de finalité, signature invalide ou droit révoqué = aucun billet à émettre.
-4. Recherchez la **claimKey** dans votre registre privé d’émission et dans vos commandes Eventbrite. La clé ne change pas avec le courriel, le nonce ou une nouvelle signature. Une révision n’est pas une seconde admission.
-5. Si le droit n’a jamais été matérialisé, créez manuellement une admission AGI Club gratuite dans Eventbrite pour le nom et le courriel **vérifiés dans le reçu**, et utilisez l’option d’envoi de confirmation appropriée.
-6. Notez hors du dépôt la claimKey, la révision, le statut et le numéro de commande. Confirmez la réception pour le canary. Effacez le reçu de l’interface après usage.
+Désignez un opérateur unique ou utilisez un verrou administratif privé partagé pour éviter les doublons simultanés. Cette page n’a ni stockage partagé, suivi de livraison ou verrou global automatique. Revérifiez juste avant de fournir l’avantage ; une révocation ultérieure reste possible.
 
-Le registre privé peut être votre outil administratif habituel ; il ne doit jamais être hébergé avec cette application. Pour éviter une course entre opérateurs, une seule personne attribue les billets ou un verrou administratif est appliqué. **Aucun stockage partagé signifie aussi aucun verrou automatique global de fulfilment.**
+**Zéro persistance dans le vérificateur statique :** le reçu et le résultat existent uniquement dans la page ouverte. Effacer, naviguer, changer de wallet/langue et dix minutes sans saisie ni clic de vérification les vident. Une vérification retardée ne restaure pas les données effacées et ne prolonge pas ce délai. Messagerie, registre privé et prestataire restent des systèmes distincts avec leurs propres règles de conservation. Aucun de leurs dossiers ou reçus privés ne doit être publié sur GitHub ou l’hébergement public.
 
-**Zéro persistance dans le vérificateur statique :** le reçu collé et le résultat existent uniquement dans la page ouverte. Le bouton **Effacer**, la navigation, un changement de wallet et dix minutes sans saisie ni clic de vérification vident les champs. Une vérification retardée ne prolonge pas ce délai et ne fait pas réapparaître un reçu effacé. Rechargez la page : aucun historique de coordonnées n’est restauré. Vos courriels, votre registre administratif et Eventbrite restent des outils distincts avec leurs propres règles de conservation.
+## Corrections et questions fréquentes
 
-## Problèmes fréquents
-
-**Le membre a déjà réclamé :** il reprend uniquement la demande, sans nouvelle transaction. S’il recharge la page, ses coordonnées ne sont pas récupérées : il les ressaisit et signe.
-
-**Demande expirée (72 h par défaut) :** faire préparer une nouvelle demande pour le claim existant. Ne pas contourner l’expiration du vérificateur.
-
-**Autre courriel / nouvelle révision :** ne pas émettre un deuxième billet. Confirmer la correction, annuler/remplacer le billet précédent si nécessaire et rapprocher le registre privé.
-
-**Le membre ne voit pas l’option de copie :** il doit disposer d’un claim actif finalisé et d’une demande signée. L’environnement doit permettre le presse-papiers ; sinon le cadre peut être sélectionné/copier manuellement, puis effacé. Prévoir un essai réel mobile avant lancement.
-
-**Le nom a été transféré après claim :** la réclamation reste attachée à son bénéficiaire jusqu’à une correction administrative ; un transfert ne recrée pas de droit pour l’édition.
-
-**Vous attribuez des claims aux ~50 membres :** les attributions administratives au détenteur courant permettent de prendre en charge le gas du lot. Chaque membre signe ensuite sa demande privée. Les signatures et vérifications restent nécessaires.
-
-## Texte membre
-
-> Vérifiez votre membership. Réclamez votre droit, s’il n’est pas déjà attribué. Saisissez vos coordonnées localement, signez une demande privée, puis copiez-la dans votre propre messagerie. Le site ne transmet pas votre nom ni votre courriel. Le billet Eventbrite sera créé manuellement après vérification.
+- **Déjà réclamé :** utiliser le claim existant ; préparer une demande privée seulement si nécessaire. Régénérer un reçu ne demande pas une nouvelle transaction Ethereum.
+- **Demande expirée :** après les 72 heures par défaut, demander une nouvelle signature pour le claim existant ; ne jamais contourner l’expiration.
+- **Ancien reçu de billet :** les formats `/3` et antérieurs sont incompatibles avec `/4`. Mettre à jour espace membre et vérificateur, recharger et préparer une nouvelle demande. Ne pas réétiqueter une ancienne signature.
+- **Autre courriel ou révision :** rapprocher l’allocation existante, annuler/remplacer la prestation ou l’accès externe si nécessaire ; aucune allocation supplémentaire automatique.
+- **Copie indisponible :** sélectionner et copier manuellement le texte préparé, puis effacer la page. Tester le véritable parcours mobile avant l’ouverture.
+- **Membership transféré :** le bénéficiaire enregistré reste inchangé jusqu’à correction administrative. Le transfert ENS ne crée pas une seconde allocation.
+- **Attributions administratives :** attribuer aux détenteurs courants par lots de 1 à 50 labels distincts si l’administrateur prend en charge le gas. La mise à disposition privée exige toujours la vérification appropriée du bénéficiaire.
 
 ## Administration
 
-Le déploiement et la démonstration administrative démarrent **sans aucun événement**. Choisissez vous-même l’identifiant permanent, la catégorie et le quota du premier avantage, uniquement quand vous décidez de le créer. Créez un brouillon, réglez titres FR/EN et dates UTC, relisez puis ouvrez explicitement. Les mêmes opérations sont disponibles dans Etherscan. En mode catalogue du registre, les membres actualisent le catalogue pour voir les nouveaux avantages et les titres modifiés ; aucune liste d’événements n’est préremplie dans le site.
+Le déploiement et la démonstration démarrent **sans aucun avantage**. Choisir identifiant permanent, catégorie, capacité, dates et titres quand l’offre est décidée. Créer un Brouillon, publier les descriptifs FR/EN, vérifier et Ouvrir explicitement. Utiliser le portail ou Etherscan. En mode registre, les membres actualisent pour voir les changements sans modifier une liste du site. Un titre anglais vide retombe sur le français publié ; publier les deux pour un catalogue bilingue complet.
 
-Ne pas écrire de données personnelles dans titres, références publiques ou motifs d’audit. Une révocation libère un quota on-chain, **sans annuler une commande Eventbrite**. Rapprocher les deux avant réattribution.
-
-Le titulaire effectif de `club.agi.eth` exécute les opérations ; si c’est un Safe, les appels doivent provenir du Safe. Maintenir le contrôle et la validité du nom est une dépendance critique.
-
-Renseignez les deux titres avec `setDescriptor` pour un catalogue bilingue complet. L’interface affiche le titre de la langue choisie ; si le titre anglais est vide, elle affiche le titre français publié, sans inventer de traduction des conditions. Les libellés d’état traduits ne changent pas les valeurs du contrat : 1 = Brouillon, 2 = Ouvert, 3 = Fermé, 4 = Archivé.
+Le détenteur effectif courant de `club.agi.eth` administre le registre. Un Safe doit exécuter ses propres appels ; le déployeur jetable n’a aucun privilège. Garder le nom ENS valide et sous contrôle. Aucun contact, référence de livraison ou secret d’accès dans les champs publics. La révocation libère de la capacité active mais n’annule ni service, ni réservation, ni livraison externe : rapprocher avant réattribution.

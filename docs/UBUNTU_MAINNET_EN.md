@@ -2,7 +2,7 @@
 
 [Français](UBUNTU_MAINNET_FR.md) · [Full Hardhat guide](HARDHAT_DEPLOYMENT.md)
 
-**You can decide the first event later.** Deployment creates zero benefits and zero claims. It needs no event name, date, quota, category, metadata or ticket identifier. You can leave the catalogue empty and add your chosen benefits later through the administrator console or Etherscan.
+**You can decide the first benefit later.** Deployment creates zero benefits and zero claims. It needs no benefit name, date, quota, category, metadata or fulfillment identifier. You can leave the catalogue empty and add your chosen benefits later through the administrator console or Etherscan.
 
 The only prefilled operator value in `.env.example` is:
 
@@ -53,7 +53,7 @@ npm run qualify
 
 Confirm the displayed commit is the one reviewed for deployment. Keep that checkout unchanged through qualification, plan approval and broadcasting. Do not run `npm update`, `npm audit fix`, or pull new source into an approved deployment checkout.
 
-**Expected qualification result:** all eight stages pass; `qualification/LOCAL_RELEASE.json` says `status: PASS` and `sourceUnchanged: true`. Save the complete qualification reports and logs. Automated test fixtures are fictitious and stay on local test chains; these tests do not create a production event or send mainnet transactions.
+**Expected qualification result:** all eight stages pass; `qualification/LOCAL_RELEASE.json` says `status: PASS` and `sourceUnchanged: true`. Save the complete qualification reports and logs. Automated test fixtures are fictitious and stay on local test chains; these tests do not create a production benefit or send mainnet transactions.
 
 For an optional free local deployment rehearsal, use [Hardhat section C](HARDHAT_DEPLOYMENT.md#c-local-contract-rehearsal--no-real-membership-or-gas). Its report must also show `entitlementCount: 0` and `claimsCreated: 0`. Never fund Hardhat's public test accounts.
 
@@ -72,7 +72,7 @@ Edit it locally. Keep keys, RPC credentials, passwords and private reports out o
 | Required before a deployment plan | What to provide |
 |---|---|
 | Real mainnet-fork rehearsal | Private read-only `MAINNET_FORK_RPC_URL`, a finalized `MAINNET_FORK_BLOCK`, and representative real `MEMBER_LABELS`; confirm `EXPECTED_ADMIN`. Follow [section E](HARDHAT_DEPLOYMENT.md#e-read-only-upstream-mainnet-fork). |
-| Independent reviews and actual workflow acceptance | Source-bound security/legal review and real wallet, private-request and ticket workflow evidence. Follow [section F](HARDHAT_DEPLOYMENT.md#f-independent-review-and-real-device-rehearsal). Fictitious staging data does not select or publish your first offering. |
+| Independent reviews and actual workflow acceptance | Source-bound security/legal review and real wallet, private-request and chosen-fulfillment workflow evidence. Follow [section F](HARDHAT_DEPLOYMENT.md#f-independent-review-and-real-device-rehearsal). Fictitious staging data does not select or publish your first offering. |
 
 After configuring the read-only fork, run:
 
@@ -97,6 +97,8 @@ Follow [Hardhat section I](HARDHAT_DEPLOYMENT.md#i-verify-before-member-access) 
 
 After writing the public configuration, rerun `npm run qualify` and review the new source fingerprint before acceptance on the final host. A correctly configured registry remains eligible for qualification; incomplete settings or an insecure origin must fail.
 
-On the verified production contract, Etherscan **Read Contract** should show `entitlementCount = 0` before you create any benefit. `admin()` must match the effective owner of `club.agi.eth`; check `isAdmin` for that owner and for the disposable deployer. The latter must return `false`. Website configuration omits `--entitlement` to follow the admin-managed catalogue without a prefilled event list.
+On the verified production contract, Etherscan **Read Contract** should show `entitlementCount = 0` before you create any benefit. `admin()` must match the effective owner of `club.agi.eth`; check `isAdmin` for that owner and for the disposable deployer. The latter must return `false`. Website configuration omits `--entitlement` to follow the admin-managed catalogue without a prefilled benefit list.
 
-You may stop with the verified registry empty. When the real offering is decided and reviewed, create it deliberately as a **Draft**, set the French/English titles and your chosen parameters, then open it explicitly. The Draft default is a safety state for a future creation form; it does not create an event. Complete the actual limited member/request/ticket canary before broad member access. Consult the [Etherscan guide](ETHERSCAN_GUIDE.md) and [operator guide](OPERATOR_GUIDE_EN.md).
+You may stop with the verified registry empty. When the real offering is decided and reviewed, create it deliberately as a **Draft**, set the French/English titles and your chosen parameters, then open it explicitly. The Draft default is a safety state for a future creation form; it does not create a benefit. Complete the actual limited member/request/fulfillment canary before broad member access. Consult the [Etherscan guide](ETHERSCAN_GUIDE.md) and [operator guide](OPERATOR_GUIDE_EN.md).
+
+For resources, access, services, periodic allocations or other benefits, use the [general benefit design guide](ENTITLEMENT_DESIGN_EN.md). `fulfillmentStaging` must cover the chosen process; Eventbrite is optional. No event must be selected for deployment. The private request is optional for a benefit, but its code/device/privacy acceptance remains a release requirement.

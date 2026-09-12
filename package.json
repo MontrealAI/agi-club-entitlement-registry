@@ -1,9 +1,9 @@
 {
   "name": "agi-club-entitlement-registry",
-  "version": "2.3.0-rc.1",
+  "version": "2.4.0-rc.1",
   "private": true,
   "type": "module",
-  "description": "ENS-rooted AGI Club benefits. Static-only private ticket requests; no contact storage or email relay.",
+  "description": "ENS-rooted AGI Club benefits. Static-only optional private entitlement requests; no contact storage or email relay.",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -52,7 +52,7 @@
     "test:journey": "hardhat run scripts/journey-tests.mjs --build-profile production --network isolatedMainnetModel",
     "privacy:check": "node --test test/privacy.test.mjs",
     "test:browser:source": "node scripts/browser-privacy.mjs --source",
-    "verify:request": "node tools/verify_ticket_request.mjs",
+    "verify:request": "node tools/verify_entitlement_request.mjs",
     "test:etherscan": "node --test test/etherscan.test.mjs"
   }
 }

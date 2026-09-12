@@ -1,4 +1,4 @@
-import {MAX_PACKET_BYTES,RequestError} from './ticket-request.mjs';
+import {MAX_PACKET_BYTES,RequestError} from './entitlement-request.mjs';
 
 const heading='AGI CLUB — PRIVATE REQUEST / DEMANDE PRIVÉE';
 const identity='AGI Club identity / Identité AGI Club: ';
@@ -8,7 +8,7 @@ export function membershipName(label) {
   if(typeof label!=='string'||!/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(label))fail('INVALID_MEMBERSHIP');
   return label+'.club.agi.eth';
 }
-// Presentation envelope only. The signed v3 packet stays byte-for-byte compatible.
+// Presentation envelope only. The signed v4 packet is included unchanged.
 // Neither function stores data, contacts a service or opens a mail client.
 export function formatRequestEmail(packet) {
   const raw=JSON.stringify(packet,null,2);

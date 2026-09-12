@@ -1,17 +1,17 @@
 # ∞ AGI CLUB — ENTITLEMENT REGISTRY
-## Static Privacy Edition · 2.3.0-rc.1
+## Static Privacy Edition · 2.4.0-rc.1
 
 **VERIFY MEMBERSHIP → CLAIM ENTITLEMENT → PROVE CLAIM**
 
-Reusable AGI Club benefits administered by the **current effective holder of `club.agi.eth` on Ethereum mainnet**. Deployment, creation forms and the admin demo start with **no preconfigured event or benefit**.
+Reusable AGI Club benefits administered by the **current effective holder of `club.agi.eth` on Ethereum mainnet**. Deployment, creation forms and the admin demo start with **no preconfigured benefit**.
 
-After the one-time approved contract/origin configuration, the member catalogue follows benefits created and modified through Etherscan. Members refresh the catalogue; no per-event website edit is needed. Optional explicit allowlists remain supported. The admin controls public titles, metadata, categories, quotas, dates, states, claim corrections, member-wrapper support and pausing. Permanent IDs, historical records, canonical ENS authority and deployed bytecode retain their contract-defined protections.
+After the one-time approved contract/origin configuration, the member catalogue follows benefits created and modified through Etherscan. Members refresh the catalogue; no per-benefit website edit is needed. Optional explicit allowlists remain supported. The admin controls public titles, metadata, categories, quotas, dates, states, claim corrections, member-wrapper support and pausing. Permanent IDs, historical records, canonical ENS authority and deployed bytecode retain their contract-defined protections.
 
 The copy-ready email to **president@montreal.ai** visibly includes the full **`subname.club.agi.eth`** and the signed receipt. The organizer verifier displays that identity from the verified signed label. The email link contains no member data; sending remains an explicit action in the member’s own mail application.
 
 > **Member names and email addresses are not persisted by the webpage or written on-chain by its claim flow. The application has no email relay, contact database, analytics, or automatic request transmission.**
 >
-> Contact text is temporary browser state. After explicit consent, the member can copy the private receipt to the device clipboard and send it with their own mail application. Clipboard, wallet extensions, device, draft, email-provider and Eventbrite copies are outside the page's control. This is not anonymity or guaranteed erasure of RAM.
+> Contact text is temporary browser state. After explicit consent, the member can copy the private receipt to the device clipboard and send it with their own mail application. Clipboard, wallet extensions, device, draft, email-provider and fulfillment-provider copies are outside the page's control. This is not anonymity or guaranteed erasure of RAM.
 
 ### English / Français
 
@@ -25,40 +25,29 @@ Open **[START_HERE.html](START_HERE.html)**. No installation is needed to read i
 
 | I want to… | Read this |
 |---|---|
-| Prepare a recent Ubuntu machine and deploy an empty registry after approval | [Ubuntu English](docs/UBUNTU_MAINNET_EN.md) / [Ubuntu français](docs/UBUNTU_MAINNET_FR.md) — choose the first event later |
+| Prepare a recent Ubuntu machine and deploy an empty registry after approval | [Ubuntu English](docs/UBUNTU_MAINNET_EN.md) / [Ubuntu français](docs/UBUNTU_MAINNET_FR.md) — choose the first benefit later |
 | Upload through the GitHub website | [GitHub UI guide](docs/GITHUB_WEB_UPLOAD.md) |
 | See a local demo, rehearse a deployment or deploy an approved canary | [Hardhat English](docs/HARDHAT_DEPLOYMENT.md) / [Français](docs/HARDHAT_DEPLOYMENT_FR.md) |
 | Verify the source and operate every public function through Etherscan | [Bilingual Etherscan guide](docs/ETHERSCAN_GUIDE.md); open **Etherscan** in the built website for copy-ready values |
 | Understand exactly where contact data goes | [Privacy policy and implementation boundary](PRIVACY.md) |
 | Review conditions, regulatory exposure and legal release requirements | [Bilingual public notice](frontend/legal.html), [operator/counsel review](docs/LEGAL_RELEASE_REVIEW.md) |
-| Issue one complimentary ticket | [English](docs/OPERATOR_GUIDE_EN.md) / [Français](docs/OPERATOR_GUIDE_FR.md) |
+| Design resources, access, services, perks or reservations | [English](docs/ENTITLEMENT_DESIGN_EN.md) / [Français](docs/ENTITLEMENT_DESIGN_FR.md) |
+| Fulfill any supported benefit | [English](docs/OPERATOR_GUIDE_EN.md) / [Français](docs/OPERATOR_GUIDE_FR.md) |
 | Evaluate readiness | [Release checklist](docs/RELEASE_CHECKLIST.md), [actual evidence](evidence/RELEASE_STATUS.json) |
 
 ### Status — read before deployment
 
-This is a **source release candidate**, not an independently audited or mainnet-authorized deployment. Source publication is separate from hosting a live portal and from deploying Ethereum bytecode. No chain address is invented, and no production wallet, gas, email or Eventbrite action was performed for this delivery.
+This is a **source release candidate**, not an independently audited or mainnet-authorized deployment. Source publication is separate from hosting a live portal and from deploying Ethereum bytecode. No chain address is invented, and no production wallet, gas, email or fulfillment action was performed for this delivery.
 
 Production preparation also requires a completed deployment-specific `legalReview`, bound to the reviewed source and private report bytes. Public notices preserve mandatory rights and the MIT license; they do not establish an exemption, eliminate liability or replace qualified counsel's review of the actual operator, membership offering and privacy operations. The member acknowledgement stays in memory only.
 
-The contract version is **2.1.1**, preserved byte-for-byte from the previous source candidate. Repository version is **2.3.0-rc.1**. The new privacy-preserving request schema is **`AGIClubTicketRequest/3`**. Old request formats are rejected rather than silently upgraded.
+The contract version is **2.1.1**, preserved byte-for-byte from the previous source candidate. Repository version is **2.4.0-rc.1**. The new privacy-preserving request schema is **`AGIClubEntitlementRequest/4`**. Old `/3` ticket requests and earlier formats are rejected. Update the member page and verifier together, then sign a new `/4` request for the existing claim; no new claim transaction is needed.
 
 A genuine npm-generated `package-lock.json` is committed, including the pinned ethers 6.17.0 dependency and tmp 0.2.7 override. Use `npm ci` for reproducible installation, then run the non-deploying CI. The supplied frontend is source; build `dist/site` and complete the release gates before publishing a live claim service. Reports under `evidence/` describe the original source delivery; current execution reports are generated under `qualification/` and attached to GitHub Actions runs.
 
 ### Architecture
 
-```text
-Static member page ← wallet (membership / public Ethereum reads)
-        ↓
-claim(entitlementId, membershipLabel) → Ethereum registry
-        ↓
-name + email + random private salt → local SHA-256 commitment
-        ↓
-wallet signs scoped commitment-only message (no raw contact text)
-        ↓
-member explicitly copies private receipt → own email application
-        ↓
-president@montreal.ai → local receipt verification → manual Eventbrite ticket
-```
+Members verify membership and claim a chosen benefit on Ethereum. **That step requires no name or email.** When the benefit needs a private request, the wallet signs a scoped salted commitment to any optional contacts. The member explicitly copies the receipt into their own email to president@montreal.ai. The operator verifies it, checks the private fulfillment record and follows the chosen benefit’s terms. The site does not send mail or deliver benefits itself.
 
 **There is no Worker, D1, backend, webhook, form endpoint or automatic sender in this release.** GitHub holds source; a suitable static HTTPS host serves public assets. The static host is never submitted a recipient form.
 
@@ -70,7 +59,7 @@ Deploy from a separate disposable wallet. The expected initial root holder suppl
 
 The admin can create/duplicate benefits, change windows/categories/capacities/descriptors, open/close/archive, grant in bounded batches, make explicit exceptions, revoke/reinstate/reassign and pause self-claims. History is not erased. The key is **entitlement + membership node**, not wallet. A transfer does not create a second self-claim.
 
-Full privileges means the management operations exposed by this immutable code—not a proxy upgrade, arbitrary future protocol compatibility, member-asset custody, or automatic Eventbrite cancellation. Expiry/parent control or loss of the root name can affect administration. No hidden recovery admin is provided.
+Full privileges means the management operations exposed by this immutable code—not a proxy upgrade, arbitrary future protocol compatibility, member-asset custody, or automatic external-service cancellation. Expiry/parent control or loss of the root name can affect administration. No hidden recovery admin is provided.
 
 All **52 public functions** (33 reads and 19 writes) are covered by the Etherscan helper and checked against the compiled production ABI. The helper prepares public parameters, including hashes, UTC seconds and batches, without connecting a wallet or submitting transactions. Etherscan operates the deployed registry; website configuration and private receipt handling remain separate. `npm run export:etherscan` produces exact Standard JSON verification input under `dist/etherscan/`, also available as the `etherscan-verification-not-deployed` Linux CI artifact. Source verification and parameter preparation do not grant mainnet clearance.
 
@@ -78,9 +67,9 @@ All **52 public functions** (33 reads and 19 writes) are covered by the Ethersca
 
 1. Connect the wallet and enter one direct ASCII `label.club.agi.eth` membership.
 2. Claim, or use the active claim already assigned to the wallet. Network fees may apply; no token approval.
-3. Enter name/email locally. Sign a message containing a **salted contact commitment**, not plaintext contacts.
+3. If private fulfillment is needed, optionally enter only necessary name/email details, or leave both blank. Sign a scoped request containing a **salted commitment**. Otherwise, follow the benefit’s published instructions directly.
 4. Explicitly copy the receipt and paste it into a message to **president@montreal.ai**. Send it yourself.
-5. Vincent verifies the signature, current/finalized claim and private issuance register, then manually creates one ticket.
+5. The operator verifies the signature, current/finalized claim and private fulfillment register, then handles the chosen benefit under its published terms.
 
 The copy button clears the page's contact fields and application references after a successful handoff. A fixed `mailto:` link opens a **blank body**; no member contacts go into a URL. The page never claims that mail was sent or received. Reloading may require a new signature, **not a second Ethereum claim**.
 

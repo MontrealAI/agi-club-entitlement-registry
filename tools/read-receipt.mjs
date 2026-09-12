@@ -1,4 +1,4 @@
-import {RequestError} from '../shared/ticket-request.mjs';
+import {RequestError} from '../shared/entitlement-request.mjs';
 import {MAX_EMAIL_BYTES,parseRequestEmail} from '../shared/request-email.mjs';
 
 // Decode incrementally without replacing malformed bytes or retaining a file.

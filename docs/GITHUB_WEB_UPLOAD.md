@@ -16,11 +16,11 @@ Show hidden files before selecting:
 
 Log into GitHub. Top-right **+ → New repository**. Choose **MontrealAI** as owner, then enter `agi-club-entitlement-registry`.
 
-Suggested description: `Reusable AGI Club entitlements with ENS-rooted administration and static, no-contact-storage ticket requests.`
+Suggested description: `Reusable AGI Club entitlements with ENS-rooted administration and static, no-contact-storage entitlement requests.`
 
 Choose Public if you intend public source review. Do **not** initialize with a generated README, .gitignore or licence: those are already included. Click **Create repository**.
 
-If a repository with that name already exists, do not overwrite its history blindly. Use a new branch and pull request; first reconcile any deployments, old claims and issued tickets.
+If a repository with that name already exists, do not overwrite its history blindly. Use a new branch and pull request; first reconcile any deployments, old claims and fulfilled allocations.
 
 ## 3. Upload in the website
 
@@ -28,7 +28,7 @@ On an empty repository select **uploading an existing file**. On an existing rep
 
 Drag in the extracted contents. GitHub permits up to 100 files per browser upload and up to 25 MiB per file. If the complete tree exceeds 100 files, use two uploads: root files plus `contracts`, `vendor`, `shared`, `frontend` first; then `.github`, `docs`, `scripts`, `test`, `tools`, `evidence` and `releases`. Preserve folder paths. No event metadata or companion event digest is shipped with the empty registry.
 
-Commit message: `Add static-privacy AGI Club registry 2.3.0-rc.1`.
+Commit message: `Add static-privacy AGI Club registry 2.4.0-rc.1`.
 
 Confirm these paths exist in the **repository root**, not inside a second folder:
 

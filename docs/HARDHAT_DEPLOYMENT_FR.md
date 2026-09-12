@@ -2,7 +2,7 @@
 
 [English](HARDHAT_DEPLOYMENT.md) · [Guide de l’organisateur](OPERATOR_GUIDE_FR.md) · [Etherscan FR / EN](ETHERSCAN_GUIDE.md)
 
-**Vous utilisez Ubuntu ?** Commencez par le [parcours de déploiement Ubuntu](UBUNTU_MAINNET_FR.md). Le registre est déployé vide ; vous pouvez choisir le premier événement plus tard.
+**Vous utilisez Ubuntu ?** Commencez par le [parcours de déploiement Ubuntu](UBUNTU_MAINNET_FR.md). Le registre est déployé vide ; vous pouvez choisir le premier avantage plus tard.
 
 Commencez par un aperçu local : aucun portefeuille financé, compte RPC, secret de déploiement ou renseignement de membre n’est nécessaire. Le contrat destiné à Ethereum mainnet est **`AGIClubEntitlementRegistryMainnet`**. Les répétitions locales utilisent volontairement des contrats de test.
 
@@ -104,7 +104,7 @@ npm run test:journey
 npm run test:stateful
 ```
 
-`npm test` inclut les parcours et simulations ; les deux commandes spécifiques permettent de les relancer séparément pour un diagnostic. Le parcours utilise un modèle local de la sous-classe de production et de véritables fonctions ethers, mais ni finalité Ethereum réelle, portefeuille physique ou billetterie réelle.
+`npm test` inclut les parcours et simulations ; les deux commandes spécifiques permettent de les relancer séparément pour un diagnostic. Le parcours utilise un modèle local de la sous-classe de production et de véritables fonctions ethers, mais ni finalité Ethereum réelle, portefeuille physique ou mise à disposition réelle.
 
 Les simulations à état utilisent quatre graines fixes, un préfixe adversarial et 128 étapes générées par graine. Un modèle distinct contrôle après chaque étape les claims, bénéficiaires, horodatages, révisions, quotas et index. Les séquences couvrent transferts ENS, indisponibilités, pauses, concurrence pour la dernière place et transactions échouées sans modification partielle des lots. Le déployeur de test est contrôlé pour l’absence de privilèges.
 
@@ -191,11 +191,11 @@ Après lecture des revues privées, le contrôle de livraison relit l’empreint
 
 ## F. Revues indépendantes et essais de vrais appareils
 
-Complétez la [revue juridique de livraison](LEGAL_RELEASE_REVIEW.md) avec un conseil qualifié et l’opérateur réel : offre, droits des membres, avis FR/EN, renseignements obligatoires et traitement des courriels/billets. Publiez les informations requises avant l’empreinte finale du code. La case de lecture du membre est temporaire ; elle ne constitue pas un registre d’acceptation conservé.
+Complétez la [revue juridique de livraison](LEGAL_RELEASE_REVIEW.md) avec un conseil qualifié et l’opérateur réel : offre, droits des membres, avis FR/EN, renseignements obligatoires et traitement des courriels/prestations. Publiez les informations requises avant l’empreinte finale du code. La case de lecture du membre est temporaire ; elle ne constitue pas un registre d’acceptation conservé.
 
 Résolvez les constats sur les sources, le compilateur et le verrou exacts. Vérifiez transitions d’autorité, wrapping/expiration, appels non autorisés, doublons, lots, quotas, révocation/réattribution, finalité et signatures invalides.
 
-Essayez réellement Ledger/Safe/portefeuille membre, navigateur mobile, origine HTTPS et CSP, signature, copie explicite, courriel, vérification et billetterie manuelle. Les données de test restent fictives. Vérifiez que le portefeuille reçoit une empreinte salée, pas les coordonnées.
+Essayez réellement Ledger/Safe/portefeuille membre, navigateur mobile, origine HTTPS et CSP, signature, copie explicite, courriel, vérification et mise à disposition choisie. Les données de test restent fictives. Vérifiez que le portefeuille reçoit une empreinte salée, pas les coordonnées.
 
 Conservez les rapports privés sous `.local/`, sans reçus clients. Utilisez `releases/external-evidence.example.json` pour préparer `.local/external-evidence.json`. Les cinq entrées requises sont :
 
@@ -203,7 +203,7 @@ Conservez les rapports privés sous `.local/`, sans reçus clients. Utilisez `re
 - `legalReview` : revue juridique du déploiement réel ;
 - `realWalletStaging` : essais des vrais portefeuilles ;
 - `privateRequestStaging` : parcours de demande privée ;
-- `eventbriteStaging` : émission et réception du billet.
+- `fulfillmentStaging` : mise à disposition et réception/utilisation de l’avantage choisi.
 
 Chaque entrée identifie le véritable réviseur, son rapport privé sous `.local/`, l’empreinte SHA-256 de ce fichier et la source exacte. Inscrivez `PASS` uniquement pour un résultat exécuté et revu. Aucun test de relais ne remplace `privateRequestStaging`.
 
@@ -303,7 +303,7 @@ npm run build:site
 
 Sur Windows, utilisez `python` au lieu de `python3`. Gardez Node 22 sur `PATH` : le configurateur emploie le protocole canonique pour valider l’origine hors ligne. Remplacez l’origine indicative par l’**origine HTTPS réelle exacte**, dédiée, sans chemin ni barre finale : hôte en minuscules, punycode ASCII si nécessaire, sans port `:443` explicite. Un port HTTPS non standard est accepté. Une configuration invalide laisse le fichier précédent intact.
 
-Sans `--entitlement`, le site lit le catalogue du registre par pages bornées, sans événement préconfiguré. Les nouveaux avantages et titres modifiés via Etherscan apparaissent après actualisation. Le titre anglais vide retombe sur le français publié. Une liste volontairement restreinte utilise plusieurs `--entitlement` et nécessite un rebuild revu lors de ses changements. La vérification des reçus exige toujours le bytecode approuvé et le claim actif signé aux deux états finalisé/récent.
+Sans `--entitlement`, le site lit le catalogue du registre par pages bornées, sans avantage préconfiguré. Les nouveaux avantages et titres modifiés via Etherscan apparaissent après actualisation. Le titre anglais vide retombe sur le français publié. Une liste volontairement restreinte utilise plusieurs `--entitlement` et nécessite un rebuild revu lors de ses changements. La vérification des reçus exige toujours le bytecode approuvé et le claim actif signé aux deux états finalisé/récent.
 
 La nouvelle configuration publique change l’empreinte source/configuration : relisez le diff et le manifeste, relancez les tests, puis liez les essais réels au build finalement publié. Une approbation navigateur antérieure à cette configuration ne qualifie pas le site final.
 
@@ -313,11 +313,11 @@ Sur l’hôte final, testez les deux langues avec des données fictives dans `me
 
 ## J. Un essai réel limité, puis une décision d’ouverture distincte
 
-Le constructeur crée **zéro avantage**. Aucun premier événement, quota, catégorie ou calendrier n’est imposé. Après approbation distincte du détenteur racine, choisissez les paramètres réels, créez un **brouillon** depuis la console ou Etherscan, relisez les titres FR/EN et ouvrez explicitement. Ne créez pas un exemple pendant le déploiement. Aucun compte de billetterie n’est intégré au contrat.
+Le constructeur crée **zéro avantage**. Aucun premier avantage, quota, catégorie ou calendrier n’est imposé. Après approbation distincte du détenteur racine, choisissez les paramètres réels, créez un **brouillon** depuis la console ou Etherscan, relisez les titres FR/EN et ouvrez explicitement. Ne créez pas un exemple pendant le déploiement. Aucun compte de billetterie n’est intégré au contrat.
 
-Faites suivre à un membre réel : claim → finalité → demande privée → copie/courriel explicite → vérification → contrôle des doublons → un billet manuel → confirmation de réception et d’accès. Une nouvelle signature ou adresse courriel ne doit jamais produire un deuxième billet pour la même clé.
+Faites suivre à un membre réel : claim → finalité → demande privée → copie/courriel explicite → vérification → contrôle des doublons → l’avantage choisi fourni une fois → confirmation de réception et d’accès. Une nouvelle signature ou adresse courriel ne doit jamais produire un doublon d’allocation pour la même clé.
 
-Gardez l’accès général fermé jusqu’à revue des constats et preuves privées. L’application ne peut confirmer ni envoi, livraison en boîte courriel ou émission d’un billet. Si un ancien registre existe, rapprochez claims et billets avant migration : aucun contrat immuable ni historique n’est mis à jour automatiquement.
+Gardez l’accès général fermé jusqu’à revue des constats et preuves privées. L’application ne peut confirmer ni envoi, livraison en boîte courriel ou émission d’un billet. Si un ancien registre existe, rapprochez claims et prestations avant migration : aucun contrat immuable ni historique n’est mis à jour automatiquement.
 
 ## Dépannage
 
@@ -333,6 +333,8 @@ Gardez l’accès général fermé jusqu’à revue des constats et preuves priv
 | `release:gate` indique `BLOCKED` | Lisez `qualification/DEPLOYMENT_GATE.json` et réalisez les vérifications réellement manquantes. |
 | Autorisation expirée, administrateur ou nonce modifié | Préparez, relisez et faites signer un nouveau plan ; n’éditez pas les champs signés. |
 | Envoi interrompu ou point de reprise déjà présent | Conservez-le et suivez H en lecture seule. Ni suppression du point de reprise ni renvoi automatique. |
-| `WAITING_FOR_FINALITY` ou reçu expiré | Attendez la finalité ou faites signer une nouvelle demande pour le claim existant. Aucun deuxième claim ou billet. |
+| `WAITING_FOR_FINALITY` ou reçu expiré | Attendez la finalité ou faites signer une nouvelle demande pour le claim existant. Aucun deuxième claim ou prestation. |
 
 Ne partagez que des erreurs expurgées. Ne téléversez jamais `.env`, clés, mots de passe, autorisations privées ou reçus membres.
+
+Pour ressources, accès, services, allocations périodiques ou autres avantages, consultez le [guide général](ENTITLEMENT_DESIGN_FR.md). `fulfillmentStaging` doit couvrir le processus choisi ; Eventbrite est facultatif. Aucun événement ne doit être choisi pour déployer. La demande privée est facultative pour un avantage ; la validation de son code, des appareils et de la confidentialité reste obligatoire.

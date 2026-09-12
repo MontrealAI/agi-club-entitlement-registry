@@ -18,10 +18,10 @@
     "file": ".local/wallet-staging.json",
     "sha256": ""
   },
-  "eventbriteStaging": {
+  "fulfillmentStaging": {
     "status": "NOT_EXECUTED",
     "reviewer": "",
-    "file": ".local/eventbrite-staging.json",
+    "file": ".local/fulfillment-staging.json",
     "sha256": ""
   },
   "privateRequestStaging": {

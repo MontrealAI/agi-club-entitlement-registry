@@ -24,7 +24,7 @@ try:
         'node', '--input-type=module', '--eval',
         'const {validOrigin}=await import(process.argv[1]); '
         'process.exit(validOrigin(process.argv[2]) ? 0 : 2);',
-        '--', (root / 'shared/ticket-request.mjs').as_uri(), a.origin,
+        '--', (root / 'shared/entitlement-request.mjs').as_uri(), a.origin,
     ], capture_output=True, text=True)
 except OSError:
     p.error('Node.js 22 must be available on PATH to validate the public origin')

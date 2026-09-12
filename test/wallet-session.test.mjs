@@ -5,7 +5,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {runInNewContext} from 'node:vm';
-import {ENS, WRAPPER, ROOT, REGISTRY_VERSION} from '../shared/ticket-request.mjs';
+import {ENS, WRAPPER, ROOT, REGISTRY_VERSION} from '../shared/entitlement-request.mjs';
 import {MEMBER_ABI} from '../frontend/contract-abi.mjs';
 import {PrivateMemory} from '../frontend/private-memory.mjs';
 import {uint,utcSeconds} from '../frontend/etherscan-tools.mjs';

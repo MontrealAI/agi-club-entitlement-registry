@@ -1,11 +1,12 @@
 import {t, tr, onLanguageChange} from './language.mjs';
-import {verifyTicketRequest,REGISTRY_VERSION} from './shared/ticket-request.mjs';
+import {verifyEntitlementRequest,REGISTRY_VERSION} from './shared/entitlement-request.mjs';
 import {createEthersIO} from './shared/ethers-adapter.mjs';
 import {parseRequestEmail,membershipName,MAX_EMAIL_BYTES} from './shared/request-email.mjs';
 import {requestPolicy} from './member-catalog.mjs';
 const $=id=>document.getElementById(id),cfg=window.AGI_CONFIG||{};
 let epoch=0,timer=null;
 const errors={
+ UNSUPPORTED_SCHEMA:'Ce reçu utilise un autre format. Demandez une nouvelle demande depuis le site à jour, pour le même claim, sans nouvelle transaction.',
  WALLET_OR_LIBRARY_UNAVAILABLE:'Ouvrez le site construit avec un navigateur compatible avec votre wallet.',
  WRONG_ORIGIN:'Utilisez uniquement l’origine HTTPS officielle configurée.',
  BODY_TOO_LARGE:'Le reçu dépasse la taille autorisée.',INVALID_JSON:'Collez la demande complète préparée par le site ou le reçu JSON original.',
@@ -30,7 +31,7 @@ for(const e of ['pagehide','pageshow','beforeunload'])window.addEventListener(e,
 if(window.ethereum?.on)for(const e of ['accountsChanged','chainChanged','disconnect'])window.ethereum.on(e,clear);
 $('verifyReceipt').addEventListener('click',async()=>{
  const button=$('verifyReceipt');if(button.disabled)return;button.disabled=true;const at=epoch;
- touch();$('verifyResult').textContent='';$('verifyStatus').textContent=t('Vérification en cours. Aucun billet autorisé.');
+ touch();$('verifyResult').textContent='';$('verifyStatus').textContent=t('Vérification en cours. Aucune mise à disposition confirmée.');
  try{
   if(!window.ethers||!window.ethereum?.request)throw Error('WALLET_OR_LIBRARY_UNAVAILABLE');
   if(location.origin!==cfg.expectedOrigin||!cfg.expectedOrigin?.startsWith('https://'))throw Error('WRONG_ORIGIN');
@@ -41,12 +42,12 @@ $('verifyReceipt').addEventListener('click',async()=>{
   const provider=new ethers.BrowserProvider(window.ethereum);
   try{
    const policy=requestPolicy(cfg,ethers,REGISTRY_VERSION);
-   const result=await verifyTicketRequest(packet,policy,createEthersIO(ethers,provider,cfg.registryAddress));
+   const result=await verifyEntitlementRequest(packet,policy,createEthersIO(ethers,provider,cfg.registryAddress));
    if(at!==epoch)throw Error('INPUT_CHANGED');
-   $('verifyResult').textContent=JSON.stringify({status:result.status,membership:membershipName(result.payload.membershipLabel),claimKey:result.claimKey,claimRevision:result.payload.claimRevision,name:result.recipient.name,email:result.recipient.email,finalizedBlock:result.finalizedBlock,ticketIssued:false,mailboxControlVerified:false},null,2);
-   $('verifyStatus').textContent=t('Signature et droit vérifiés. Contrôlez les doublons dans votre registre privé AVANT de créer un billet.');
+   $('verifyResult').textContent=JSON.stringify({status:result.status,membership:membershipName(result.payload.membershipLabel),entitlementId:result.payload.entitlementId,claimKey:result.claimKey,claimRevision:result.payload.claimRevision,name:result.recipient.name,email:result.recipient.email,finalizedBlock:result.finalizedBlock,fulfillmentConfirmed:false,mailboxControlVerified:false},null,2);
+   $('verifyStatus').textContent=t('Signature et droit vérifiés. Consultez les conditions et contrôlez les doublons dans votre registre privé AVANT de fournir l’avantage.');
   }finally{provider.destroy();}
- }catch(e){if(at===epoch){$('verifyResult').textContent='';const code=Object.hasOwn(errors,e?.code)?e.code:Object.hasOwn(errors,e?.message)?e.message:null;$('verifyStatus').textContent=t('NON VALIDÉ : ')+(code?t(errors[code]):t('Reçu invalide ou vérification indisponible. Aucun billet autorisé.'));}}
+ }catch(e){if(at===epoch){$('verifyResult').textContent='';const code=Object.hasOwn(errors,e?.code)?e.code:Object.hasOwn(errors,e?.message)?e.message:null;$('verifyStatus').textContent=t('NON VALIDÉ : ')+(code?t(errors[code]):t('Reçu invalide ou vérification indisponible. Aucune mise à disposition autorisée.'));}}
  finally{button.disabled=false;}
 });
 
