@@ -17,8 +17,9 @@
     "ethers": "6.17.0"
   },
   "devDependencies": {
-    "hardhat": "3.16.0",
     "@nomicfoundation/hardhat-verify": "3.1.0",
+    "axe-core": "4.13.0",
+    "hardhat": "3.16.0",
     "solc": "0.8.37"
   },
   "overrides": {

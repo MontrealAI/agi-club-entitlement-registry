@@ -28,6 +28,8 @@ Fork-runner regressions use synthetic reports in temporary directories and injec
 
 `npm run test:browser`: built-site genuine-library smoke test plus source UI privacy rehearsal with explicitly simulated wallet/crypto. Real-device wallet acceptance remains separate.
 
+The built-site suite checks all eight pages at 320, 390, 768 and 1440 CSS pixels, actual keyboard Tab/Enter access through the skip link, landmarks, form labels and reduced-motion behavior. Pinned axe-core checks run at desktop and mobile widths; reported violations fail qualification. Any checks requiring manual judgment are retained in the report. Automated accessibility tests do not certify complete WCAG conformance, screen-reader usability or physical-device behavior. axe-core is development tooling and is excluded from the public build.
+
 `npm run test:browser:source`: only the mocked privacy-UI scope, suitable before dependencies are available. A browser security/network block is a failed/unexecuted test, not a pass.
 
 All contacts and keys in tests are fictitious/public fixtures. Never reuse them with real assets. No test tool belongs in the hosted site.

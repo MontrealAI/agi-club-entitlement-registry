@@ -4,6 +4,7 @@ const iface = new ethers.Interface(EXPLORER_ABI);
 let language = 'fr', prepared = null, generation = 0;
 const french = Object.fromEntries([...document.querySelectorAll('[data-i18n]')].map(el => [el.dataset.i18n, el.textContent]));
 const english = {
+  skipContent:'Skip to content', footerPrivacy:'Privacy', footerLegal:'Terms · Legal', footerVerify:'Verify a receipt', footerDeployment:'Deployment',
   home:'Home', admin:'Administration', member:'Members', title:'Your registry, through Etherscan.',
   intro:'Prepare exact values to read, configure or use the verified contract. Every operation remains subject to registry rules and your wallet confirmation.',
   privacy:'Public parameters only. No participant names, email addresses, private receipts or secrets. This helper connects to no wallet and sends no transaction.',
@@ -103,6 +104,9 @@ $('language').addEventListener('click', () => {
   const inputs=iface.getFunction($('operation').value).inputs.map((_,i)=>$('parameter-'+i).value);
   language = language === 'fr' ? 'en' : 'fr'; document.documentElement.lang = language; $('language').textContent = language === 'fr' ? 'English' : 'Français';
   for (const el of document.querySelectorAll('[data-i18n]')) el.textContent = (language === 'fr' ? french : english)[el.dataset.i18n];
+  document.querySelector('.brand').setAttribute('aria-label',tr('AGI Club — Accueil','AGI Club — Home'));
+  document.querySelector('.header-tail').setAttribute('aria-label',tr('Navigation principale','Main navigation'));
+  document.querySelector('.footer-links').setAttribute('aria-label',tr('Ressources du Club','Club resources'));
   populate();
   inputs.forEach((value,i)=>{$('parameter-'+i).value=value;});
 });
