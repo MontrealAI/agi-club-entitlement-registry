@@ -19,7 +19,7 @@ export function sourceDigest(root = projectRoot) {
   for (const folder of ['contracts','shared','frontend','scripts','tools','test','vendor','.github']) {
     if (fs.existsSync(path.join(root,folder))) walk(path.join(root,folder));
   }
-  for (const file of ['package.json','package-lock.json','hardhat.config.ts','VERSION','.npmrc','.nvmrc']) {
+  for (const file of ['package.json','package-lock.json','hardhat.config.ts','VERSION','.npmrc','.nvmrc','LICENSE','PRIVACY.md','docs/LEGAL_RELEASE_REVIEW.md']) {
     if (fs.existsSync(path.join(root,file))) records.push({path:file,sha256:sha256(fs.readFileSync(path.join(root,file)))});
   }
   records.sort((a,b)=>a.path<b.path?-1:a.path>b.path?1:0);

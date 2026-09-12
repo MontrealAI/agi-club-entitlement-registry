@@ -174,13 +174,15 @@ The script reads a pinned real block, then deploys and impersonates accounts **o
 
 ## F. Independent review and real-device rehearsal
 
+Complete the [legal release review](LEGAL_RELEASE_REVIEW.md) with qualified counsel and the actual operator. Review the real offering, membership arrangements, French/English notices, provider information and email/Eventbrite privacy operations. Publish any required operational facts before the final source fingerprint. The member acknowledgement is temporary and is not a retained contractual acceptance record.
+
 Resolve all findings against the exact source/compiler/dependency lock. Test root authority transitions, member wrapping/expiry semantics, unauthorized calls, duplicate claims, batch bounds, quotas, revocation/reassignment, Ethereum finality and signature failures.
 
 Rehearse the actual Ledger/Safe/member wallet, mobile browser, official-origin CSP, request signature, explicit copy/paste, organizer verification and manual Eventbrite workflow. Stage with test-only harnesses without calling them real memberships. Contact test data must be fictitious. Confirm that the wallet sees only a salted recipient commitment.
 
 Record private review reports, not customer receipts, under `.local/`. Use `releases/external-evidence.example.json` as the structure for `.local/external-evidence.json`; each report must bind the current source hash. The static edition requires **privateRequestStaging**, not a relay test.
 
-The required report entries are `independentSecurityReview`, `realWalletStaging`, `privateRequestStaging` and `eventbriteStaging`. Each identifies the actual reviewer, a private `.local/` report file and that file's SHA-256. Record `PASS` only for an executed, reviewed result. `npm run fingerprint` prints the source hash to bind; changing code, tests or configuration requires matching new evidence. Keep names/emails from participant receipts out of public qualification artifacts.
+The required report entries are `independentSecurityReview`, `legalReview`, `realWalletStaging`, `privateRequestStaging` and `eventbriteStaging`. Each identifies the actual reviewer, a private `.local/` report file and that file's SHA-256. Record `PASS` only for an executed, reviewed result. `npm run fingerprint` prints the source hash to bind; changing code, tests, configuration, public legal/privacy notices, the legal-review guide or the license requires matching new evidence. Keep participant contacts and legal advice out of public qualification artifacts.
 
 ```bash
 npm run fingerprint

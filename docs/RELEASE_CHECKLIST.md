@@ -15,6 +15,7 @@
 - [ ] Hosted built assets and privacy instrumentation pass; test-device scope recorded.
 - [ ] Canonical ENS mainnet fork passes on representative real memberships.
 - [ ] Independent security review findings resolved against the exact bytes.
+- [ ] Qualified deployment-specific [legal review](LEGAL_RELEASE_REVIEW.md) completed; actual operator, offer, French/English notices and privacy operations verified and published as required.
 - [ ] Actual root/member wallets, intended mobile path and Safe if used are rehearsed.
 - [ ] Static no-PII-persistence and commitment-only signing verified on those devices.
 - [ ] Private copy/email/manual Eventbrite process staged using fictitious data.

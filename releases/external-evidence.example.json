@@ -6,6 +6,12 @@
     "file": ".local/security-review.json",
     "sha256": ""
   },
+  "legalReview": {
+    "status": "NOT_EXECUTED",
+    "reviewer": "",
+    "file": ".local/legal-review.json",
+    "sha256": ""
+  },
   "realWalletStaging": {
     "status": "NOT_EXECUTED",
     "reviewer": "",

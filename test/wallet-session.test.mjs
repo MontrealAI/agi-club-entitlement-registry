@@ -49,7 +49,7 @@ function fixture(page) {
   const hash = n => '0x' + BigInt(n).toString(16).padStart(64, '0');
   const account = '0x' + '11'.repeat(20);
   const state = {code: '0x6000', codeHash: hash(88), version: REGISTRY_VERSION, ens: ENS, wrapper: WRAPPER, root: ROOT, chain: '0x1', permissionEvent: false};
-  const calls = [], sent = [], providers = [], waits = new Map(), walletListeners = new Map();
+  const calls = [], sent = [], providers = [], waits = new Map(), walletListeners = new Map(), pageListeners = new Map();
   async function call(name, result) {
     calls.push(name);
     const wait = waits.get(name);
@@ -86,7 +86,7 @@ function fixture(page) {
     Contract: class { constructor() { return registry; } },
   };
   const window = {
-    ethers, addEventListener() {},
+    ethers, addEventListener: (event, handler) => pageListeners.set(event, handler),
     AGI_CONFIG: {registryAddress: '0x' + '22'.repeat(20), registryCodeHash: hash(88), expectedOrigin: 'https://claims.example.org', allowedEntitlements: ['IA101_2026_09_22']},
     ethereum: {
       request: async ({method}) => {
@@ -117,6 +117,8 @@ function fixture(page) {
     state, calls, sent, providers,
     el: id => elements.get(id), click: id => elements.get(id).click(),
     walletEvent: event => walletListeners.get(event)?.([]),
+    pageEvent: event => pageListeners.get(event)?.(),
+    acknowledgeUsage: async () => { const input=elements.get('usageConsent'); input.checked=true; await input.emit('change'); },
     pause: name => {
       const started = Promise.withResolvers(), pending = Promise.withResolvers();
       waits.set(name, {started, pending});
@@ -127,7 +129,7 @@ function fixture(page) {
 
 async function attemptTransaction(ui, page) {
   if (page === 'admin') { await ui.click('pause'); await ui.click('approveConfirm'); }
-  else { ui.el('memberLabel').value = 'alice'; await ui.click('verify'); await ui.click('claim'); }
+  else { ui.el('memberLabel').value = 'alice'; await ui.click('verify'); await ui.acknowledgeUsage(); await ui.click('claim'); }
 }
 
 for (const page of ['admin', 'member']) {
@@ -269,6 +271,7 @@ test('member: editing the membership during gas estimation cancels the old claim
   ui.el('memberLabel').value = 'alice';
   await ui.click('verify');
   const estimation = ui.pause('claim.estimateGas');
+  await ui.acknowledgeUsage();
   const claiming = ui.click('claim');
   await estimation.started;
   ui.el('memberLabel').value = 'bob';
@@ -276,4 +279,29 @@ test('member: editing the membership during gas estimation cancels the old claim
   estimation.release();
   await claiming;
   assert.equal(ui.sent.length, 0);
+});
+
+test('member: public reads need no acknowledgement but a claim does', async () => {
+  const ui=fixture('member');await ui.click('connect');
+  ui.el('memberLabel').value='alice';await ui.click('verify');
+  assert.equal(ui.el('usageConsent').checked,false);
+  await ui.click('claim');assert.equal(ui.sent.length,0);
+  assert(!ui.calls.includes('claim.staticCall'));
+  assert.match(ui.el('status').textContent,/conditions/);
+});
+
+for(const cancel of ['withdraw','withdraw and acknowledge again','clear','pagehide','pageshow','beforeunload']) {
+ test('member: '+cancel+' during gas estimation invalidates the pending claim',async()=>{
+  const ui=fixture('member');await ui.click('connect');
+  ui.el('memberLabel').value='alice';await ui.click('verify');await ui.acknowledgeUsage();
+  const estimation=ui.pause('claim.estimateGas'),claiming=ui.click('claim');await estimation.started;
+  if(cancel.startsWith('withdraw')){ui.el('usageConsent').checked=false;await ui.el('usageConsent').emit('change');if(cancel.endsWith('again'))await ui.acknowledgeUsage();}
+  else if(cancel==='clear')await ui.click('clearPrivate');
+  else ui.pageEvent(cancel);
+  estimation.release();await claiming;assert.equal(ui.sent.length,0);
+ });
+}
+for(const event of ['accountsChanged','chainChanged','disconnect'])test('member: '+event+' clears the reading acknowledgement',async()=>{
+ const ui=fixture('member');await ui.click('connect');await ui.acknowledgeUsage();
+ ui.walletEvent(event);assert.equal(ui.el('usageConsent').checked,false);
 });
