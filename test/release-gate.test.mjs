@@ -5,10 +5,10 @@ import os from 'node:os';
 import path from 'node:path';
 import {releaseGate} from '../scripts/release-gate.mjs';
 import {sha256,sourceDigest} from '../scripts/source-digest.mjs';
-import {ENS,WRAPPER,ROOT,REGISTRY_VERSION} from '../shared/ticket-request.mjs';
+import {ENS,WRAPPER,ROOT,REGISTRY_VERSION} from '../shared/entitlement-request.mjs';
 
 const stages=['check:repo','check:lock','test:offline','compile','test:evm','test:journey','build:site','test:browser'];
-const kinds=['independentSecurityReview','legalReview','realWalletStaging','privateRequestStaging','eventbriteStaging'];
+const kinds=['independentSecurityReview','legalReview','realWalletStaging','privateRequestStaging','fulfillmentStaging'];
 const localFile='qualification/LOCAL_RELEASE.json',compilerFile='qualification/compiler-status.json',forkFile='qualification/mainnet-fork.json';
 const hash=n=>'0x'+n.repeat(64),address=n=>'0x'+n.repeat(40);
 function fixture(t) {
@@ -99,8 +99,8 @@ test('A running or interrupted fork blocks otherwise complete evidence',t=>{cons
 
 for(const [name,whenRead,occurrence,replaceReport] of [
  ['lock acquired after the initial lock check',forkFile,1,false],
- ['lock acquired while external evidence is read','.local/eventbriteStaging.txt',1,false],
- ['failed attempt completes after the fork report was read','.local/eventbriteStaging.txt',1,true],
+ ['lock acquired while external evidence is read','.local/fulfillmentStaging.txt',1,false],
+ ['failed attempt completes after the fork report was read','.local/fulfillmentStaging.txt',1,true],
  ['lock acquired during the final fork-report read',forkFile,2,false],
 ])test('Concurrent fork evidence rejects '+name,t=>{
  const f=fixture(t),previous=f.read(forkFile),original=fs.readFileSync;
@@ -115,4 +115,11 @@ for(const [name,whenRead,occurrence,replaceReport] of [
  });
  const g=f.gate();assert(triggered,'The intended filesystem interleaving must execute');
  assert.equal(g.status,'BLOCKED');assert.equal(g.qualifiedBytecode,null);assert(!g.checks.some(x=>x.type==='fork'),'A stale fork must not contribute to approval evidence');
+});
+
+test('Fulfillment evidence supports a chosen non-event flow and cannot be replaced by a legacy provider entry',t=>{
+ const f=fixture(t);assert.equal(f.gate().status,'EVIDENCE_READY_FOR_PRINCIPAL_REVIEW');
+ const q=f.read('.local/external-evidence.json');assert(q.fulfillmentStaging);assert(!q.eventbriteStaging);
+ f.edit('.local/external-evidence.json',value=>{value.eventbriteStaging=value.fulfillmentStaging;delete value.fulfillmentStaging;});
+ assert(f.gate().blockers.includes('fulfillmentStaging: missing reviewed evidence'));f.blocked();
 });

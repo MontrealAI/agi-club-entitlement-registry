@@ -74,10 +74,17 @@ try{
  };
  await connectMember();
  await check('Catalogue uses the administrator’s selected-language title',async()=>assert.equal(await evaluate('document.getElementById("benefitSelect").selectedOptions[0].textContent'),language==='fr'?'TEST FICTIF — AVANTAGE — Ouvert':'FICTITIOUS TEST — BENEFIT — Open'));
- const fill=`document.getElementById('usageConsent').checked=true;document.getElementById('usageConsent').dispatchEvent(new Event('change'));document.getElementById('ticketName').value='PRIVATE FICTIVE MEMBER';document.getElementById('ticketName').dispatchEvent(new Event('input'));document.getElementById('ticketEmail').value='private-fixture@example.org';document.getElementById('ticketEmail').dispatchEvent(new Event('input'));document.getElementById('consent').checked=true;`;
+ const fill=`document.getElementById('usageConsent').checked=true;document.getElementById('usageConsent').dispatchEvent(new Event('change'));document.getElementById('requestName').value='PRIVATE FICTIVE MEMBER';document.getElementById('requestName').dispatchEvent(new Event('input'));document.getElementById('requestEmail').value='private-fixture@example.org';document.getElementById('requestEmail').dispatchEvent(new Event('input'));document.getElementById('consent').checked=true;`;
  await check('No signature prompt without the reading acknowledgement',async()=>{
   await evaluate(fill+"document.getElementById('usageConsent').checked=false;");await click('prepareRequest');
   assert.equal(await evaluate("window.__calls.filter(x=>x.method==='personal_sign').length"),0);
+ });
+ for(const [name,email] of [['',''],['PRIVATE FICTIVE MEMBER',''],['','private-fixture@example.org']])await check('Optional private contacts prepare correctly: '+(name?'name':'no name')+' / '+(email?'email':'no email'),async()=>{
+  await evaluate(fill+`document.getElementById('requestName').value=${JSON.stringify(name)};document.getElementById('requestName').dispatchEvent(new Event('input'));document.getElementById('requestEmail').value=${JSON.stringify(email)};document.getElementById('requestEmail').dispatchEvent(new Event('input'));`);
+  await click('prepareRequest');assert(await evaluate('!document.getElementById("copyRequest").disabled'),await evaluate('document.getElementById("status").textContent'));
+  const packet=parseRequestEmail(await evaluate('document.getElementById("requestPreview").value'));
+  assert.equal(packet.payload.schema,'AGIClubEntitlementRequest/4');assert.equal(packet.recipient.name,name);assert.equal(packet.recipient.email,email);
+  await emptyStores();await click('clearPrivate');
  });
  await evaluate(fill);await click('prepareRequest');
  await check('Actual sign and verify handlers prepare a bounded private receipt',async()=>assert(await evaluate('!document.getElementById("copyRequest").disabled'),await evaluate('document.getElementById("status").textContent')));
@@ -96,9 +103,9 @@ try{
   assert(await evaluate("document.getElementById('copyRequest').disabled&&document.getElementById('requestPreview').value===''") );
  });
  await evaluate(fill);await click('prepareRequest');
- await check('Editing contacts invalidates the existing signed packet',async()=>{await evaluate('document.getElementById("ticketEmail").dispatchEvent(new Event("input"))');assert(await evaluate('document.getElementById("copyRequest").disabled&&document.getElementById("requestPreview").value===""'));});
+ await check('Editing contacts invalidates the existing signed packet',async()=>{await evaluate('document.getElementById("requestEmail").dispatchEvent(new Event("input"))');assert(await evaluate('document.getElementById("copyRequest").disabled&&document.getElementById("requestPreview").value===""'));});
  await evaluate(fill);await click('prepareRequest');
- await check('Explicit clipboard handoff clears page references and fields',async()=>{await evaluate('document.getElementById("copyConsent").checked=true');await click('copyRequest');assert(await evaluate('window.__clipboard.length===1 && document.getElementById("ticketName").value==="" && document.getElementById("ticketEmail").value==="" && document.getElementById("requestPreview").value==="" && document.getElementById("copyRequest").disabled'));});
+ await check('Explicit clipboard handoff clears page references and fields',async()=>{await evaluate('document.getElementById("copyConsent").checked=true');await click('copyRequest');assert(await evaluate('window.__clipboard.length===1 && document.getElementById("requestName").value==="" && document.getElementById("requestEmail").value==="" && document.getElementById("requestPreview").value==="" && document.getElementById("copyRequest").disabled'));});
  const privateReceipt=await evaluate('window.__clipboard[0]'),privateSalt=parseRequestEmail(privateReceipt).recipient.salt;
  await check('Copied email visibly contains the full signed AGI Club subname',async()=>assert(privateReceipt.includes('Identité AGI Club: alice.club.agi.eth')));
  await check('Language change cancels a pending private signature and clears contact data without reloading',async()=>{
@@ -109,12 +116,12 @@ try{
   await evaluate(`document.querySelector('[data-language="${language==='fr'?'en':'fr'}"]').click();window.__completeSignature();window.__signatureGate=null;`);
   await waitFor("document.getElementById('prepareRequest').getAttribute('aria-busy')!=='true'",'cancelled private signature');
   assert.equal(await evaluate('window.__documentGeneration'),generation);
-  assert(await evaluate("document.getElementById('ticketName').value===''&&document.getElementById('ticketEmail').value===''&&document.getElementById('requestPreview').value===''&&document.getElementById('copyRequest').disabled&&!document.getElementById('usageConsent').checked"));
+  assert(await evaluate("document.getElementById('requestName').value===''&&document.getElementById('requestEmail').value===''&&document.getElementById('requestPreview').value===''&&document.getElementById('copyRequest').disabled&&!document.getElementById('usageConsent').checked"));
   assert.equal(await evaluate('window.__clipboard.length'),1);
   await evaluate(`document.querySelector('[data-language="${language}"]').click();`);await connectMember();
  });
- await check('Return from page cache clears private fields',async()=>{await evaluate(fill+'window.dispatchEvent(new PageTransitionEvent("pageshow",{persisted:true}));');assert(await evaluate('document.getElementById("ticketEmail").value===""&&!document.getElementById("usageConsent").checked'));});
- await check('Pagehide clears fields',async()=>{await evaluate(fill+'window.dispatchEvent(new Event("pagehide"));');assert(await evaluate('document.getElementById("ticketName").value===""&&!document.getElementById("usageConsent").checked'));});
+ await check('Return from page cache clears private fields',async()=>{await evaluate(fill+'window.dispatchEvent(new PageTransitionEvent("pageshow",{persisted:true}));');assert(await evaluate('document.getElementById("requestEmail").value===""&&!document.getElementById("usageConsent").checked'));});
+ await check('Pagehide clears fields',async()=>{await evaluate(fill+'window.dispatchEvent(new Event("pagehide"));');assert(await evaluate('document.getElementById("requestName").value===""&&!document.getElementById("usageConsent").checked'));});
  await check('Mailto link has no private body or member address',async()=>{const h=await evaluate('document.querySelector("a[href^=mailto]").getAttribute("href")');assert(!h.includes('body='));assert(!h.includes('private-fixture'));});
  for(const width of [1280,390])await check('Member layout '+width+'px fits viewport',async()=>{await command('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:false});await evaluate('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(true))))');assert(await evaluate('document.documentElement.scrollWidth<=innerWidth+2'));});
  await check('Member flow leaves all persistent stores empty and creates no file or log',emptyStores);
@@ -122,7 +129,7 @@ try{
  await check('Reloading the member page never restores contact fields or the receipt',async()=>{
   await evaluate(fill);const generation=await evaluate('window.__documentGeneration');await command('Page.reload',{ignoreCache:true});
   await waitFor('window.__documentGeneration!=='+JSON.stringify(generation)+'&&document.readyState==="complete"&&!!window.__calls','member reload');
-  assert(await evaluate(`document.getElementById('ticketName').value===''&&document.getElementById('ticketEmail').value===''&&document.getElementById('requestPreview').value===''&&!document.getElementById('usageConsent').checked`));
+  assert(await evaluate(`document.getElementById('requestName').value===''&&document.getElementById('requestEmail').value===''&&document.getElementById('requestPreview').value===''&&!document.getElementById('usageConsent').checked`));
  });
  await command('Page.navigate',{url:base+'/verify.html?lang='+language});
  await waitFor('location.href==='+JSON.stringify(base+'/verify.html?lang='+language)+'&&document.readyState==="complete"','organizer page and modules');

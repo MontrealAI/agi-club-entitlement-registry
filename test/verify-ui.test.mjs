@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {runInNewContext} from 'node:vm';
-import {REGISTRY_VERSION,MAX_PACKET_BYTES,RequestError} from '../shared/ticket-request.mjs';
+import {REGISTRY_VERSION,MAX_PACKET_BYTES,RequestError} from '../shared/entitlement-request.mjs';
 import {parseRequestEmail,membershipName,MAX_EMAIL_BYTES} from '../shared/request-email.mjs';
 import {requestPolicy} from '../frontend/member-catalog.mjs';
 
@@ -21,7 +21,7 @@ function fixture() {
   ...language,window,ethers,REGISTRY_VERSION,MAX_PACKET_BYTES,RequestError,TextEncoder,parseRequestEmail,membershipName,MAX_EMAIL_BYTES,requestPolicy,
   location:{origin:window.AGI_CONFIG.expectedOrigin},document:{getElementById:id=>elements.get(id)},
   setTimeout:(fn,delay)=>{const id=++next;timers.set(id,{fn,at:now+delay});return id;},clearTimeout:id=>timers.delete(id),
-  createEthersIO:()=>({}),verifyTicketRequest:async packet=>{await boundary('verification');if(error)throw error;return {status:'VERIFIED_REQUEST_NOT_A_TICKET',claimKey:'PUBLIC_FIXTURE',payload:{claimRevision:1,membershipLabel:'fictitious-member'},recipient:packet.recipient,finalizedBlock:100};},
+  createEthersIO:()=>({}),verifyEntitlementRequest:async packet=>{await boundary('verification');if(error)throw error;return {status:'VERIFIED_REQUEST_NOT_FULFILLED',claimKey:'PUBLIC_FIXTURE',payload:{entitlementId:'0x'+'33'.repeat(32),claimRevision:1,membershipLabel:'fictitious-member'},recipient:packet.recipient,finalizedBlock:100};},
  },{filename:'frontend/verify.js'});
  return {
   changeLanguage:language.changeLanguage,calls,providers,el:id=>elements.get(id),
@@ -38,6 +38,8 @@ test('Organizer verifier displays the verified recipient and releases its provid
  const ui=fixture();await ui.input();await ui.click('verifyReceipt');
  assert.equal(JSON.parse(ui.el('verifyResult').textContent).email,'fixture@example.org');
  assert.equal(JSON.parse(ui.el('verifyResult').textContent).membership,'fictitious-member.club.agi.eth');
+ assert.equal(JSON.parse(ui.el('verifyResult').textContent).entitlementId,'0x'+'33'.repeat(32));
+ assert.equal(JSON.parse(ui.el('verifyResult').textContent).fulfillmentConfirmed,false);
  assert(ui.providers.every(provider=>provider.destroyed));
 });
 
@@ -104,4 +106,9 @@ test('A recognized protocol failure remains actionable without echoing the recei
  const ui=fixture();await ui.input();ui.fail(new RequestError('WAITING_FOR_FINALITY'));await ui.click('verifyReceipt');
  assert.match(ui.el('verifyStatus').textContent,/finalit/i);
  assert.equal(ui.el('verifyResult').textContent,'');
+});
+
+for(const language of ['fr','en'])test('Legacy-format guidance requests a new signature for the same claim in '+language,async()=>{
+ const ui=fixture();ui.changeLanguage(language);await ui.input();ui.fail(new RequestError('UNSUPPORTED_SCHEMA'));await ui.click('verifyReceipt');
+ assert.equal(ui.el('verifyResult').textContent,'');assert(ui.el('verifyStatus').textContent.includes(language==='fr'?'sans nouvelle transaction':'without another transaction'));
 });

@@ -14,7 +14,7 @@
 | Configurer ou réclamer / Configure or claim | Etherscan **Contract → Write Contract**. Select the function by **name**, not its display number. |
 | Préparer les valeurs / Prepare values | Open **Etherscan** from the registry website. Choose Français/English, the approved address and an operation. |
 | Configurer le site / Configure the website | The [public website configuration](HARDHAT_DEPLOYMENT.md#i-verify-before-member-access) remains a separate hosting operation. Etherscan cannot edit static website files. |
-| Reçu privé et billet / Private receipt and ticket | Use the member page and private verifier, then the deliberate private-message and ticket workflow. Never paste these data into Etherscan. |
+| Demande privée et prestation / Private request and fulfillment | Use the member page and private verifier, only if the benefit needs a private request, then follow its chosen fulfillment workflow. Never paste these data into Etherscan. |
 
 ## 1. Déployer puis vérifier / Deploy, then verify
 
@@ -132,9 +132,9 @@ All operations except `claim` require the current effective administrator. / Tou
 | `unpause()` | Resume public self-claims subject to benefit state/dates/capacity/ownership. / Reprendre sous les règles existantes. |
 | `claim(entitlementId, label)` | Member self-claim, called by the current effective membership holder. / Réclamation du membre détenteur. |
 
-**FR.** Les attributions administratives et exceptions contournent le brouillon, les dates et la pause des réclamations publiques ; elles ne contournent jamais le quota ou l’unicité du droit. Corriger un droit n’annule pas un billet Eventbrite déjà délivré : l’organisateur doit corriger le billet séparément. Les paramètres d’un appel, ses logs et son historique sont publics, même si vous révoquez ensuite le droit.
+**FR.** Les attributions administratives et exceptions contournent le brouillon, les dates et la pause des réclamations publiques ; elles ne contournent jamais le quota ou l’unicité du droit. Corriger un droit ne retire pas une prestation ou un accès déjà fourni : le Club doit rapprocher le système externe séparément. Les paramètres d’un appel, ses logs et son historique sont publics, même si vous révoquez ensuite le droit.
 
-**EN.** Administrative grants and exceptions bypass Draft/state, time windows and the public-claim pause; they never bypass capacity or the one-record rule. Correcting a claim does not cancel an issued Eventbrite ticket; the organizer must correct that separately. Call inputs, logs and history are public, including after revocation.
+**EN.** Administrative grants and exceptions bypass Draft/state, time windows and the public-claim pause; they never bypass capacity or the one-record rule. Correcting a claim does not retract an external delivery or access; the Club must reconcile the external system separately. Call inputs, logs and history are public, including after revocation.
 
 **Input format / Format.** Paste bytes32/address/decimal/bool values as shown, without extra quotation marks. For `string[]`, use the helper’s JSON array, for example `["alice","bob"]`. A membership input is one lowercase direct label, such as `alice`, not a wallet address, full personal name or email. The helper also accepts `alice.club.agi.eth` and produces `alice` for the contract. A failing batch reverts every member in that batch. / Un lot qui échoue n’attribue ni ne révoque partiellement ses membres.
 
@@ -144,7 +144,7 @@ All operations except `claim` require the current effective administrator. / Tou
 2. Read `claimability(entitlementId, claimant, label)` with the actual caller wallet. Status **0** means claimable at that read’s state. / État **0** : réclamation possible à cet instant.
 3. In **Write Contract → claim**, use the bytes32 benefit ID and direct label. Connect the holder wallet and confirm the transaction. / Confirmez avec le wallet détenteur.
 4. Wait for success, then read `claimRecord` or `claimantOf`, using `membershipNode(label)` for the node. Confirm the active claimant and revision. A successful transaction for a different function is not proof of this claim. / Relisez le droit actif.
-5. For a private ticket request, return to the member page and use the existing active claim. Do **not** claim again or paste name/email/salt/receipt into Etherscan’s Verified Signatures, Input Data Messages, metadata, comments or transaction fields. / Retournez au site pour le reçu privé, sans seconde réclamation et sans dépôt des coordonnées dans Etherscan.
+5. If a private fulfillment request is needed, return to the member page and use the existing active claim. Do **not** claim again or paste name/email/salt/receipt into Etherscan’s Verified Signatures, Input Data Messages, metadata, comments or transaction fields. / Retournez au site pour le reçu privé, sans seconde réclamation et sans dépôt des coordonnées dans Etherscan.
 
 ## 6. Toutes les lectures / Every read function
 
@@ -199,3 +199,5 @@ Checked 2026-09-12 / Consultées le 12 septembre 2026:
 - [Input formats](https://info.etherscan.com/understanding-the-required-input-formats-for-read-write-contract-tab/)
 
 Local helper/EVM tests demonstrate parameter encoding against the compiled contract. They do not demonstrate a real deployed address, actual Etherscan verification or a hardware-wallet transaction. Record those production-specific results separately. / Les tests locaux prouvent l’encodage dans leurs limites ; la vérification Etherscan réelle et les wallets réels restent à qualifier séparément.
+
+**Any benefit / Tout avantage.** Choose categories freely; they do not activate special contract behavior. For resource, access, service, reservation, perk or periodic-allocation recipes, see [English](ENTITLEMENT_DESIGN_EN.md) / [Français](ENTITLEMENT_DESIGN_FR.md). No category or first offering is preselected.

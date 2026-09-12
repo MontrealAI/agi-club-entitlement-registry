@@ -1,5 +1,5 @@
 import {id,namehash,signMessage,verifyMessage,walletAddress} from './crypto-reference.mjs';
-import {REGISTRY_VERSION,ENS,WRAPPER,ROOT,preparePacket} from '../shared/ticket-request.mjs';
+import {REGISTRY_VERSION,ENS,WRAPPER,ROOT,preparePacket} from '../shared/entitlement-request.mjs';
 export const NOW=1789156800;
 export async function fixture(){
  const policy={origin:'https://claims.example.org',chainId:1,registry:'0x'+'11'.repeat(20),registryCodeHash:'0x'+'22'.repeat(32),version:REGISTRY_VERSION,entitlements:[id('FICTITIOUS_TEST_BENEFIT')]};

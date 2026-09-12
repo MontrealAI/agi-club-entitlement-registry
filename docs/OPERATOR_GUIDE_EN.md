@@ -10,45 +10,35 @@ Switching language keeps public administration and Etherscan inputs, but invalid
 
 The signed protocol, JSON field names, contract function names and public identifiers retain their exact technical form in either language. The private email heading contains both languages and the full signed AGI Club subname. Its fixed bilingual subject contains no member data. Browser, wallet and Etherscan interfaces have their own language settings.
 
-## One verified entitlement, one private request, one ticket
+## Claim first; request private fulfillment only if needed
 
-The member must have an active claim. Their request signature binds the recipient to that claim, but proves neither legal identity nor control of the email account. It does not prevent later sharing of the final ticket.
+Read the [benefit design guide](ENTITLEMENT_DESIGN_EN.md) for practical models and the contract’s limits. The registry is not tied to an event or a ticket provider. A member can claim without name or email. If the published benefit needs no private request, follow its access/use instructions directly after the claim step.
 
-1. Receive the email at **president@montreal.ai**. Keep its contents and attachments private.
-2. Open **the verifier on your approved official origin**, never a verification tool supplied by the sender. Paste the complete prepared email, including its identity heading and signed JSON receipt, or the original JSON. It stays in the page’s memory.
-3. Select **Verify through my wallet**. The result must be `VERIFIED_REQUEST_NOT_A_TICKET`, with the full `membership: example.club.agi.eth` and the expected name/email. The subname comes from the signed label; a conflicting email heading is rejected. Awaiting finality, an invalid signature or a revoked entitlement means no ticket may be issued.
-4. Look up the **claimKey** in your private issuance register and Eventbrite orders. The key does not change with an email address, nonce or new signature. A new revision is not a second admission.
-5. If the entitlement has never been used for a ticket, manually create one complimentary AGI Club admission in Eventbrite for the name and email **verified in the receipt**, using the appropriate confirmation option.
-6. Record the claimKey, revision, status and order number outside the repository. Confirm receipt during the limited production acceptance test. Clear the receipt from the interface after use.
+## Handle a private request
 
-Use your usual private administrative system; never host its records with this static application. To prevent operators issuing duplicates concurrently, designate one issuer or use an administrative lock. The static application has no shared store and provides no automatic global issuance lock.
+1. Receive the member’s email at **president@montreal.ai**. Keep it private. The prepared email includes the full AGI Club subname.
+2. Open **the verifier on your approved official origin**, never a tool supplied by the sender. Paste the complete prepared email or its original JSON. A misleading identity heading is rejected.
+3. Choose **Verify through my wallet**. Require `VERIFIED_REQUEST_NOT_FULFILLED` and the expected full `membership`. Review the entitlement ID, claimant revision and any supplied contacts. Empty name/email means not supplied; neither a name nor mailbox control is certified. Awaiting finality, a revoked claim or an invalid signature blocks fulfillment.
+4. Check the benefit’s published terms and look up the **claimKey** in your private fulfillment register and the relevant provider’s records. Lock that allocation before handling it. A different nonce, recipient or revision is still the same allocation.
+5. If eligible and not already fulfilled, provide the resource, access, service, reservation or other agreed benefit through the chosen channel. For a ticket benefit only, a ticketing provider such as Eventbrite may be used. Use only necessary supplied contacts; obtain any genuinely required missing information through your approved private process.
+6. Record claimKey, revision, fulfillment status and a private provider reference outside this repository. Confirm receipt/use during acceptance testing. Clear the verifier after use.
 
-**Zero persistence in the static verifier:** the pasted receipt and result exist only in the open page. Clear, navigation, wallet or language changes, and ten minutes without input or a verification click empty them. A delayed verification does not extend that deadline or restore a cleared receipt. Reloading restores no contact history. Email, your administrative register and Eventbrite remain separate systems with their own retention practices.
+Designate one operator or use a shared private administrative lock to prevent concurrent duplicates. The static page has no shared store, delivery status or automatic global lock. Reverify immediately before fulfillment; a subsequent revocation can still occur.
 
-## Common questions
+**Zero persistence in the static verifier:** the pasted receipt and result stay in the open page only. Clear, navigation, wallet/language changes and ten minutes without input or a verification click empty them. Delayed verification cannot restore cleared data or extend that deadline. Email, your private register and any fulfillment provider are separate systems with their own retention practices. Do not upload their records or private receipts to GitHub or public hosting.
 
-**The member has already claimed:** prepare only the private request, without another transaction. Reloading does not restore contact details; enter them again and sign.
+## Corrections and common questions
 
-**The request expired (72 hours by default):** ask the member to prepare a new request for the existing claim. Do not bypass verifier expiry.
-
-**Another email or a new revision:** do not issue a second ticket. Confirm the correction, cancel or replace the previous ticket where necessary and reconcile the private register.
-
-**Copying is unavailable:** the member needs an active finalized claim and a signed request. If automatic clipboard access is unavailable, they can select and copy the prepared text manually, then clear the page. Test the actual mobile flow before launch.
-
-**The membership name was transferred after claiming:** the claim remains attached to its beneficiary until an administrative correction. Transfer does not recreate the entitlement.
-
-**The administrator grants claims to members:** grants to current owners allow the administrator to pay the batch’s gas. Each member still signs their own private request, and verification remains required. Use batches of 1–50 distinct labels.
-
-## Member instructions
-
-Verify your membership. Claim your entitlement if it has not already been assigned. Enter your contact details locally, sign a private request, then copy it into your own email application. The site does not transmit your name or email. Where the benefit provides for a ticket, the organizer creates it manually after verification.
+- **Already claimed:** use the existing claim. Prepare a new private request only if needed. No new Ethereum transaction is needed merely to regenerate a receipt.
+- **Expired request:** after the default 72-hour validity, ask for a new signature for the existing claim; never bypass expiry.
+- **Old ticket receipt:** `/3` and earlier formats are incompatible with `/4`. Update both member and verifier, reload and prepare a new request. Do not relabel an old signature.
+- **Another email or revision:** reconcile the existing allocation, cancel/replace external delivery or access where appropriate; do not allocate again automatically.
+- **Copy unavailable:** select and copy the prepared text manually, then clear the page. Test the real mobile flow before launch.
+- **Membership transferred:** the recorded claimant remains the beneficiary until an administrative correction. ENS transfer does not create a second allocation.
+- **Admin grants:** grant to current owners in batches of 1–50 distinct labels if the administrator should pay the gas. Private fulfillment still requires the appropriate claimant verification.
 
 ## Administration
 
-Production deployment and the administrative demonstration start **without any event**. Choose the permanent identifier, category and capacity only when you decide to create the first benefit. Create a draft, set its French and English titles and optional UTC dates, review it and explicitly open it. The same operations are available through Etherscan.
+Deployment and the demonstration start **without any benefit**. Choose permanent ID, category, capacity, dates and titles only when the offer is decided. Create a Draft, set French/English descriptors, review and explicitly Open. Use the portal or Etherscan. In registry mode, members refresh to see administrator changes without a website allowlist edit. An empty English title falls back to the published French title; publish both for a complete bilingual catalogue.
 
-In registry catalogue mode, members refresh to see new benefits and title changes, without an event list prefilled in the site. The interface uses the title for the selected language. An empty English title falls back to the published French title; the app does not invent or automatically translate benefit terms. Publish both titles with `setDescriptor` for a complete bilingual catalogue. Localized state labels do not change contract values: 1 = Draft, 2 = Open, 3 = Closed, 4 = Archived.
-
-Never place personal data in public titles, references or audit reasons. Revocation releases on-chain capacity **without cancelling an Eventbrite order**. Reconcile both before reassignment.
-
-The effective holder of `club.agi.eth` executes administrative operations. If that holder is a Safe, the calls must come from the Safe itself. Keeping control of the ENS name and its validity is a critical operational dependency. The disposable deployer receives no separate privileges.
+The current effective holder of `club.agi.eth` administers the registry. A Safe must execute its own calls; the disposable deployer receives no privileges. Keep the ENS name valid and controlled. Public fields must contain no contacts, delivery references or access secrets. Revocation frees active capacity but does not cancel an external service, reservation or delivery: reconcile before reassignment.

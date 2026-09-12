@@ -4,7 +4,7 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 import {fileURLToPath} from 'node:url';
 import {sourceDigest,sha256} from './source-digest.mjs';
-import {ENS,WRAPPER,ROOT,REGISTRY_VERSION} from '../shared/ticket-request.mjs';
+import {ENS,WRAPPER,ROOT,REGISTRY_VERSION} from '../shared/entitlement-request.mjs';
 
 export const LOCAL_STAGES = Object.freeze(['check:repo','check:lock','test:offline','compile','test:evm','test:journey','build:site','test:browser']);
 const PROD = 'contracts/AGIClubEntitlementRegistryMainnet.sol:AGIClubEntitlementRegistryMainnet';
@@ -82,7 +82,7 @@ export function releaseGate(root=process.cwd()) {
   try {
     const e=read('.local/external-evidence.json','.local').report;
     if(e.sourceSha256!==source) blockers.push('External evidence does not bind current source');
-    for(const name of ['independentSecurityReview','legalReview','realWalletStaging','privateRequestStaging','eventbriteStaging']) {
+    for(const name of ['independentSecurityReview','legalReview','realWalletStaging','privateRequestStaging','fulfillmentStaging']) {
       const x=e[name];
       if(x?.status!=='PASS'||typeof x.reviewer!=='string'||!x.reviewer.trim()||typeof x.file!=='string'||!x.file.startsWith('.local/')||!(/^[0-9a-f]{64}$/.test(x.sha256||''))) {
         blockers.push(name+': missing reviewed evidence'); continue;

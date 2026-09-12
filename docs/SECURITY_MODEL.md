@@ -6,17 +6,17 @@ This is a candidate, not an independent audit. Start with immutable source hashe
 
 - Root authority: current effective `club.agi.eth` holder and its parent/wrapper dependencies.
 - Claim integrity: entitlement+membership uniqueness, capacity, windows, administrative history.
-- Recipient binding: private /3 receipt, salted commitment, scope, expiry and revision.
+- Recipient binding: private /4 receipt, salted commitment, scope, expiry and revision.
 - Contact privacy: volatile page state, no automatic transport, explicit clipboard handoff.
-- Fulfilment: private organizer register and manual Eventbrite order.
+- Fulfilment: private organizer register and chosen external fulfillment process.
 
 ## Required adversarial checks
 
-Unauthorized admin; root transfer; owner versus resolver; wrapping/unwrapping/fuses and exact expiry boundary; unavailable/malformed wrapper; duplicate/transfer-based claim; batch failure atomicity; quota accounting; pause behavior; override events; stale/revoked/reassigned receipt; substituted email/name/salt/message; wrong registry/domain/network; replay; EOA and actual Safe signing; configuration/runtime-code mismatch; page account changes while signing; contact edits; copied stale request; no PII network/cookie/storage writes; fail-closed invalid receipt; accidental public logs/metadata; mismatch between claim and already-issued ticket.
+Unauthorized admin; root transfer; owner versus resolver; wrapping/unwrapping/fuses and exact expiry boundary; unavailable/malformed wrapper; duplicate/transfer-based claim; batch failure atomicity; quota accounting; pause behavior; override events; stale/revoked/reassigned receipt; substituted email/name/salt/message; wrong registry/domain/network; replay; EOA and actual Safe signing; configuration/runtime-code mismatch; page account changes while signing; contact edits; copied stale request; no PII network/cookie/storage writes; fail-closed invalid receipt; accidental public logs/metadata; mismatch between claim and already-fulfilled allocation.
 
 ## Explicit non-guarantees
 
-No protection against a compromised authorized root, malicious host/dependency/device, holder deliberately forwarding their final ticket, or operator issuing duplicate tickets without reconciliation. No implicit fallback administrator. No guarantee of future ENS architecture compatibility. No current claim of production clearance.
+No protection against a compromised authorized root, malicious host/dependency/device, holder deliberately forwarding a delivered benefit, or operator issuing duplicate allocations without reconciliation. No implicit fallback administrator. No guarantee of future ENS architecture compatibility. No current claim of production clearance.
 
 ## Privacy code restrictions
 

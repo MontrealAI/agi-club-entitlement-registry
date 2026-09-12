@@ -2,7 +2,7 @@
 
 [Français](HARDHAT_DEPLOYMENT_FR.md) · [English operator guide](OPERATOR_GUIDE_EN.md)
 
-**Using Ubuntu?** Start with the [Ubuntu deployment checklist](UBUNTU_MAINNET_EN.md). The registry deploys empty; the first event can be chosen later.
+**Using Ubuntu?** Start with the [Ubuntu deployment checklist](UBUNTU_MAINNET_EN.md). The registry deploys empty; the first benefit can be chosen later.
 
 Start with a local preview. You need no funded wallet, RPC account, deployment key or member contact data for it. The contract intended for Ethereum mainnet is **`AGIClubEntitlementRegistryMainnet`**; the local rehearsal deliberately uses test contracts.
 
@@ -199,15 +199,15 @@ After reading the private review reports, the gate rechecks the fork-report hash
 
 ## F. Independent review and real-device rehearsal
 
-Complete the [legal release review](LEGAL_RELEASE_REVIEW.md) with qualified counsel and the actual operator. Review the real offering, membership arrangements, French/English notices, provider information and email/Eventbrite privacy operations. Publish any required operational facts before the final source fingerprint. The member acknowledgement is temporary and is not a retained contractual acceptance record.
+Complete the [legal release review](LEGAL_RELEASE_REVIEW.md) with qualified counsel and the actual operator. Review the real offering, membership arrangements, French/English notices, provider information and email and fulfillment-provider privacy operations. Publish any required operational facts before the final source fingerprint. The member acknowledgement is temporary and is not a retained contractual acceptance record.
 
 Resolve all findings against the exact source/compiler/dependency lock. Test root authority transitions, member wrapping/expiry semantics, unauthorized calls, duplicate claims, batch bounds, quotas, revocation/reassignment, Ethereum finality and signature failures.
 
-Rehearse the actual Ledger/Safe/member wallet, mobile browser, official-origin CSP, request signature, explicit copy/paste, organizer verification and manual Eventbrite workflow. Stage with test-only harnesses without calling them real memberships. Contact test data must be fictitious. Confirm that the wallet sees only a salted recipient commitment.
+Rehearse the actual Ledger/Safe/member wallet, mobile browser, official-origin CSP, request signature, explicit copy/paste, organizer verification and chosen fulfillment workflow. Stage with test-only harnesses without calling them real memberships. Contact test data must be fictitious. Confirm that the wallet sees only a salted recipient commitment.
 
 Record private review reports, not customer receipts, under `.local/`. Use `releases/external-evidence.example.json` as the structure for `.local/external-evidence.json`; each report must bind the current source hash. The static edition requires **privateRequestStaging**, not a relay test.
 
-The required report entries are `independentSecurityReview`, `legalReview`, `realWalletStaging`, `privateRequestStaging` and `eventbriteStaging`. Each identifies the actual reviewer, a private `.local/` report file and that file's SHA-256. Record `PASS` only for an executed, reviewed result. `npm run fingerprint` prints the source hash to bind; changing code, tests, configuration, public legal/privacy notices, the legal-review guide or the license requires matching new evidence. Keep participant contacts and legal advice out of public qualification artifacts.
+The required report entries are `independentSecurityReview`, `legalReview`, `realWalletStaging`, `privateRequestStaging` and `fulfillmentStaging`. Each identifies the actual reviewer, a private `.local/` report file and that file's SHA-256. Record `PASS` only for an executed, reviewed result. `npm run fingerprint` prints the source hash to bind; changing code, tests, configuration, public legal/privacy notices, the legal-review guide or the license requires matching new evidence. Keep participant contacts and legal advice out of public qualification artifacts.
 
 ```bash
 npm run fingerprint
@@ -309,7 +309,7 @@ npm run build:site
 
 On Windows replace `python3` with your installed `python` command. Keep the required Node.js 22 toolchain on `PATH`; the configurator uses the canonical receipt protocol to validate the origin offline. The origin is an example: replace it with the **exact real dedicated HTTPS origin**, no path/trailing slash. Use the browser's canonical form: lowercase hostname, an ASCII punycode hostname for an internationalized domain, and no explicit default `:443` port. Non-default HTTPS ports are supported. Invalid settings leave the existing configuration untouched.
 
-Omitting `--entitlement` writes explicit registry-catalogue mode with no preconfigured event. After verifying the registry identity, the member page reads the admin-created catalogue in bounded pages. New or modified Etherscan benefits appear after refreshing; no per-event site rebuild is needed. Receipt verification still requires the exact approved registry bytecode and an active claim with the signed claimant/revision at both finalized and latest blocks. To deliberately restrict the website to an allowlist, repeat `--entitlement`; future changes to that list require a reviewed rebuild. Hexadecimal IDs are normalized to lowercase; canonical names keep their spelling.
+Omitting `--entitlement` writes explicit registry-catalogue mode with no preconfigured benefit. After verifying the registry identity, the member page reads the admin-created catalogue in bounded pages. New or modified Etherscan benefits appear after refreshing; no per-benefit site rebuild is needed. Receipt verification still requires the exact approved registry bytecode and an active claim with the signed claimant/revision at both finalized and latest blocks. To deliberately restrict the website to an allowlist, repeat `--entitlement`; future changes to that list require a reviewed rebuild. Hexadecimal IDs are normalized to lowercase; canonical names keep their spelling.
 
 The new public contract/origin configuration changes the source/configuration fingerprint. Review the configuration diff and the new asset manifest; rerun build/privacy checks and bind real canary evidence to that exact published configuration. Do not reuse a pre-configuration browser approval as proof of the final site.
 
@@ -319,13 +319,13 @@ Upload **only `dist/site`** to a suitable static host. Apply `_headers` or equiv
 
 ## J. One real canary, then a separate launch decision
 
-The production constructor creates **zero benefits**. No first event, quota, category or claim window is supplied by the app. When the root owner separately approves a real benefit or limited canary, choose its permanent ID and public parameters, create it in **Draft** using the admin console or Etherscan, review its descriptors and then explicitly open it. Do not run a sample creation as part of deployment. No ticketing account is integrated into the contract.
+The production constructor creates **zero benefits**. No first benefit, quota, category or claim window is supplied by the app. When the root owner separately approves a real benefit or limited canary, choose its permanent ID and public parameters, create it in **Draft** using the admin console or Etherscan, review its descriptors and then explicitly open it. Do not run a sample creation as part of deployment. No ticketing account is integrated into the contract.
 
-Run one genuine member through claim → finality → private request → explicit clipboard/email handoff → receipt verification → duplicate check → one manually issued ticket → participant confirms receipt/access. A new signature or email must never produce a second ticket for the same claim key.
+Run one genuine member through claim → finality → private request → explicit clipboard/email handoff → receipt verification → duplicate check → the chosen benefit fulfilled once → participant confirms receipt/access. A new signature or email must never produce a duplicate allocation for the same claim key.
 
 Keep broad access closed until findings and private acceptance evidence are reviewed. The app cannot attest that a member sent an email, prove inbox delivery or issue tickets. Do not promise those events from a browser success indicator.
 
-If any older registry was deployed, reconcile all claims and tickets before migration. This source does not upgrade immutable deployed contracts or migrate records automatically.
+If any older registry was deployed, reconcile all claims and fulfillment records before migration. This source does not upgrade immutable deployed contracts or migrate records automatically.
 
 ## Troubleshooting — what to do next
 
@@ -342,7 +342,7 @@ If any older registry was deployed, reconcile all claims and tickets before migr
 | `release:gate` reports `BLOCKED` | Read `qualification/DEPLOYMENT_GATE.json`; complete the missing real checks and source-bound private reports. |
 | Approval expired, admin changed or nonce changed | Stop and prepare/review/sign a fresh plan. An old signature cannot authorize edited fields. |
 | Broadcast interrupted, timed out or checkpoint already exists | Preserve `.local/deployment-broadcast.json`. Reconcile its hash/nonce and use the read-only recovery steps in H. Do not delete the checkpoint or automatically retry. |
-| Receipt `WAITING_FOR_FINALITY` or expired | Wait for finality, or have the member prepare a fresh request for the existing claim. Do not claim or issue a second ticket. |
+| Receipt `WAITING_FOR_FINALITY` or expired | Wait for finality, or have the member prepare a fresh request for the existing claim. Do not claim or issue a duplicate allocation. |
 
 Share only redacted failure details when requesting help. Never upload `.env`, keystores/passwords, private approvals or a member's receipt.
 
@@ -354,3 +354,5 @@ Share only redacted failure details when requesting help. Never upload `.env`, k
 - https://hardhat.org/docs/guides/deployment/using-scripts
 - https://docs.npmjs.com/cli/commands/npm-ci/
 - https://docs.ens.domains/wrapper/expiry/
+
+For resources, access, services, periodic allocations or other benefits, use the [general benefit design guide](ENTITLEMENT_DESIGN_EN.md). `fulfillmentStaging` must cover the chosen process; Eventbrite is optional. No event must be selected for deployment. The private request is optional for a benefit, but its code/device/privacy acceptance remains a release requirement.

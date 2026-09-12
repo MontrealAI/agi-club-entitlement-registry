@@ -2,7 +2,7 @@
 
 [English](UBUNTU_MAINNET_EN.md) · [Guide Hardhat complet](HARDHAT_DEPLOYMENT_FR.md)
 
-**Vous pouvez choisir le premier événement plus tard.** Le déploiement crée zéro avantage et zéro réclamation. Il ne nécessite aucun nom d’événement, date, quota, catégorie, métadonnée ou identifiant de billet. Vous pouvez laisser le catalogue vide et ajouter les avantages choisis ultérieurement, depuis la console d’administration ou Etherscan.
+**Vous pouvez choisir le premier avantage plus tard.** Le déploiement crée zéro avantage et zéro réclamation. Il ne nécessite aucun nom d’avantage, date, quota, catégorie, métadonnée ou identifiant de prestation. Vous pouvez laisser le catalogue vide et ajouter les avantages choisis ultérieurement, depuis la console d’administration ou Etherscan.
 
 La seule valeur opérateur préremplie dans `.env.example` est :
 
@@ -53,7 +53,7 @@ npm run qualify
 
 Confirmez que le commit affiché est celui revu pour le déploiement. Conservez cette copie inchangée pendant la qualification, l’approbation du plan et la diffusion. N’exécutez ni `npm update`, ni `npm audit fix`, ni récupération de nouveau code dans une copie déjà approuvée pour le déploiement.
 
-**Résultat attendu :** les huit étapes réussissent ; `qualification/LOCAL_RELEASE.json` indique `status: PASS` et `sourceUnchanged: true`. Conservez l’ensemble des rapports et journaux. Les données des tests automatiques sont fictives et restent sur des chaînes locales ; ces tests ne créent aucun événement de production et n’envoient aucune transaction mainnet.
+**Résultat attendu :** les huit étapes réussissent ; `qualification/LOCAL_RELEASE.json` indique `status: PASS` et `sourceUnchanged: true`. Conservez l’ensemble des rapports et journaux. Les données des tests automatiques sont fictives et restent sur des chaînes locales ; ces tests ne créent aucun avantage de production et n’envoient aucune transaction mainnet.
 
 Pour une répétition locale gratuite facultative, suivez la [section C du guide Hardhat](HARDHAT_DEPLOYMENT_FR.md#c-répéter-localement--aucune-adhésion-ni-dépense-réelle). Son rapport doit également indiquer `entitlementCount: 0` et `claimsCreated: 0`. Ne financez jamais les comptes de test publics de Hardhat.
 
@@ -72,7 +72,7 @@ Modifiez-le localement. Gardez clés, identifiants RPC, mots de passe et rapport
 | Avant de préparer un plan de déploiement | Éléments nécessaires |
 |---|---|
 | Répétition sur un fork du véritable mainnet | `MAINNET_FORK_RPC_URL` privé en lecture seule, `MAINNET_FORK_BLOCK` finalisé et `MEMBER_LABELS` réels représentatifs ; confirmez `EXPECTED_ADMIN`. Suivez la section E du [guide Hardhat](HARDHAT_DEPLOYMENT_FR.md). |
-| Revues indépendantes et validation des parcours réels | Revues sécurité/juridique liées au code, essais réels du portefeuille, de la demande privée et de la billetterie. Suivez la section F du [guide Hardhat](HARDHAT_DEPLOYMENT_FR.md). Les données fictives de préparation ne choisissent ni ne publient votre première offre. |
+| Revues indépendantes et validation des parcours réels | Revues sécurité/juridique liées au code, essais réels du portefeuille, de la demande privée et de la mise à disposition choisie. Suivez la section F du [guide Hardhat](HARDHAT_DEPLOYMENT_FR.md). Les données fictives de préparation ne choisissent ni ne publient votre première offre. |
 
 Après configuration du fork en lecture seule, exécutez :
 
@@ -97,6 +97,8 @@ Suivez la section I du [guide Hardhat](HARDHAT_DEPLOYMENT_FR.md) pour l’inspec
 
 Après avoir écrit la configuration publique, relancez `npm run qualify` et relisez la nouvelle empreinte source avant les essais sur l’hôte final. Un registre correctement configuré peut être qualifié ; des réglages incomplets ou une origine non sécurisée doivent être refusés.
 
-Sur le contrat de production vérifié, **Read Contract** dans Etherscan doit afficher `entitlementCount = 0` avant la création d’un avantage. `admin()` doit correspondre au détenteur effectif de `club.agi.eth` ; vérifiez `isAdmin` pour ce détenteur et pour le déployeur jetable. Pour ce dernier, le résultat doit être `false`. Omettez `--entitlement` lors de la configuration du site pour suivre le catalogue administré sans liste d’événements préremplie.
+Sur le contrat de production vérifié, **Read Contract** dans Etherscan doit afficher `entitlementCount = 0` avant la création d’un avantage. `admin()` doit correspondre au détenteur effectif de `club.agi.eth` ; vérifiez `isAdmin` pour ce détenteur et pour le déployeur jetable. Pour ce dernier, le résultat doit être `false`. Omettez `--entitlement` lors de la configuration du site pour suivre le catalogue administré sans liste d’avantages préremplie.
 
-Vous pouvez vous arrêter avec le registre vérifié et vide. Une fois l’offre réelle choisie et revue, créez-la volontairement en **Brouillon**, renseignez les titres français/anglais et les paramètres choisis, puis ouvrez-la explicitement. Le Brouillon proposé par défaut est un état de sécurité du formulaire de création futur ; il ne crée aucun événement. Réalisez l’essai réel limité membre/demande/billet avant l’ouverture générale. Consultez le [guide Etherscan](ETHERSCAN_GUIDE.md) et le [guide de l’organisateur](OPERATOR_GUIDE_FR.md).
+Vous pouvez vous arrêter avec le registre vérifié et vide. Une fois l’offre réelle choisie et revue, créez-la volontairement en **Brouillon**, renseignez les titres français/anglais et les paramètres choisis, puis ouvrez-la explicitement. Le Brouillon proposé par défaut est un état de sécurité du formulaire de création futur ; il ne crée aucun avantage. Réalisez l’essai réel limité membre/demande/prestation avant l’ouverture générale. Consultez le [guide Etherscan](ETHERSCAN_GUIDE.md) et le [guide de l’organisateur](OPERATOR_GUIDE_FR.md).
+
+Pour ressources, accès, services, allocations périodiques ou autres avantages, consultez le [guide général](ENTITLEMENT_DESIGN_FR.md). `fulfillmentStaging` doit couvrir le processus choisi ; Eventbrite est facultatif. Aucun événement ne doit être choisi pour déployer. La demande privée est facultative pour un avantage ; la validation de son code, des appareils et de la confidentialité reste obligatoire.

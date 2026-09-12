@@ -1,8 +1,8 @@
 /** AGI Club static-only request protocol. No storage, network or wallet access here.
  * The wallet signs a salted commitment, never plaintext name/email.
- * A signature is NOT encryption, civil identity, mailbox control, or a ticket.
+ * A signature is NOT encryption, civil identity, mailbox control, or fulfillment.
  */
-export const SCHEMA = 'AGIClubTicketRequest/3';
+export const SCHEMA = 'AGIClubEntitlementRequest/4';
 export const REGISTRY_VERSION = '2.1.1';
 export const ENS = '0x00000000000c2e074ec69a0dfb2997ba6c7d2e1e';
 export const WRAPPER = '0xd4416b13d2b3a9abae7acd5d6c2bbdbe25686401';
@@ -37,7 +37,9 @@ export function validatePolicy(policy) {
 }
 export function validateRecipient(recipient) {
   if (!exactKeys(recipient,['name','email','salt'])) fail('INVALID_RECIPIENT_SCHEMA');
-  if (!text(recipient.name,100) || !text(recipient.email,254) || !/^[\x21-\x7e]+$/.test(recipient.email) || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient.email)) fail('INVALID_CONTACT');
+  // Empty strings deliberately represent omitted contact fields; provided fields stay strict.
+  if (recipient.name!=='' && !text(recipient.name,100)) fail('INVALID_CONTACT');
+  if (recipient.email!=='' && (!text(recipient.email,254) || !/^[\x21-\x7e]+$/.test(recipient.email) || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient.email))) fail('INVALID_CONTACT');
   if (!bytes32(recipient.salt) || /^0x0{64}$/.test(recipient.salt)) fail('INVALID_SALT');
   return recipient;
 }
@@ -51,14 +53,16 @@ export async function recipientCommitment(recipient) {
 }
 export function requestMessage(payload) {
   const p=Object.fromEntries(FIELDS.map(k=>[k,payload[k]]));
-  return 'AGI CLUB — TICKET REQUEST v3\n'
-    + 'Purpose: request one complimentary ticket from the organizer.\n'
+  return 'AGI CLUB — ENTITLEMENT REQUEST v4\n'
+    + 'Purpose: request fulfillment of the identified AGI Club entitlement under its published terms.\n'
     + 'No transaction, transfer, permit, approval, or payment is authorized.\n'
-    + 'Recipient name and email are bound by a private salted SHA-256 commitment.\n'
+    + 'Optional recipient details are bound by a private salted SHA-256 commitment.\n'
+    + 'This request does not confirm delivery, access, a reservation, or a ticket.\n'
     + JSON.stringify(p);
 }
-export async function preparePacket(scope,contact) {
-  const recipient={name:String(contact.name).trim().normalize('NFC'),email:String(contact.email).trim(),salt:randomHex(32)};
+export async function preparePacket(scope,contact={name:'',email:''}) {
+  if (!plain(contact) || typeof contact.name!=='string' || typeof contact.email!=='string') fail('INVALID_CONTACT');
+  const recipient={name:contact.name.trim().normalize('NFC'),email:contact.email.trim(),salt:randomHex(32)};
   const payload={...scope,schema:SCHEMA,recipientCommitment:await recipientCommitment(recipient)};
   return {payload,recipient,message:requestMessage(payload)};
 }
@@ -97,7 +101,7 @@ function claimMatches(r,p) { return r && Number(r.status)===1 && String(r.claima
 function validateRegistry(s,policy) {
   if (!s || s.version!==policy.version || s.ens?.toLowerCase()!==ENS || s.wrapper?.toLowerCase()!==WRAPPER || s.root?.toLowerCase()!==ROOT || s.codeHash?.toLowerCase()!==policy.registryCodeHash) fail('WRONG_REGISTRY');
 }
-export async function verifyTicketRequest(packet,policy,io,options={}) {
+export async function verifyEntitlementRequest(packet,policy,io,options={}) {
   // Capture caller-owned data before the first await. Unsupported prototypes
   // and extra fields remain intact so the existing schema checks reject them.
   validatePolicy(policy);
@@ -124,5 +128,5 @@ export async function verifyTicketRequest(packet,policy,io,options={}) {
   if (checkF?.hash!==finalized.hash || checkL?.hash!==latest.hash) fail('CHAIN_CHANGED_RETRY');
   const verifiedAt=verificationTime(timing);
   validateTime(p,verifiedAt);
-  return Object.freeze({status:'VERIFIED_REQUEST_NOT_A_TICKET',payload:p,recipient:Object.freeze({name:request.recipient.name,email:request.recipient.email}),claimKey:claimKey(p),revisionKey:revisionKey(p),finalizedBlock:finalized.number,finalizedHash:finalized.hash,latestBlock:latest.number,latestHash:latest.hash,verifiedAt,ticketIssued:false,mailboxControlVerified:false,civilIdentityVerified:false});
+  return Object.freeze({status:'VERIFIED_REQUEST_NOT_FULFILLED',payload:p,recipient:Object.freeze({name:request.recipient.name,email:request.recipient.email}),claimKey:claimKey(p),revisionKey:revisionKey(p),finalizedBlock:finalized.number,finalizedHash:finalized.hash,latestBlock:latest.number,latestHash:latest.hash,verifiedAt,fulfillmentConfirmed:false,mailboxControlVerified:false,civilIdentityVerified:false});
 }

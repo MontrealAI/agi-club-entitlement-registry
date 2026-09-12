@@ -35,7 +35,7 @@ test('A benefit uses the published title in the chosen language with an explicit
   assert.equal(benefitTitle({...e,en:''},'en'),e.fr);assert.equal(benefitTitle({id:e.id},'en'),e.id);
 });
 test('Translations do not change the canonical signed protocol or private email envelope',()=>{
-  for(const file of ['ticket-request.mjs','request-email.mjs','deployment-policy.mjs'])assert.equal(fs.readFileSync('shared/'+file,'utf8'),fs.readFileSync('frontend/shared/'+file,'utf8'));
+  for(const file of ['entitlement-request.mjs','request-email.mjs','deployment-policy.mjs'])assert.equal(fs.readFileSync('shared/'+file,'utf8'),fs.readFileSync('frontend/shared/'+file,'utf8'));
   for(const file of ['frontend/language.mjs','frontend/language-core.mjs']){
     const source=fs.readFileSync(file,'utf8');
     for(const sink of [/\.value\b/,/innerHTML/,/MutationObserver/,/localStorage\s*\./,/sessionStorage\s*\./,/fetch\s*\(/,/\.cookie\s*=/])assert(!sink.test(source),file+' '+sink);
