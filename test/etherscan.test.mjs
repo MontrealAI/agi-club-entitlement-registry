@@ -17,8 +17,8 @@ test('Explorer has all public read/write categories and does not expose signing 
   const html = fs.readFileSync('frontend/etherscan.html','utf8');assert(html.includes("connect-src 'none'"));assert(html.includes('no-referrer'));
 });
 test('Readable IDs and categories produce canonical Keccak values; creation defaults remain draft', () => {
-  const p = prepare('createEntitlement',['IA101_2026_09_22','EVENT','50','','','1','']);
-  assert.deepEqual(p.args,[ethers.id('IA101_2026_09_22'),ethers.id('EVENT'),'50','0','0','1',zero]);
+  const p = prepare('createEntitlement',['FICTITIOUS_TEST_BENEFIT','EVENT','50','','','1','']);
+  assert.deepEqual(p.args,[ethers.id('FICTITIOUS_TEST_BENEFIT'),ethers.id('EVENT'),'50','0','0','1',zero]);
   assert.equal(p.transaction.value,'0');assert.equal(p.transaction.chainId,1);
   assert.equal(new ethers.Interface(EXPLORER_ABI).parseTransaction({data:p.transaction.data}).name,'createEntitlement');
 });

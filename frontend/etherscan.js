@@ -8,7 +8,7 @@ const errors = {
   LABEL:['Utilisez un label ASCII direct, en minuscules, de 1 à 63 caractères.','Use a direct lowercase ASCII label, 1–63 characters.'],
   INTEGER:['Utilisez un entier positif ou zéro, dans la plage du type indiqué.','Use a nonnegative integer within the displayed type’s range.'],
   HASH:['Utilisez un identifiant public non vide (128 octets maximum) ou un bytes32 exact. Aucun secret.','Use a nonempty public identifier (maximum 128 bytes) or exact bytes32. No secrets.'],
-  DATE:['Utilisez des secondes Unix ou une date UTC exacte : 2026-09-22T16:00:00Z.','Use Unix seconds or an exact UTC date: 2026-09-22T16:00:00Z.'],
+  DATE:['Utilisez des secondes Unix ou une date UTC exacte au format AAAA-MM-JJTHH:mm:ssZ.','Use Unix seconds or an exact UTC date in YYYY-MM-DDTHH:mm:ssZ format.'],
   WINDOW:['La fermeture doit suivre l’ouverture quand les deux dates sont définies.','Closing must follow opening when both dates are set.'],
   BATCH:['Utilisez 1 à 50 labels distincts, séparés par des virgules ou des lignes, ou un tableau JSON.','Use 1–50 distinct labels, separated by commas or lines, or a JSON array.'],
   STATE:['Choisissez un état de 1 à 4.','Choose a state from 1 to 4.'], PAGE:['La limite de page doit être entre 1 et 100.','Page limit must be between 1 and 100.'],
@@ -17,7 +17,7 @@ const errors = {
 };
 function invalidate() { generation++; prepared = null; $('result').hidden = true; $('values').replaceChildren(); $('transaction').textContent = ''; $('openExplorer').removeAttribute('href'); $('status').textContent = ''; }
 function hint(p) {
-  if (['opensAt','closesAt'].includes(p.name)) return tr('UTC : 2026-09-22T16:00:00Z, secondes Unix, ou vide/0 sans limite.','UTC: 2026-09-22T16:00:00Z, Unix seconds, or empty/0 for no bound.');
+  if (['opensAt','closesAt'].includes(p.name)) return tr('Date UTC au format AAAA-MM-JJTHH:mm:ssZ, secondes Unix, ou vide/0 sans limite.','UTC date in YYYY-MM-DDTHH:mm:ssZ format, Unix seconds, or empty/0 for no bound.');
   if (['initialState','newState'].includes(p.name)) return tr('1 Brouillon · 2 Ouvert · 3 Fermé · 4 Archivé.','1 Draft · 2 Open · 3 Closed · 4 Archived.');
   if (p.type === 'bytes32') return ['id','entitlementId','sourceId','newId','category','newCategory','reasonHash'].includes(p.name || 'entitlementId')
     ? tr('Identifiant public lisible, sensible à la casse, ou hash bytes32 exact. Le hash préparé sera affiché.','Case-sensitive readable public identifier, or exact bytes32 hash. The prepared hash will be shown.')

@@ -5,7 +5,7 @@ import vm from 'node:vm';
 import {Readable} from 'node:stream';
 import {readCatalogPage,requestPolicy} from '../frontend/member-catalog.mjs';
 import {membershipName,formatRequestEmail,parseRequestEmail,MAX_EMAIL_BYTES} from '../shared/request-email.mjs';
-import {validatePolicy,verifyTicketRequest,validatePacket,requestMessage} from '../shared/ticket-request.mjs';
+import {validatePolicy,verifyTicketRequest,validatePacket,requestMessage,REGISTRY_VERSION} from '../shared/ticket-request.mjs';
 import {defaultValue} from '../frontend/etherscan-tools.mjs';
 import {readReceipt} from '../tools/read-receipt.mjs';
 import {fixture,NOW} from './fixtures.mjs';
@@ -18,11 +18,18 @@ function catalogue(count=63) {
     entitlement:async()=>[id('PERK'),id('metadata'),0n,0n,0n,0n,0n,1n,true],titleEN:async()=>'',titleFR:async key=>'Fictitious '+ids.indexOf(key)};
   return {ids,calls,registry};
 }
-test('Shipped configuration and explorer creation fields contain no preconfigured event',()=>{
+test('Public configuration and explorer creation fields are valid without a preselected event',()=>{
   const context={window:{}};vm.runInNewContext(fs.readFileSync('frontend/config.js','utf8'),context);
-  const c=context.window.AGI_CONFIG;assert.equal(c.registryAddress,'');assert.equal(c.entitlementMode,'registry');assert.equal(c.allowedEntitlements.length,0);assert(!Object.hasOwn(c,'defaultEntitlement'));
-  for(const name of ['entitlementId','newId','category','newCategory','capacity','newCapacity'])assert.equal(defaultValue({name,type:name.includes('apacity')?'uint64':'bytes32'},'createEntitlement'),'');
-  for(const file of ['config.js','index.html','admin.html','member.html','app.js','etherscan-tools.mjs'])assert.doesNotMatch(fs.readFileSync('frontend/'+file,'utf8'),/IA101|IA 101|AI 101/);
+  const c=context.window.AGI_CONFIG;
+  assert.deepEqual(Object.keys(c).sort(),['allowedEntitlements','chainId','contactEmail','entitlementMode','expectedOrigin','registryAddress','registryCodeHash']);
+  assert.equal(c.chainId,1);assert.equal(c.contactEmail,'president@montreal.ai');assert(Array.isArray(c.allowedEntitlements));
+  if([c.registryAddress,c.registryCodeHash,c.expectedOrigin].every(value=>value==='')){
+    assert.equal(c.entitlementMode,'registry');assert.equal(c.allowedEntitlements.length,0);
+  }else validatePolicy(requestPolicy(c,{id},REGISTRY_VERSION));
+  for(const name of ['entitlementId','newId','category','newCategory','capacity','newCapacity','opensAt','closesAt'])assert.equal(defaultValue({name,type:/apacity|At$/.test(name)?'uint64':'bytes32'},'createEntitlement'),'');
+  for(const file of fs.readdirSync('frontend',{withFileTypes:true}).filter(entry=>entry.isFile()&&entry.name!=='config.js').map(entry=>entry.name))assert.doesNotMatch(fs.readFileSync('frontend/'+file,'utf8'),/IA101|IA 101|AI 101|2026-09-22/);
+  const values=fs.readFileSync('.env.example','utf8').split(/\r?\n/).filter(line=>line.trim()&&!line.startsWith('#')).map(line=>line.split('='));
+  assert.deepEqual(values.filter(([,value])=>value),[['EXPECTED_ADMIN','0xa9eD0539c2fbc5C6BC15a2E168bd9BCd07c01201']]);
 });
 test('Registry catalogue reads every bounded page without requiring a website event list',async()=>{
   const f=catalogue(),rows=[];let page;

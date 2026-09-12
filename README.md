@@ -25,6 +25,7 @@ Open **[START_HERE.html](START_HERE.html)**. No installation is needed to read i
 
 | I want to… | Read this |
 |---|---|
+| Prepare a recent Ubuntu machine and deploy an empty registry after approval | [Ubuntu English](docs/UBUNTU_MAINNET_EN.md) / [Ubuntu français](docs/UBUNTU_MAINNET_FR.md) — choose the first event later |
 | Upload through the GitHub website | [GitHub UI guide](docs/GITHUB_WEB_UPLOAD.md) |
 | See a local demo, rehearse a deployment or deploy an approved canary | [Hardhat English](docs/HARDHAT_DEPLOYMENT.md) / [Français](docs/HARDHAT_DEPLOYMENT_FR.md) |
 | Verify the source and operate every public function through Etherscan | [Bilingual Etherscan guide](docs/ETHERSCAN_GUIDE.md); open **Etherscan** in the built website for copy-ready values |

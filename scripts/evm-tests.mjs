@@ -24,7 +24,7 @@ try{
  const[da,aa,ma,na]=await Promise.all([deployer,admin,member,next].map(x=>x.getAddress()));
  async function deploy(n,args=[]){const a=artifact(n),c=await new ethers.ContractFactory(a.abi,a.bytecode,deployer).deploy(...args);await c.waitForDeployment();return c;}
  const tx=async p=>{const r=await(await p).wait();assert.equal(r.status,1);return r;};
- const root=ethers.namehash('club.agi.eth'),id=ethers.id('IA101_2026_09_22'),cat=ethers.id('EVENT'),node=ethers.namehash('alice.club.agi.eth');
+ const root=ethers.namehash('club.agi.eth'),id=ethers.id('FICTITIOUS_TEST_BENEFIT'),cat=ethers.id('EVENT'),node=ethers.namehash('alice.club.agi.eth');
  const ens=await deploy('QualificationENS'),wrapper=await deploy('QualificationWrapper');
  await tx(ens.setOwner(root,aa));await tx(ens.setOwner(node,ma));
  const c=await deploy('AGIClubEntitlementRegistry',[await ens.getAddress(),[await wrapper.getAddress()]]);
@@ -67,7 +67,7 @@ try{
  await run('Batch grant is atomic, not partial if a later member is invalid',async()=>{await tx(ens.setOwner(ethers.namehash('dave.club.agi.eth'),ma));await bad('adminGrantBatchToCurrentOwners',[id,['dave','missing']],'MembershipNotFound',admin);assert.equal(await c.wasEverClaimed(id,ethers.namehash('dave.club.agi.eth')),false);});
  await run('Batches are bounded at 50 and cannot be empty',async()=>{await bad('adminGrantBatchToCurrentOwners',[id,[]],'InvalidBatchSize',admin);await bad('adminGrantBatchToCurrentOwners',[id,Array(51).fill('dave')],'InvalidBatchSize',admin);});
  await run('Explicit override requires reference and emits separate audit event',async()=>{await bad('adminGrantClaimOverride',[id,'exception',na,ethers.ZeroHash],'InvalidReason',admin);const r=await tx(c.connect(admin).adminGrantClaimOverride(id,'exception',na,ethers.id('CASE_TEST')));assert(r.logs.some(l=>{try{return c.interface.parseLog(l)?.name==='AdministrativeOverrideGranted';}catch{return false;}}));});
- await run('URI executable schemes rejected, public IPFS descriptor accepted',async()=>{await bad('setDescriptor',[id,'FR','EN','javascript:alert(1)',ethers.ZeroHash],'InvalidDescriptor',admin);await tx(c.connect(admin).setDescriptor(id,'IA 101','AI 101','ipfs://example',ethers.ZeroHash));assert.equal(await c.titleFR(id),'IA 101');});
+ await run('URI executable schemes rejected, public IPFS descriptor accepted',async()=>{await bad('setDescriptor',[id,'FR','EN','javascript:alert(1)',ethers.ZeroHash],'InvalidDescriptor',admin);await tx(c.connect(admin).setDescriptor(id,'Avantage fictif','Fictitious benefit','ipfs://example',ethers.ZeroHash));assert.equal(await c.titleFR(id),'Avantage fictif');});
  await run('Read pagination bounds enforced',async()=>{assert.equal((await c.entitlementIdsPage(0,100)).length,2);await reject(()=>c.entitlementIdsPage(0,101),'InvalidPageSize');});
  await run('Labels cannot name a parent or deeper descendant',async()=>{for(const label of ['', 'club.agi.eth','x.alice','-bad','UPPER'])await reject(()=>c.membershipNode(label),'ClaimRejected');});
  await run('Contract-wallet holder is admin, its individual signer is not',async()=>{const w=await deploy('QualificationWallet',[aa]);await tx(ens.setOwner(root,await w.getAddress()));assert.equal(await c.admin(),await w.getAddress());await bad('pause',[],'NotClubAdmin',admin);await tx(w.connect(admin).execute(await c.getAddress(),c.interface.encodeFunctionData('pause')));assert.equal(await c.paused(),true);await tx(w.connect(admin).execute(await c.getAddress(),c.interface.encodeFunctionData('unpause')));await tx(ens.setOwner(root,aa));});
