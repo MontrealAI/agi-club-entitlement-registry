@@ -72,7 +72,7 @@ Edit it locally. Keep keys, RPC credentials, passwords and private reports out o
 | Required before a deployment plan | What to provide |
 |---|---|
 | Real mainnet-fork rehearsal | Private read-only `MAINNET_FORK_RPC_URL`, a finalized `MAINNET_FORK_BLOCK`, and representative real `MEMBER_LABELS`; confirm `EXPECTED_ADMIN`. Follow [section E](HARDHAT_DEPLOYMENT.md#e-read-only-upstream-mainnet-fork). |
-| Independent reviews and actual workflow acceptance | Source-bound security/legal review and real wallet, private-request and chosen-fulfillment workflow evidence. Follow [section F](HARDHAT_DEPLOYMENT.md#f-independent-review-and-real-device-rehearsal). Fictitious staging data does not select or publish your first offering. |
+| Independent reviews and actual workflow acceptance | Source-bound security/legal review and real wallet, private-request workflow evidence for the empty deployment scope. Review a chosen benefit and fulfillment separately with `npm run launch:gate` before its limited canary. Follow [section F](HARDHAT_DEPLOYMENT.md#f-independent-review-and-real-device-rehearsal). Fictitious staging data does not select or publish your first offering. |
 
 After configuring the read-only fork, run:
 
@@ -85,7 +85,7 @@ Inspect `qualification/DEPLOYMENT_GATE.json`. **`BLOCKED` means stop:** complete
 
 ## 4. Prepare, approve and deploy the empty contract
 
-Follow [Hardhat sections G–H](HARDHAT_DEPLOYMENT.md#g-prepare-an-unsigned-limited-canary-plan) for the explicit budget, disposable deployer address and encrypted keystore, unsigned plan, root-holder signature and one-time broadcast. Neither a gas budget nor a deployer address is prefilled. Never export the root wallet's seed or private key.
+Follow [Hardhat sections G–H](HARDHAT_DEPLOYMENT.md#g-prepare-an-unsigned-empty-registry-plan) for the explicit budget, disposable deployer address and encrypted keystore, unsigned plan, root-holder signature and one-time broadcast. Neither a gas budget nor a deployer address is prefilled. Never export the root wallet's seed or private key.
 
 `npm run prepare:mainnet` sends no transaction. The only documented production broadcast command is `npm run deploy:mainnet`, with its explicit one-time acknowledgement and signed approval. Do not deploy the configurable test core, run test scripts against mainnet, or enter constructor arguments for `AGIClubEntitlementRegistryMainnet`.
 
@@ -101,4 +101,4 @@ On the verified production contract, Etherscan **Read Contract** should show `en
 
 You may stop with the verified registry empty. When the real offering is decided and reviewed, create it deliberately as a **Draft**, set the French/English titles and your chosen parameters, then open it explicitly. The Draft default is a safety state for a future creation form; it does not create a benefit. Complete the actual limited member/request/fulfillment canary before broad member access. Consult the [Etherscan guide](ETHERSCAN_GUIDE.md) and [operator guide](OPERATOR_GUIDE_EN.md).
 
-For resources, access, services, periodic allocations or other benefits, use the [general benefit design guide](ENTITLEMENT_DESIGN_EN.md). `fulfillmentStaging` must cover the chosen process; Eventbrite is optional. No event must be selected for deployment. The private request is optional for a benefit, but its code/device/privacy acceptance remains a release requirement.
+For resources, access, services, periodic allocations or other benefits, use the [general benefit design guide](ENTITLEMENT_DESIGN_EN.md). `fulfillmentStaging` belongs to the later `launch:gate` for a chosen benefit; Eventbrite is optional. The empty deployment requires the explicit `EMPTY_REGISTRY_ONLY` review scope. No event must be selected for deployment. The private request is optional for a benefit, but its code/device/privacy acceptance remains a release requirement.

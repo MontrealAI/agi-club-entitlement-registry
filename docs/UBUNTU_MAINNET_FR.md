@@ -72,7 +72,7 @@ Modifiez-le localement. Gardez clés, identifiants RPC, mots de passe et rapport
 | Avant de préparer un plan de déploiement | Éléments nécessaires |
 |---|---|
 | Répétition sur un fork du véritable mainnet | `MAINNET_FORK_RPC_URL` privé en lecture seule, `MAINNET_FORK_BLOCK` finalisé et `MEMBER_LABELS` réels représentatifs ; confirmez `EXPECTED_ADMIN`. Suivez la section E du [guide Hardhat](HARDHAT_DEPLOYMENT_FR.md). |
-| Revues indépendantes et validation des parcours réels | Revues sécurité/juridique liées au code, essais réels du portefeuille, de la demande privée et de la mise à disposition choisie. Suivez la section F du [guide Hardhat](HARDHAT_DEPLOYMENT_FR.md). Les données fictives de préparation ne choisissent ni ne publient votre première offre. |
+| Revues indépendantes et validation des parcours réels | Revues sécurité/juridique liées au code, essais réels du portefeuille, de la demande privée pour le périmètre de déploiement vide. Revoyez ensuite l’avantage choisi et sa mise à disposition via `npm run launch:gate` avant son essai limité. Suivez la section F du [guide Hardhat](HARDHAT_DEPLOYMENT_FR.md). Les données fictives de préparation ne choisissent ni ne publient votre première offre. |
 
 Après configuration du fork en lecture seule, exécutez :
 
@@ -101,4 +101,4 @@ Sur le contrat de production vérifié, **Read Contract** dans Etherscan doit af
 
 Vous pouvez vous arrêter avec le registre vérifié et vide. Une fois l’offre réelle choisie et revue, créez-la volontairement en **Brouillon**, renseignez les titres français/anglais et les paramètres choisis, puis ouvrez-la explicitement. Le Brouillon proposé par défaut est un état de sécurité du formulaire de création futur ; il ne crée aucun avantage. Réalisez l’essai réel limité membre/demande/prestation avant l’ouverture générale. Consultez le [guide Etherscan](ETHERSCAN_GUIDE.md) et le [guide de l’organisateur](OPERATOR_GUIDE_FR.md).
 
-Pour ressources, accès, services, allocations périodiques ou autres avantages, consultez le [guide général](ENTITLEMENT_DESIGN_FR.md). `fulfillmentStaging` doit couvrir le processus choisi ; Eventbrite est facultatif. Aucun événement ne doit être choisi pour déployer. La demande privée est facultative pour un avantage ; la validation de son code, des appareils et de la confidentialité reste obligatoire.
+Pour ressources, accès, services, allocations périodiques ou autres avantages, consultez le [guide général](ENTITLEMENT_DESIGN_FR.md). `fulfillmentStaging` relève du contrôle ultérieur `launch:gate` pour un avantage choisi ; Eventbrite est facultatif. Le déploiement vide exige le périmètre de revue explicite `EMPTY_REGISTRY_ONLY`. Aucun événement ne doit être choisi pour déployer. La demande privée est facultative pour un avantage ; la validation de son code, des appareils et de la confidentialité reste obligatoire.

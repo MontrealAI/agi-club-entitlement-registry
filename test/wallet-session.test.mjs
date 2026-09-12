@@ -9,7 +9,7 @@ import {ENS, WRAPPER, ROOT, REGISTRY_VERSION} from '../shared/entitlement-reques
 import {MEMBER_ABI} from '../frontend/contract-abi.mjs';
 import {PrivateMemory} from '../frontend/private-memory.mjs';
 import {uint,utcSeconds} from '../frontend/etherscan-tools.mjs';
-import {readCatalogPage,requestPolicy} from '../frontend/member-catalog.mjs';
+import {readCatalogPage,requestPolicy,readBenefitDetails,publicTermsLink} from '../frontend/member-catalog.mjs';
 
 // Actual UI handlers with simulated wallet, contract, and DOM boundaries.
 // These fixtures never send a transaction or verify real Ethereum bytecode.
@@ -72,6 +72,7 @@ function fixture(page) {
     CANONICAL_WRAPPER: async () => state.wrapper, adminNameWrapper: async () => state.wrapper,
     CLUB_AGI_ETH_NODE: async () => state.root, admin: async () => account,
     entitlementCount: async () => BigInt(state.catalogCount), entitlementIdsPage: async (offset,limit) => call('catalogPage',Array.from({length:Math.min(limit,state.catalogCount-offset)},(_,i)=>hash(1000+offset+i))),
+    metadataURI: async () => {if(state.failDetails)throw Error('Fixture details unavailable');return call('metadataURI',state.metadataURI??'https://example.org/public-terms');},
     paused: async () => false, titleEN: async () => state.catalogEnglishTitle||'', titleFR: async () => {if(state.failCatalog)throw Error('Fixture read failure');return state.catalogTitle||'Fictitious benefit';},
     entitlement: async () => [hash(1),hash(0),50n,0n,0n,0n,0n,2n,true],
     claimability: async () => call('claimability', [0]),
@@ -88,6 +89,7 @@ function fixture(page) {
       constructor() { providers.push(this); }
       async getSigner() { return {getAddress: async () => account}; }
       async getCode() { return call('getCode', state.code); }
+      async getBlock() { return {number:123}; }
       destroy() { this.destroyed = true; }
     },
     Contract: class { constructor() { return registry; } },
@@ -111,7 +113,7 @@ function fixture(page) {
   };
   // Import declarations are supplied below; the member handler body is unchanged.
   runInNewContext(source.replace(/^import .*;\r?\n/gm, ''), {
-    ...language,RUNTIME_MESSAGES,benefitTitle,window, ethers, ENS, WRAPPER, ROOT, REGISTRY_VERSION, MEMBER_ABI, PrivateMemory, uint,utcSeconds,readCatalogPage,requestPolicy,
+    ...language,RUNTIME_MESSAGES,benefitTitle,window, ethers, ENS, WRAPPER, ROOT, REGISTRY_VERSION, MEMBER_ABI, PrivateMemory, uint,utcSeconds,readCatalogPage,requestPolicy,readBenefitDetails,publicTermsLink,
     location: {origin: window.AGI_CONFIG.expectedOrigin},
     document: {
       body: {dataset: {page}}, addEventListener() {},
@@ -135,6 +137,25 @@ function fixture(page) {
 }
 
 async function chooseBenefit(ui){ui.el('benefitSelect').value=ui.el('benefitSelect').children[1]?.value||'';await ui.el('benefitSelect').emit('input');}
+
+test('Member reads public instructions before entering any membership or contact fields',async()=>{
+ const ui=fixture('member');await ui.click('connect');await chooseBenefit(ui);await ui.click('readBenefit');
+ assert.equal(ui.el('benefitDetails').hidden,false);assert.equal(ui.el('benefitTerms').href,'https://example.org/public-terms');
+ assert.match(ui.el('benefitObserved').textContent,/123/);assert.match(ui.el('benefitWindow').textContent,/sans limite/);assert.equal(ui.sent.length,0);
+ ui.state.failDetails=true;await ui.click('readBenefit');assert.equal(ui.el('benefitDetails').hidden,true);assert.equal(ui.el('benefitTerms').hidden,true);
+});
+for(const event of ['accountsChanged','selection','language'])test('Pending benefit details cannot reappear after '+event,async()=>{
+ const ui=fixture('member');await ui.click('connect');await chooseBenefit(ui);
+ const wait=ui.pause('metadataURI'),action=ui.click('readBenefit');await wait.started;
+ if(event==='selection'){ui.el('benefitSelect').value='';await ui.el('benefitSelect').emit('input');}
+ else if(event==='language')ui.changeLanguage('en');else ui.walletEvent(event);
+ wait.release();await action;assert.equal(ui.el('benefitDetails').hidden,true);assert.equal(ui.el('benefitTerms').hidden,true);assert.equal(ui.sent.length,0);
+});
+test('Unsafe public metadata is displayed only as text with no active link',async()=>{
+ const ui=fixture('member');ui.state.metadataURI='javascript:<img src=x onerror=alert(1)>';
+ await ui.click('connect');await chooseBenefit(ui);await ui.click('readBenefit');assert.equal(ui.el('benefitDetails').hidden,false);
+ assert.equal(ui.el('benefitURI').textContent,ui.state.metadataURI);assert.equal(ui.el('benefitTerms').hidden,true);
+});
 
 async function attemptTransaction(ui, page) {
   if (page === 'admin') { await ui.click('pause'); await ui.click('approveConfirm'); }

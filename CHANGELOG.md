@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.4.0-rc.2 — Immutable scope and empty deployment
+
+- Qualify practical allocation models against the unchanged production constructor: capacity reuse, curated grants, recurring IDs, bundles, reservations, access semantics, descriptor edits, transfers, migration and mined atomic batch rollback. Document native rules and permanent limits in English and French before deployment.
+- Require explicit EMPTY_REGISTRY_ONLY deployment evidence and plan /2. Keep security/legal, wallet/privacy and real-fork requirements. Move chosen-benefit legal/fulfillment evidence to a separately scoped launch:gate, with no automatic launch authority. An undecided first benefit no longer prevents reviewed empty deployment.
+- Let members read public benefit instructions, capacity and claim windows at one observed block before supplying a membership label or contacts. External documents are never fetched automatically; stale wallet/selection/language responses are discarded.
+- Regenerate old /1 deployment plans and approvals; use I_APPROVE_THIS_EMPTY_REGISTRY for the one-time broadcaster. Contract 2.1.1 and entitlement-request /4 are unchanged.
+
 ## 2.4.0-rc.1 — General entitlements
 
 - Keep the preserved 2.1.1 contract, canonical ENS authority and empty initial catalogue.

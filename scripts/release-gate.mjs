@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import {fileURLToPath} from 'node:url';
+import {readEvidenceFile} from './evidence-files.mjs';
 import {sourceDigest,sha256} from './source-digest.mjs';
 import {ENS,WRAPPER,ROOT,REGISTRY_VERSION} from '../shared/entitlement-request.mjs';
 
@@ -13,20 +14,7 @@ const address = value => typeof value === 'string' && /^0x[0-9a-f]{40}$/i.test(v
 export function releaseGate(root=process.cwd()) {
   root = fs.realpathSync(root);
   const source=sourceDigest(root).sourceSha256, blockers=[], checks=[];
-  // Refuse path traversal and links before opening evidence, including parent directories.
-  const readFile = (relative, directory) => {
-    const base = path.join(root,directory), file = path.resolve(root,relative);
-    assert(file.startsWith(base+path.sep), 'Evidence path escapes its directory');
-    let part = root;
-    for (const segment of path.relative(root,file).split(path.sep)) {
-      part = path.join(part,segment);
-      assert(!fs.lstatSync(part).isSymbolicLink(), 'Evidence symlinks are not allowed');
-    }
-    assert(fs.statSync(file).isFile(), 'Evidence must be a regular file');
-    const bytes = fs.readFileSync(file);
-    assert(bytes.length > 0, 'Evidence is empty');
-    return bytes;
-  };
+  const readFile=(relative,directory)=>readEvidenceFile(root,relative,directory);
   const read = (relative, directory='qualification') => {
     const bytes=readFile(relative,directory);
     return {report:JSON.parse(bytes.toString('utf8')),sha256:sha256(bytes)};
@@ -82,7 +70,9 @@ export function releaseGate(root=process.cwd()) {
   try {
     const e=read('.local/external-evidence.json','.local').report;
     if(e.sourceSha256!==source) blockers.push('External evidence does not bind current source');
-    for(const name of ['independentSecurityReview','legalReview','realWalletStaging','privateRequestStaging','fulfillmentStaging']) {
+    if(e.deploymentScope!=='EMPTY_REGISTRY_ONLY') blockers.push('Explicit EMPTY_REGISTRY_ONLY deployment scope is required');
+    else checks.push({type:'deploymentScope',scope:'EMPTY_REGISTRY_ONLY',benefitLaunchAuthorized:false});
+    for(const name of ['independentSecurityReview','legalReview','realWalletStaging','privateRequestStaging']) {
       const x=e[name];
       if(x?.status!=='PASS'||typeof x.reviewer!=='string'||!x.reviewer.trim()||typeof x.file!=='string'||!x.file.startsWith('.local/')||!(/^[0-9a-f]{64}$/.test(x.sha256||''))) {
         blockers.push(name+': missing reviewed evidence'); continue;
@@ -104,7 +94,7 @@ export function releaseGate(root=process.cwd()) {
       blockers.push('Fork evidence changed or a rehearsal started during the release check; rerun release:gate after completion and inspect any retained fork lock');
     }
   }
-  return {schema:'AGIClubDeploymentGate/1',sourceSha256:source,status:blockers.length?'BLOCKED':'EVIDENCE_READY_FOR_PRINCIPAL_REVIEW',deploymentAuthorized:false,blockers,checks,qualifiedBytecode,evidenceSha256:sha256(JSON.stringify(checks)),note:'Checks bind documents; they do not prove the truth of external assertions. Root-holder approval is a separate step. Broad launch requires the subsequent real production canary.'};
+  return {schema:'AGIClubDeploymentGate/2',deploymentScope:'EMPTY_REGISTRY_ONLY',benefitLaunchAuthorized:false,sourceSha256:source,status:blockers.length?'BLOCKED':'EVIDENCE_READY_FOR_PRINCIPAL_REVIEW',deploymentAuthorized:false,blockers,checks,qualifiedBytecode,evidenceSha256:sha256(JSON.stringify(checks)),note:'Checks bind documents; they do not prove the truth of external assertions. Root-holder approval authorizes only empty contract creation. Run launch:gate for a chosen benefit before a separately approved canary; broad launch requires actual production acceptance.'};
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)) {
   fs.mkdirSync('qualification',{recursive:true});const r=releaseGate();fs.writeFileSync('qualification/DEPLOYMENT_GATE.json',JSON.stringify(r,null,2)+'\n');console.log(JSON.stringify(r,null,2));if(r.blockers.length)process.exitCode=1;

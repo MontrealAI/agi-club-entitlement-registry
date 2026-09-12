@@ -1,14 +1,14 @@
-/** Explicit canary ONLY. No CI deploy, no hard-coded key, no deployer admin privileges. */
+/** Explicit empty-registry deployment ONLY. No CI deploy, no hard-coded key, no deployer admin privileges. */
 import fs from 'node:fs';import assert from 'node:assert/strict';
 import {network,artifacts} from 'hardhat';import {ethers} from 'ethers';
 import {PROD,save,canonicalAdmin,checkProduction} from './runtime.mjs';import {releaseGate} from './release-gate.mjs';
 import {deploymentMessage,validatePlan} from '../shared/deployment-policy.mjs';
 import {reserveBroadcast} from './broadcast-record.mjs';
 assert(!process.env.CI,'Mainnet broadcasting from CI is intentionally disabled');
-assert.equal(process.env.AGI_MAINNET_SEND,'I_APPROVE_THIS_LIMITED_CANARY','Explicit one-time broadcast phrase missing');
+assert.equal(process.env.AGI_MAINNET_SEND,'I_APPROVE_THIS_EMPTY_REGISTRY','Explicit one-time broadcast phrase missing');
 const checkpoint='.local/deployment-broadcast.json';
 assert(!fs.existsSync(checkpoint),'Deployment checkpoint already exists. Inspect its transaction hash; do not repeat or overwrite a deployment attempt');
-const gate=releaseGate();assert.equal(gate.status,'EVIDENCE_READY_FOR_PRINCIPAL_REVIEW',gate.blockers.join('; '));
+const gate=releaseGate();assert.equal(gate.status,'EVIDENCE_READY_FOR_PRINCIPAL_REVIEW',gate.blockers.join('; '));assert.equal(gate.deploymentScope,'EMPTY_REGISTRY_ONLY','Only empty-registry deployment evidence is accepted');
 const packet=JSON.parse(fs.readFileSync('.local/deployment-approval.json','utf8'));assert.deepEqual(Object.keys(packet).sort(),['message','plan','signature']);
 const plan=validatePlan(packet.plan),message=deploymentMessage(plan);assert.equal(packet.message,message);
 assert.equal(plan.sourceSha256,gate.sourceSha256);assert.equal(plan.evidenceSha256,gate.evidenceSha256);
@@ -50,5 +50,5 @@ try {
  assert.equal(receipt.contractAddress?.toLowerCase(),plan.predictedAddress);
  const checked=await checkProduction(provider,receipt.contractAddress,plan.admin,plan.runtimeCodeHash);
  save('.local/mainnet-deployment.json',{...checked,transactionHash:tx.hash,blockNumber:receipt.blockNumber,blockHash:receipt.blockHash,finalityVerified:false,scope:'LATEST_IDENTITY_ONLY; run inspect:mainnet for finalized verification',sourceSha256:plan.sourceSha256,broadMemberLaunchAuthorized:false});
- console.log('Runtime and authority verified at latest observed state. Wait for finality, verify source on Etherscan, then execute ONE member canary. Broad access remains closed.');
+ console.log('Runtime and authority verified at latest observed state. Wait for finality, verify source on Etherscan, keep the registry empty until a chosen benefit passes launch:gate and separate root review. Broad access remains closed.');
 } finally {provider.destroy();await connection.close();}

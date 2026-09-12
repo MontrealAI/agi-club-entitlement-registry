@@ -15,7 +15,7 @@ try{
  const fixture=`window.__calls=[];window.__clipboard=[];window.__walletEvents={};window.ethereum={request:async r=>{window.__calls.push(r);if(r.method==='eth_requestAccounts'){if(window.__permissionError)throw Error(window.__permissionError);if(window.__permissionGate)await window.__permissionGate;}if(r.method==='eth_chainId')return '0x1';return ['${A}'];},on:(event,fn)=>{window.__walletEvents[event]=fn;}};
  window.ethers={id:()=> '${E}',namehash:n=>n==='club.agi.eth'?'${namehash('club.agi.eth')}':'${N}',isAddress:x=>/^0x[0-9a-f]{40}$/i.test(x),keccak256:()=> '${CODE}',ZeroAddress:'0x'+'0'.repeat(40),verifyMessage:()=> '${A}',hashMessage:()=> '${id('mock-hash')}',
  BrowserProvider:class{async getSigner(){return{getAddress:async()=> '${A}',signMessage:async m=>{window.__calls.push({method:'personal_sign',message:m});if(window.__signatureGate)await window.__signatureGate;return '0x'+'11'.repeat(65);}};}async getCode(a){window.__calls.push({method:'getCode',a});return a.toLowerCase()==='${A}'?'0x':'0x6000';}async getNetwork(){return{chainId:1n};}async getBlock(t){return{number:t==='finalized'||t===100?100:104,hash:'0x'+(t==='finalized'||t===100?'aa':'bb').repeat(32)};}destroy(){}},
- Contract:class{async VERSION(){return '2.1.1';}async CANONICAL_ENS(){return '0x00000000000c2e074ec69a0dfb2997ba6c7d2e1e';}async CANONICAL_WRAPPER(){return '0xd4416b13d2b3a9abae7acd5d6c2bbdbe25686401';}async CLUB_AGI_ETH_NODE(){return '${namehash('club.agi.eth')}';}async admin(){return '${A}';}async entitlementCount(){return 1n;}async entitlementIdsPage(){return ['${E}'];}async entitlement(){return ['${E}','0x'+'0'.repeat(64),50n,1n,1n,0n,0n,2n,true];}async titleFR(){return 'TEST FICTIF — AVANTAGE';}async titleEN(){return 'FICTITIOUS TEST — BENEFIT';}async claimability(){return[9,'${N}','${A}','${A}',1,false,false,0,1,50,2];}async claimRecord(...args){window.__calls.push({method:'claimRecord',args});return ['${A}',1n,1n,0n,1n,1n];}}};
+ Contract:class{async VERSION(){return '2.1.1';}async CANONICAL_ENS(){return '0x00000000000c2e074ec69a0dfb2997ba6c7d2e1e';}async CANONICAL_WRAPPER(){return '0xd4416b13d2b3a9abae7acd5d6c2bbdbe25686401';}async CLUB_AGI_ETH_NODE(){return '${namehash('club.agi.eth')}';}async admin(){return '${A}';}async entitlementCount(){return 1n;}async entitlementIdsPage(){return ['${E}'];}async entitlement(){return ['${E}','0x'+'0'.repeat(64),50n,1n,1n,0n,0n,2n,true];}async metadataURI(...args){window.__calls.push({method:'metadataURI',args});return 'https://example.org/public-benefit-terms';}async titleFR(){return 'TEST FICTIF — AVANTAGE';}async titleEN(){return 'FICTITIOUS TEST — BENEFIT';}async claimability(){return[9,'${N}','${A}','${A}',1,false,false,0,1,50,2];}async claimRecord(...args){window.__calls.push({method:'claimRecord',args});return ['${A}',1n,1n,0n,1n,1n];}}};
  Object.defineProperty(navigator,'clipboard',{value:{writeText:async t=>{window.__clipboard.push(t);}},configurable:true});
  `;
  const requests=[];
@@ -74,6 +74,15 @@ try{
  };
  await connectMember();
  await check('Catalogue uses the administrator’s selected-language title',async()=>assert.equal(await evaluate('document.getElementById("benefitSelect").selectedOptions[0].textContent'),language==='fr'?'TEST FICTIF — AVANTAGE — Ouvert':'FICTITIOUS TEST — BENEFIT — Open'));
+ await check('Published benefit details read at one block without opening the external instructions',async()=>{
+  const before=network.length;await click('readBenefit');
+  assert(await evaluate('!document.getElementById("benefitDetails").hidden'));
+  assert.equal(await evaluate('document.getElementById("benefitTerms").href'),'https://example.org/public-benefit-terms');
+  assert.equal(await evaluate('document.getElementById("benefitHeading").textContent'),language==='fr'?'TEST FICTIF — AVANTAGE':'FICTITIOUS TEST — BENEFIT');
+  assert(await evaluate('document.getElementById("benefitObserved").textContent.includes("104")'));
+  assert(await evaluate('window.__calls.filter(x=>x.method==="metadataURI").every(x=>x.args[1].blockTag===104)'));
+  assert(!network.slice(before).some(r=>r.url.startsWith('https://example.org/')));
+ });
  const fill=`document.getElementById('usageConsent').checked=true;document.getElementById('usageConsent').dispatchEvent(new Event('change'));document.getElementById('requestName').value='PRIVATE FICTIVE MEMBER';document.getElementById('requestName').dispatchEvent(new Event('input'));document.getElementById('requestEmail').value='private-fixture@example.org';document.getElementById('requestEmail').dispatchEvent(new Event('input'));document.getElementById('consent').checked=true;`;
  await check('No signature prompt without the reading acknowledgement',async()=>{
   await evaluate(fill+"document.getElementById('usageConsent').checked=false;");await click('prepareRequest');

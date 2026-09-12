@@ -1,5 +1,20 @@
 const fail=()=>{throw Error('CATALOG_UNAVAILABLE');};
 const validId=id=>typeof id==='string'&&/^0x[0-9a-fA-F]{64}$/.test(id)&&!/^0x0{64}$/.test(id);
+// Public reads only, pinned to one observed block; no metadata is fetched.
+export async function readBenefitDetails(registry,id,blockTag) {
+ try {
+  if(!validId(id)||!Number.isSafeInteger(blockTag)||blockTag<0)fail();
+  const at={blockTag};
+  const [e,fr,en,uri]=await Promise.all([registry.entitlement(id,at),registry.titleFR(id,at),registry.titleEN(id,at),registry.metadataURI(id,at)]);
+  if(e[8]!==true||![1,2,3,4].includes(Number(e[7]))||[fr,en,uri].some(x=>typeof x!=='string'))fail();
+  for(const index of [2,3,4,5,6])if(typeof e[index]!=='bigint'||e[index]<0n||e[index]>=(1n<<64n))fail();
+  return {id,fr,en,uri,state:Number(e[7]),capacity:e[2],active:e[3],opensAt:e[5],closesAt:e[6],blockTag};
+ }catch{fail();}
+}
+export function publicTermsLink(uri) {
+ if(typeof uri!=='string'||/[\s\u0000-\u001f\u007f]/.test(uri))return null;
+ try {const url=new URL(uri);return url.protocol==='https:'&&!url.username&&!url.password?url.href:null;}catch{return null;}
+}
 export function requestPolicy(cfg,ethers,version) {
   return {origin:cfg.expectedOrigin,chainId:1,registry:String(cfg.registryAddress).toLowerCase(),registryCodeHash:cfg.registryCodeHash,version,
     entitlementMode:cfg.entitlementMode??'allowlist',entitlements:(cfg.allowedEntitlements||[]).map(x=>x.startsWith('0x')?x.toLowerCase():ethers.id(x))};

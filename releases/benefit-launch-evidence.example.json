@@ -1,0 +1,15 @@
+{
+  "schema": "AGIClubBenefitLaunchEvidence/1",
+  "scope": "LIMITED_BENEFIT_CANARY",
+  "sourceSha256": "",
+  "benefit": {
+    "chainId": 1,
+    "registryAddress": "",
+    "registryCodeHash": "",
+    "entitlementId": "",
+    "definitionFile": ".local/benefit-definition.json",
+    "definitionSha256": ""
+  },
+  "benefitLegalReview": {"status": "NOT_EXECUTED", "reviewer": "", "scopeSha256": "", "file": ".local/benefit-legal-review.json", "sha256": ""},
+  "fulfillmentStaging": {"status": "NOT_EXECUTED", "reviewer": "", "scopeSha256": "", "file": ".local/fulfillment-staging.json", "sha256": ""}
+}

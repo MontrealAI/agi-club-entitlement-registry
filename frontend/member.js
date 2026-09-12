@@ -5,7 +5,7 @@ import {benefitTitle} from './language-core.mjs';
 import {MEMBER_ABI} from './contract-abi.mjs';
 import {PrivateMemory} from './private-memory.mjs';
 import {formatRequestEmail} from './shared/request-email.mjs';
-import {readCatalogPage,requestPolicy} from './member-catalog.mjs';
+import {readCatalogPage,requestPolicy,readBenefitDetails,publicTermsLink} from './member-catalog.mjs';
 const $=id=>document.getElementById(id), cfg=window.AGI_CONFIG||{}, memory=new PrivateMemory();
 let provider=null,signer=null,contract=null,account='',member=null,demo=false,busy=false,timer=null,sessionEpoch=0,membershipEpoch=0,usageEpoch=0,walletPromptEpoch=null,txProvider=null;
 let catalog=[],catalogTotal=0;
@@ -41,8 +41,35 @@ function renderCatalog(previous=''){
   const options=catalog.map(e=>{const o=document.createElement('option');o.value=e.id;o.lang=getLanguage()==='en'&&e.en?'en':'fr';o.textContent=benefitTitle(e,getLanguage())+' — '+['',t('Brouillon'),t('Ouvert'),t('Fermé'),t('Archivé')][e.state];return o;});
   $('benefitSelect').replaceChildren(option,...options);$('benefitSelect').value=catalog.some(e=>e.id===previous)?previous:'';
   $('benefitSelect').disabled=!catalog.length;$('verify').disabled=!demo&&!$('benefitSelect').value;
+  clearBenefitDetails();
   $('loadBenefits').disabled=!contract||catalog.length>=catalogTotal;$('refreshBenefits').disabled=!contract;
   $('catalogStatus').textContent=catalog.length?catalog.length+t(' avantage(s) chargé(s) sur ')+catalogTotal+t('. Le statut sera vérifié avant toute transaction.'):contract?t('Le registre est vide. Aucun avantage n’a été créé. Revenez après sa publication par l’administrateur.'):t('Connectez le wallet pour lire le catalogue officiel. Aucun avantage n’est préconfiguré.');
+}
+function clearBenefitDetails(){
+ $('benefitDetails').hidden=true;$('readBenefit').disabled=!contract||!$('benefitSelect').value;
+ for(const id of ['benefitHeading','benefitLimit','benefitWindow','benefitURI','benefitObserved'])$(id).textContent='';
+ $('benefitTerms').hidden=true;$('benefitTerms').removeAttribute('href');
+}
+function claimTime(seconds){
+ if(seconds===0n)return tr('sans limite','no boundary');
+ return seconds<=8640000000000n?new Date(Number(seconds)*1000).toISOString().replace('T',' ').replace('.000Z',' UTC'):seconds.toString()+tr(' secondes Unix',' Unix seconds');
+}
+async function inspectBenefit(){
+ clearBenefitDetails();await assertSession();
+ const epoch=sessionEpoch,selection=membershipEpoch,registry=contract,id=benefitId();
+ const current=()=>epoch===sessionEpoch&&selection===membershipEpoch&&registry===contract;
+ try {
+  const block=await provider.getBlock('latest');if(!current())return;
+  const d=await readBenefitDetails(registry,id,block?.number);if(!current())return;
+  await assertWallet(account);if(!current())return;
+  $('benefitHeading').textContent=benefitTitle(d,getLanguage());
+  $('benefitLimit').textContent=d.active.toString()+tr(' attribution(s) active(s) · ',' active allocation(s) · ')+(d.capacity===0n?tr('sans plafond','uncapped'):tr('plafond : ','capacity: ')+d.capacity.toString());
+  $('benefitWindow').textContent=tr('Début : ','Opens: ')+claimTime(d.opensAt)+tr(' · Fin : ',' · Closes: ')+claimTime(d.closesAt);
+  $('benefitURI').textContent=d.uri||tr('Aucune instruction externe publiée. Consultez le Club pour les modalités de cet avantage.','No external instructions published. Ask the Club for this benefit’s terms.');
+  const link=publicTermsLink(d.uri);if(link){$('benefitTerms').href=link;$('benefitTerms').hidden=false;}
+  $('benefitObserved').textContent=['',t('Brouillon'),t('Ouvert'),t('Fermé'),t('Archivé')][d.state]+tr(' · Bloc ',' · Block ')+d.blockTag+' · '+id;
+  $('benefitDetails').hidden=false;
+ }catch(error){if(current())throw error;}
 }
 async function loadBenefits(append=false){
   await assertSession();const epoch=sessionEpoch,registry=contract;
@@ -199,12 +226,13 @@ async function copy(){
 }
 on('connect',connect);on('verify',inspectMember);on('claim',claim);on('prepareRequest',prepare);on('copyRequest',copy);
 on('refreshBenefits',()=>loadBenefits());on('loadBenefits',()=>loadBenefits(true));
+on('readBenefit',inspectBenefit);
 $('clearPrivate').addEventListener('click',()=>{clearPrivate();status(t('Coordonnées effacées de la page. Le presse-papiers et votre messagerie ne sont pas effacés par cette action.'));});
 on('demo',()=>{disconnect();demo=true;$('verify').disabled=false;$('authority').textContent=t('Démonstration');$('modeNotice').textContent=t('DÉMONSTRATION — catalogue vide, sans wallet, transaction ni envoi. Utilisez des données fictives.');$('memberLabel').value='exemple';status(t('Cliquez sur Vérifier pour explorer la confidentialité avec un droit fictif. Aucun avantage n’est créé.'));});
 for(const f of ['requestName','requestEmail'])$(f).addEventListener('input',()=>{invalidate();touch();});
 $('consent').addEventListener('change',()=>invalidate());
 $('usageConsent').addEventListener('change',()=>{usageEpoch++;invalidate(true);touch();});
-for(const f of ['memberLabel','benefitSelect'])$(f).addEventListener('input',()=>{membershipEpoch++;clearPrivate();member=null;lockContact(false);$('claim').disabled=true;$('verify').disabled=!demo&&!$('benefitSelect').value;$('eligibility').textContent=t('Vérifiez de nouveau le membership et l’avantage sélectionnés.');});
+for(const f of ['memberLabel','benefitSelect'])$(f).addEventListener('input',()=>{membershipEpoch++;clearPrivate();clearBenefitDetails();member=null;lockContact(false);$('claim').disabled=true;$('verify').disabled=!demo&&!$('benefitSelect').value;$('eligibility').textContent=t('Vérifiez de nouveau le membership et l’avantage sélectionnés.');});
 for(const e of ['pointerdown','keydown'])document.addEventListener(e,touch,{passive:true});
 window.addEventListener('pagehide',clearPrivate);
 window.addEventListener('pageshow',()=>{clearPrivate();});

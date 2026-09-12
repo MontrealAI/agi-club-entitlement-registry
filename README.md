@@ -1,5 +1,5 @@
 # ∞ AGI CLUB — ENTITLEMENT REGISTRY
-## Static Privacy Edition · 2.4.0-rc.1
+## Static Privacy Edition · 2.4.0-rc.2
 
 **VERIFY MEMBERSHIP → CLAIM ENTITLEMENT → PROVE CLAIM**
 
@@ -27,7 +27,7 @@ Open **[START_HERE.html](START_HERE.html)**. No installation is needed to read i
 |---|---|
 | Prepare a recent Ubuntu machine and deploy an empty registry after approval | [Ubuntu English](docs/UBUNTU_MAINNET_EN.md) / [Ubuntu français](docs/UBUNTU_MAINNET_FR.md) — choose the first benefit later |
 | Upload through the GitHub website | [GitHub UI guide](docs/GITHUB_WEB_UPLOAD.md) |
-| See a local demo, rehearse a deployment or deploy an approved canary | [Hardhat English](docs/HARDHAT_DEPLOYMENT.md) / [Français](docs/HARDHAT_DEPLOYMENT_FR.md) |
+| See a local demo, rehearse or deploy an approved empty registry | [Hardhat English](docs/HARDHAT_DEPLOYMENT.md) / [Français](docs/HARDHAT_DEPLOYMENT_FR.md) |
 | Verify the source and operate every public function through Etherscan | [Bilingual Etherscan guide](docs/ETHERSCAN_GUIDE.md); open **Etherscan** in the built website for copy-ready values |
 | Understand exactly where contact data goes | [Privacy policy and implementation boundary](PRIVACY.md) |
 | Review conditions, regulatory exposure and legal release requirements | [Bilingual public notice](frontend/legal.html), [operator/counsel review](docs/LEGAL_RELEASE_REVIEW.md) |
@@ -41,7 +41,7 @@ This is a **source release candidate**, not an independently audited or mainnet-
 
 Production preparation also requires a completed deployment-specific `legalReview`, bound to the reviewed source and private report bytes. Public notices preserve mandatory rights and the MIT license; they do not establish an exemption, eliminate liability or replace qualified counsel's review of the actual operator, membership offering and privacy operations. The member acknowledgement stays in memory only.
 
-The contract version is **2.1.1**, preserved byte-for-byte from the previous source candidate. Repository version is **2.4.0-rc.1**. The new privacy-preserving request schema is **`AGIClubEntitlementRequest/4`**. Old `/3` ticket requests and earlier formats are rejected. Update the member page and verifier together, then sign a new `/4` request for the existing claim; no new claim transaction is needed.
+The contract version is **2.1.1**, preserved byte-for-byte from the previous source candidate. Repository version is **2.4.0-rc.2**. The new privacy-preserving request schema is **`AGIClubEntitlementRequest/4`**. Old `/3` ticket requests and earlier formats are rejected. Update the member page and verifier together, then sign a new `/4` request for the existing claim; no new claim transaction is needed.
 
 A genuine npm-generated `package-lock.json` is committed, including the pinned ethers 6.17.0 dependency and tmp 0.2.7 override. Use `npm ci` for reproducible installation, then run the non-deploying CI. The supplied frontend is source; build `dist/site` and complete the release gates before publishing a live claim service. Reports under `evidence/` describe the original source delivery; current execution reports are generated under `qualification/` and attached to GitHub Actions runs.
 
@@ -102,7 +102,7 @@ npm run node          # Terminal 1: local chain only
 npm run deploy:local  # Terminal 2: LOCAL rehearsal; never real memberships
 ```
 
-Use [the full guide](docs/HARDHAT_DEPLOYMENT.md) for fork, review, canary approval and mainnet steps. Never import public test keys into a wallet holding real assets.
+Use [the full guide](docs/HARDHAT_DEPLOYMENT.md) for fork, review, empty-deployment approval and mainnet steps. Never import public test keys into a wallet holding real assets.
 
 ### English / français
 
@@ -111,3 +111,5 @@ The live operator and member interfaces are French. English documentation is inc
 ### Licence and disclosure
 
 MIT. OpenZeppelin notices are preserved. ethers is installed as an exact dependency and its official distribution/licence is copied by the public-site builder; no crypto stub may be published instead. Report vulnerabilities privately to the address in [SECURITY.md](SECURITY.md), without member contact data.
+
+Before freezing the immutable contract, review the capability boundaries in the [English](docs/ENTITLEMENT_DESIGN_EN.md#decide-the-immutable-contract-scope-before-deploying) / [French](docs/ENTITLEMENT_DESIGN_FR.md#décider-du-périmètre-immuable-avant-le-déploiement) guide. `npm run test:scenarios` exercises practical allocation models against the production constructor in a local EVM. `release:gate` and deployment plan `/2` cover empty contract creation only; `launch:gate` separately binds a later chosen benefit to its legal and fulfillment reviews. The first offering may remain undecided.

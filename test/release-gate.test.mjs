@@ -4,11 +4,12 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {releaseGate} from '../scripts/release-gate.mjs';
+import {benefitLaunchGate} from '../scripts/benefit-launch-gate.mjs';
 import {sha256,sourceDigest} from '../scripts/source-digest.mjs';
 import {ENS,WRAPPER,ROOT,REGISTRY_VERSION} from '../shared/entitlement-request.mjs';
 
 const stages=['check:repo','check:lock','test:offline','compile','test:evm','test:journey','build:site','test:browser'];
-const kinds=['independentSecurityReview','legalReview','realWalletStaging','privateRequestStaging','fulfillmentStaging'];
+const kinds=['independentSecurityReview','legalReview','realWalletStaging','privateRequestStaging'];
 const localFile='qualification/LOCAL_RELEASE.json',compilerFile='qualification/compiler-status.json',forkFile='qualification/mainnet-fork.json';
 const hash=n=>'0x'+n.repeat(64),address=n=>'0x'+n.repeat(40);
 function fixture(t) {
@@ -25,7 +26,7 @@ function fixture(t) {
  write(localFile,{repositoryVersion:pkg.version,contractVersion:REGISTRY_VERSION,status:'PASS',sourceSha256:source,sourceUnchanged:true,at:new Date().toISOString(),results,mainnetAuthorization:false});
  write(compilerFile,{status:'PASS',sourceSha256:source,compiler:pkg.devDependencies.solc+'+fixture',hardhat:pkg.devDependencies.hardhat,profile:'production',productionContract:'contracts/AGIClubEntitlementRegistryMainnet.sol:AGIClubEntitlementRegistryMainnet',creationBytes:100,runtimeBytes:80,creationCodeHash:hash('1'),templateRuntimeCodeHash:hash('2')});
  write(forkFile,{status:'PASS',attemptId:'00000000-0000-4000-8000-000000000001',completedAt:new Date().toISOString(),scope:'LOCAL_FORK_OF_PINNED_MAINNET; no real transactions; not real-wallet acceptance',sourceSha256:source,creationCodeHash:hash('1'),forkBlock:{number:20000000,hash:hash('3')},identity:{chainId:1,contractVersion:REGISTRY_VERSION,runtimeCodeHash:hash('4'),root:ROOT,ens:ENS,wrapper:WRAPPER,address:address('5'),admin:address('6')},results:[{label:'fixture',status:'PASS',owner:address('7'),node:hash('8'),wrapped:true}]});
- const external={sourceSha256:source};
+ const external={sourceSha256:source,deploymentScope:'EMPTY_REGISTRY_ONLY'};
  for(const kind of kinds) {const file='.local/'+kind+'.txt',report='SYNTHETIC UNIT TEST EVIDENCE: '+kind;write(file,report);external[kind]={status:'PASS',reviewer:'Fixture reviewer',file,sha256:sha256(report)};}
  write('.local/external-evidence.json',external);
  return {root,write,read,edit,gate:()=>releaseGate(root),remove:file=>fs.rmSync(path.join(root,file)),blocked:()=>assert.equal(releaseGate(root).status,'BLOCKED')};
@@ -99,8 +100,8 @@ test('A running or interrupted fork blocks otherwise complete evidence',t=>{cons
 
 for(const [name,whenRead,occurrence,replaceReport] of [
  ['lock acquired after the initial lock check',forkFile,1,false],
- ['lock acquired while external evidence is read','.local/fulfillmentStaging.txt',1,false],
- ['failed attempt completes after the fork report was read','.local/fulfillmentStaging.txt',1,true],
+ ['lock acquired while external evidence is read','.local/privateRequestStaging.txt',1,false],
+ ['failed attempt completes after the fork report was read','.local/privateRequestStaging.txt',1,true],
  ['lock acquired during the final fork-report read',forkFile,2,false],
 ])test('Concurrent fork evidence rejects '+name,t=>{
  const f=fixture(t),previous=f.read(forkFile),original=fs.readFileSync;
@@ -117,9 +118,68 @@ for(const [name,whenRead,occurrence,replaceReport] of [
  assert.equal(g.status,'BLOCKED');assert.equal(g.qualifiedBytecode,null);assert(!g.checks.some(x=>x.type==='fork'),'A stale fork must not contribute to approval evidence');
 });
 
-test('Fulfillment evidence supports a chosen non-event flow and cannot be replaced by a legacy provider entry',t=>{
- const f=fixture(t);assert.equal(f.gate().status,'EVIDENCE_READY_FOR_PRINCIPAL_REVIEW');
- const q=f.read('.local/external-evidence.json');assert(q.fulfillmentStaging);assert(!q.eventbriteStaging);
- f.edit('.local/external-evidence.json',value=>{value.eventbriteStaging=value.fulfillmentStaging;delete value.fulfillmentStaging;});
- assert(f.gate().blockers.includes('fulfillmentStaging: missing reviewed evidence'));f.blocked();
+test('An explicitly reviewed empty deployment does not need a chosen benefit or fulfillment report',t=>{
+ const f=fixture(t),q=f.read('.local/external-evidence.json'),g=f.gate();assert(!q.fulfillmentStaging);assert.equal(g.status,'EVIDENCE_READY_FOR_PRINCIPAL_REVIEW');
+ assert.equal(g.deploymentScope,'EMPTY_REGISTRY_ONLY');assert.equal(g.benefitLaunchAuthorized,false);assert.equal(g.deploymentAuthorized,false);
+ assert.equal(benefitLaunchGate(f.root).status,'BLOCKED');
+});
+for(const scope of [undefined,'BENEFIT_LAUNCH','',null])test('Empty deployment refuses missing or different scope '+scope,t=>{
+ const f=fixture(t);f.edit('.local/external-evidence.json',e=>{e.deploymentScope=scope;});assert(f.gate().blockers.includes('Explicit EMPTY_REGISTRY_ONLY deployment scope is required'));f.blocked();
+});
+
+function launchFixture(t) {
+ const f=fixture(t),definition='FICTITIOUS reviewed access allocation. No real launch evidence.';
+ const benefit={chainId:1,registryAddress:address('5'),registryCodeHash:hash('4'),entitlementId:hash('9'),definitionFile:'.local/benefit-definition.txt',definitionSha256:sha256(definition)};
+ f.write(benefit.definitionFile,definition);
+ const scopeSha256=sha256(JSON.stringify(benefit));
+ const launch={schema:'AGIClubBenefitLaunchEvidence/1',scope:'LIMITED_BENEFIT_CANARY',sourceSha256:sourceDigest(f.root).sourceSha256,benefit};
+ for(const kind of ['benefitLegalReview','fulfillmentStaging']){
+  const file='.local/'+kind+'.txt',report='SYNTHETIC REVIEW FOR '+kind;f.write(file,report);
+  launch[kind]={status:'PASS',reviewer:'Fixture reviewer',scopeSha256,file,sha256:sha256(report)};
+ }
+ f.write('.local/benefit-launch-evidence.json',launch);
+ return {...f,launch:()=>benefitLaunchGate(f.root),change:fn=>f.edit('.local/benefit-launch-evidence.json',fn)};
+}
+test('A chosen non-event benefit needs its own legal and fulfillment evidence and grants no launch authority',t=>{
+ const f=launchFixture(t),g=f.launch();assert.equal(g.status,'EVIDENCE_READY_FOR_BENEFIT_REVIEW');
+ assert.equal(g.scope,'LIMITED_BENEFIT_CANARY');for(const k of ['deploymentAuthorized','benefitLaunchAuthorized','broadLaunchAuthorized'])assert.equal(g[k],false);
+ assert.equal(g.benefit.entitlementId,hash('9'));assert.deepEqual(g.checks.map(x=>x.type),['benefitScope','launchEvidence','benefitLegalReview','fulfillmentStaging']);
+ assert.match(g.note,/not mechanically restricted/);
+});
+for(const [name,change] of [
+ ['missing delivery rehearsal',e=>{delete e.fulfillmentStaging;}],
+ ['legacy Eventbrite label',e=>{e.eventbriteStaging=e.fulfillmentStaging;delete e.fulfillmentStaging;}],
+ ['missing benefit legal review',e=>{delete e.benefitLegalReview;}],
+ ['unexecuted rehearsal',e=>{e.fulfillmentStaging.status='NOT_EXECUTED';}],
+ ['absent reviewer',e=>{e.fulfillmentStaging.reviewer=' ';}],
+ ['different source',e=>{e.sourceSha256='0'.repeat(64);}],
+ ['different launch scope',e=>{e.scope='BROAD_LAUNCH';}],
+ ['substituted entitlement',e=>{e.benefit.entitlementId=hash('a');}],
+ ['substituted registry',e=>{e.benefit.registryAddress=address('a');}],
+ ['wrong runtime',e=>{e.benefit.registryCodeHash=hash('a');}],
+ ['wrong chain',e=>{e.benefit.chainId=31337;}],
+ ['extra benefit scope field',e=>{e.benefit.approved=true;}],
+ ['zero ID',e=>{e.benefit.entitlementId=hash('0');}],
+ ['unbound review',e=>{e.fulfillmentStaging.scopeSha256='a'.repeat(64);}],
+ ['report hash mismatch',e=>{e.fulfillmentStaging.sha256='a'.repeat(64);}],
+ ['definition hash mismatch',e=>{e.benefit.definitionSha256='a'.repeat(64);}],
+ ['definition traversal',e=>{e.benefit.definitionFile='.local/../package.json';}],
+ ['report traversal',e=>{e.fulfillmentStaging.file='.local/../package.json';}],
+])test('Benefit gate refuses '+name+' without blocking the separately reviewed empty deployment',t=>{
+ const f=launchFixture(t);f.change(change);assert.equal(f.launch().status,'BLOCKED');assert.equal(f.gate().status,'EVIDENCE_READY_FOR_PRINCIPAL_REVIEW');
+});
+test('Changed definition bytes require new benefit scope and matching new reviews',t=>{
+ const f=launchFixture(t),before=f.launch();f.write('.local/benefit-definition.txt','REVISED FICTITIOUS TERMS');assert.equal(f.launch().status,'BLOCKED');
+ f.change(e=>{e.benefit.definitionSha256=sha256('REVISED FICTITIOUS TERMS');});assert.equal(f.launch().status,'BLOCKED');
+ f.change(e=>{const scope=sha256(JSON.stringify(e.benefit));for(const k of ['benefitLegalReview','fulfillmentStaging'])e[k].scopeSha256=scope;});
+ const after=f.launch();assert.equal(after.status,'EVIDENCE_READY_FOR_BENEFIT_REVIEW');assert.notEqual(after.benefitScopeSha256,before.benefitScopeSha256);assert.notEqual(after.evidenceSha256,before.evidenceSha256);
+});
+for(const [name,mutate] of [
+ ['new fork lock',f=>f.write('.local/mainnet-fork.lock','SYNTHETIC NEW ATTEMPT')],
+ ['changed qualification log',f=>f.write('qualification/test-browser.log','SYNTHETIC CHANGED LOG')],
+ ['changed source',f=>f.write('frontend/changed.js','// SYNTHETIC CHANGED SOURCE')],
+])test('Benefit review refuses '+name+' appearing during its private report read',t=>{
+ const f=launchFixture(t),read=fs.readFileSync;let triggered=false;
+ t.mock.method(fs,'readFileSync',function(file,...args){const bytes=read.call(this,file,...args);if(file===path.join(f.root,'.local/fulfillmentStaging.txt')&&!triggered){triggered=true;mutate(f);}return bytes;});
+ const g=f.launch();assert(triggered);assert.equal(g.status,'BLOCKED');assert(g.blockers.includes('Deployment qualification is incomplete or changed during benefit review'));
 });

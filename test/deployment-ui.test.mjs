@@ -6,7 +6,7 @@ import {runInNewContext} from 'node:vm';
 import {deploymentMessage,validatePlan} from '../shared/deployment-policy.mjs';
 
 const hash=n=>'0x'+n.repeat(64),address=n=>'0x'+n.repeat(40);
-function plan(n='a') {const now=Math.floor(Date.now()/1000);return {schema:'AGIClubDeploymentPlan/1',chainId:1,contract:'contracts/AGIClubEntitlementRegistryMainnet.sol:AGIClubEntitlementRegistryMainnet',sourceSha256:n.repeat(64),creationCodeHash:hash('1'),runtimeCodeHash:hash('2'),deployer:address('3'),admin:address('4'),nonce:'0',predictedAddress:address('5'),gasLimit:'100',maxFeePerGas:'5',maxPriorityFeePerGas:'1',maxCostWei:'500',createdAt:now,expiresAt:now+1800,evidenceSha256:'b'.repeat(64)};}
+function plan(n='a') {const now=Math.floor(Date.now()/1000);return {schema:'AGIClubDeploymentPlan/2',chainId:1,contract:'contracts/AGIClubEntitlementRegistryMainnet.sol:AGIClubEntitlementRegistryMainnet',sourceSha256:n.repeat(64),creationCodeHash:hash('1'),runtimeCodeHash:hash('2'),deployer:address('3'),admin:address('4'),nonce:'0',predictedAddress:address('5'),gasLimit:'100',maxFeePerGas:'5',maxPriorityFeePerGas:'1',maxCostWei:'500',createdAt:now,expiresAt:now+1800,evidenceSha256:'b'.repeat(64)};}
 function fixture() {
  const language=languageFixture('en');
  const elements=new Map(['plan','consent','sign','details','status'].map(id=>[id,{value:'',files:[],checked:false,disabled:id==='sign',textContent:'',listeners:new Map(),addEventListener(name,fn){this.listeners.set(name,fn);}}]));

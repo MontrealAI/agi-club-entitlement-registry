@@ -199,15 +199,15 @@ After reading the private review reports, the gate rechecks the fork-report hash
 
 ## F. Independent review and real-device rehearsal
 
-Complete the [legal release review](LEGAL_RELEASE_REVIEW.md) with qualified counsel and the actual operator. Review the real offering, membership arrangements, French/English notices, provider information and email and fulfillment-provider privacy operations. Publish any required operational facts before the final source fingerprint. The member acknowledgement is temporary and is not a retained contractual acceptance record.
+Complete the [legal release review](LEGAL_RELEASE_REVIEW.md) with qualified counsel and the actual operator. Review the explicitly empty deployment scope, existing membership arrangements, French/English notices, provider information and email and fulfillment-provider privacy operations. Publish any required operational facts before the final source fingerprint. The member acknowledgement is temporary and is not a retained contractual acceptance record.
 
 Resolve all findings against the exact source/compiler/dependency lock. Test root authority transitions, member wrapping/expiry semantics, unauthorized calls, duplicate claims, batch bounds, quotas, revocation/reassignment, Ethereum finality and signature failures.
 
-Rehearse the actual Ledger/Safe/member wallet, mobile browser, official-origin CSP, request signature, explicit copy/paste, organizer verification and chosen fulfillment workflow. Stage with test-only harnesses without calling them real memberships. Contact test data must be fictitious. Confirm that the wallet sees only a salted recipient commitment.
+Rehearse the actual Ledger/Safe/member wallet, mobile browser, official-origin CSP, request signature, explicit copy/paste, organizer verification with fictitious requests. Review the actual benefit and fulfillment workflow separately when one is chosen. Stage with test-only harnesses without calling them real memberships. Contact test data must be fictitious. Confirm that the wallet sees only a salted recipient commitment.
 
 Record private review reports, not customer receipts, under `.local/`. Use `releases/external-evidence.example.json` as the structure for `.local/external-evidence.json`; each report must bind the current source hash. The static edition requires **privateRequestStaging**, not a relay test.
 
-The required report entries are `independentSecurityReview`, `legalReview`, `realWalletStaging`, `privateRequestStaging` and `fulfillmentStaging`. Each identifies the actual reviewer, a private `.local/` report file and that file's SHA-256. Record `PASS` only for an executed, reviewed result. `npm run fingerprint` prints the source hash to bind; changing code, tests, configuration, public legal/privacy notices, the legal-review guide or the license requires matching new evidence. Keep participant contacts and legal advice out of public qualification artifacts.
+Set `deploymentScope` to `EMPTY_REGISTRY_ONLY`. The four required report entries are `independentSecurityReview`, `legalReview`, `realWalletStaging` and `privateRequestStaging`. No chosen benefit or fulfillment report is needed to deploy the empty registry. A later benefit needs its own legal and fulfillment evidence through `npm run launch:gate` ([instructions](ENTITLEMENT_DESIGN_EN.md#deploy-empty-approve-a-chosen-benefit-later)). Each identifies the actual reviewer, a private `.local/` report file and that file's SHA-256. Record `PASS` only for an executed, reviewed result. `npm run fingerprint` prints the source hash to bind; changing code, tests, configuration, public legal/privacy notices, the legal-review guide or the license requires matching new evidence. Keep participant contacts and legal advice out of public qualification artifacts.
 
 ```bash
 npm run fingerprint
@@ -218,7 +218,7 @@ The gate requires all eight successful qualification stages and their nonempty l
 
 The gate checks completeness and hashes. It does not independently determine whether someone else's statement is true. It never itself authorizes deployment. Do not edit a failed report to say `PASS`: complete the missing check and regenerate its evidence.
 
-## G. Prepare an unsigned limited-canary plan
+## G. Prepare an unsigned empty-registry plan
 
 Only after the preceding gates pass, configure local `.env` with a private `MAINNET_RPC_URL`, `EXPECTED_ADMIN`, `DEPLOYER_ADDRESS` and **`DEPLOY_MAX_COST_ETH`**, your explicit maximum deployment cost in ETH. Leaving the budget blank blocks plan creation. This is your ceiling, not a promised fee estimate.
 
@@ -228,7 +228,7 @@ npm run prepare:mainnet
 
 Review `.local/deployment-plan.json`: chain 1, production contract name, source/creation/runtime hashes, deployer, current root admin, nonce, predicted address, gas limit, fee ceiling and short expiry. **No transaction is sent by this command.**
 
-**Success:** the command prints `UNSIGNED CANARY PLAN — no transaction sent`. The plan lasts 30 minutes. If it expires or the deployer's nonce changes, prepare and review a new plan, then obtain a new signature. Never edit the JSON to extend its expiry or change its fee ceiling.
+**Success:** the command prints `UNSIGNED EMPTY REGISTRY PLAN — no transaction sent`. The plan lasts 30 minutes. If it expires or the deployer's nonce changes, prepare and review a new plan, then obtain a new signature. Never edit the JSON to extend its expiry or change its fee ceiling.
 
 The planner also compares the actual build artifact with the qualified creation code and compares the live root holder with the fork evidence. If either differs, repeat the affected qualification and review before preparing a fresh plan. A previously generated report does not qualify replacement build artifacts.
 
@@ -240,7 +240,7 @@ Open the built `deployment.html` from a trusted local server or approved HTTPS o
 
 For the local approval page, keep `npm run serve` running and open **`http://127.0.0.1:8080/deployment.html`**. Choose `.local/deployment-plan.json`, review the displayed fields, acknowledge them and sign. Move the downloaded `deployment-approval.json` from your browser's Downloads folder to `.local/deployment-approval.json` in this checkout. This is a deployment approval, not a member receipt. Its download is separate from the member/organizer pages, which provide no receipt-file export.
 
-The page signs the exact reviewed plan. Changing the file, wallet, network or interface language, leaving/restoring the page, or withdrawing consent cancels that attempt in the page. Reject any open wallet prompt, then review again. Only one signing attempt can run at a time; the account and current root holder are checked again before download. Unchecking the box cannot revoke a signed approval you have already shared: treat that file as active until its signed expiry or another deployment gate invalidates it.
+The page signs the exact `AGIClubDeploymentPlan/2`, authorizing empty contract creation only. It authorizes no benefit creation or member launch. Regenerate and review old `/1` plans and signatures; never relabel them. The page signs the exact reviewed plan. Changing the file, wallet, network or interface language, leaving/restoring the page, or withdrawing consent cancels that attempt in the page. Reject any open wallet prompt, then review again. Only one signing attempt can run at a time; the account and current root holder are checked again before download. Unchecking the box cannot revoke a signed approval you have already shared: treat that file as active until its signed expiry or another deployment gate invalidates it.
 
 The supplied broadcaster uses a locally encrypted **deployer** JSON keystore. Configure `DEPLOYER_KEYSTORE`. Provide its password locally for this one execution—never in GitHub, a command committed to source or shared logs. The environment-variable method is visible to processes with sufficient local privileges; use an isolated machine and clear it afterward.
 
@@ -250,7 +250,7 @@ macOS/Linux (Bash terminal):
 printf "Deployer keystore password: "
 read -r -s DEPLOYER_KEYSTORE_PASSWORD; printf "\n"
 export DEPLOYER_KEYSTORE_PASSWORD
-AGI_MAINNET_SEND=I_APPROVE_THIS_LIMITED_CANARY npm run deploy:mainnet
+AGI_MAINNET_SEND=I_APPROVE_THIS_EMPTY_REGISTRY npm run deploy:mainnet
 unset DEPLOYER_KEYSTORE_PASSWORD
 ```
 
@@ -261,7 +261,7 @@ $secret = Read-Host "Deployer keystore password" -AsSecureString
 $ptr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secret)
 try {
   $env:DEPLOYER_KEYSTORE_PASSWORD = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($ptr)
-  $env:AGI_MAINNET_SEND = "I_APPROVE_THIS_LIMITED_CANARY"
+  $env:AGI_MAINNET_SEND = "I_APPROVE_THIS_EMPTY_REGISTRY"
   npm run deploy:mainnet
 } finally {
   [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($ptr)
@@ -319,7 +319,7 @@ Upload **only `dist/site`** to a suitable static host. Apply `_headers` or equiv
 
 ## J. One real canary, then a separate launch decision
 
-The production constructor creates **zero benefits**. No first benefit, quota, category or claim window is supplied by the app. When the root owner separately approves a real benefit or limited canary, choose its permanent ID and public parameters, create it in **Draft** using the admin console or Etherscan, review its descriptors and then explicitly open it. Do not run a sample creation as part of deployment. No ticketing account is integrated into the contract.
+The production constructor creates **zero benefits**. No first benefit, quota, category or claim window is supplied by the app. After a chosen benefit passes `npm run launch:gate` and the root owner separately approves its limited canary, choose its permanent ID and public parameters, create it in **Draft** using the admin console or Etherscan, review its descriptors and then explicitly open it. Do not run a sample creation as part of deployment. No ticketing account is integrated into the contract.
 
 Run one genuine member through claim → finality → private request → explicit clipboard/email handoff → receipt verification → duplicate check → the chosen benefit fulfilled once → participant confirms receipt/access. A new signature or email must never produce a duplicate allocation for the same claim key.
 
@@ -355,4 +355,4 @@ Share only redacted failure details when requesting help. Never upload `.env`, k
 - https://docs.npmjs.com/cli/commands/npm-ci/
 - https://docs.ens.domains/wrapper/expiry/
 
-For resources, access, services, periodic allocations or other benefits, use the [general benefit design guide](ENTITLEMENT_DESIGN_EN.md). `fulfillmentStaging` must cover the chosen process; Eventbrite is optional. No event must be selected for deployment. The private request is optional for a benefit, but its code/device/privacy acceptance remains a release requirement.
+For resources, access, services, periodic allocations or other benefits, use the [general benefit design guide](ENTITLEMENT_DESIGN_EN.md). `fulfillmentStaging` belongs to the later `launch:gate` for a chosen benefit; Eventbrite is optional. The empty deployment requires the explicit `EMPTY_REGISTRY_ONLY` review scope. No event must be selected for deployment. The private request is optional for a benefit, but its code/device/privacy acceptance remains a release requirement.
