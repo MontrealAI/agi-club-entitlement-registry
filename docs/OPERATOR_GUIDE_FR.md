@@ -17,6 +17,8 @@ Le membre doit posséder un claim actif. La signature de sa demande lie le desti
 
 Le registre privé peut être votre outil administratif habituel ; il ne doit jamais être hébergé avec cette application. Pour éviter une course entre opérateurs, une seule personne attribue les billets ou un verrou administratif est appliqué. **Aucun stockage partagé signifie aussi aucun verrou automatique global de fulfilment.**
 
+**Zéro persistance dans le vérificateur statique :** le reçu collé et le résultat existent uniquement dans la page ouverte. Le bouton **Effacer**, la navigation, un changement de wallet et dix minutes sans saisie ni clic de vérification vident les champs. Une vérification retardée ne prolonge pas ce délai et ne fait pas réapparaître un reçu effacé. Rechargez la page : aucun historique de coordonnées n’est restauré. Vos courriels, votre registre administratif et Eventbrite restent des outils distincts avec leurs propres règles de conservation.
+
 ## Problèmes fréquents
 
 **Le membre a déjà réclamé :** il reprend uniquement la demande, sans nouvelle transaction. S’il recharge la page, ses coordonnées ne sont pas récupérées : il les ressaisit et signe.

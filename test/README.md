@@ -10,6 +10,8 @@ Receipt regressions mutate caller-owned inputs during simulated asynchronous ver
 
 Public-tooling regressions run the Python configurator from outside the repository and validate its output against the receipt policy. They cover canonical HTTPS origins, hexadecimal entitlement IDs and preservation of an existing configuration after invalid input. Preview-server tests use actual loopback HTTP requests and temporary directory symlinks (junctions on Windows) to check public-root containment. Isolated child processes inject file-stream errors before and after response bytes to check error handling and continued server availability. Fixtures contain no private data.
 
+Organizer-verifier regressions execute the actual handler body with simulated DOM, clock and wallet boundaries. They check retention deadlines during delayed operations, input invalidation, lifecycle clearing, provider cleanup and fixed error messages. Browser privacy qualification now executes both member and organizer flows, traps persistent-storage/file/logging APIs, inspects stores and network/wallet calls, and checks clear and real reload behavior. The EVM journey decodes a real claim transaction and checks its logs for contact bytes; receipt verification must not mine another transaction. These tests use fictitious contacts only.
+
 `npm run test:evm`: real Hardhat EVM, compiled contracts and local ENS/wrapper mocks.
 
 `npm run test:journey`: isolated chain-ID-1 model, actual ethers adapter, real WebCrypto recipient binding. No real ENS ownership, finality, mail or Eventbrite.
