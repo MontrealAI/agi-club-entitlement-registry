@@ -13,7 +13,7 @@ const localFile='qualification/LOCAL_RELEASE.json',compilerFile='qualification/c
 const hash=n=>'0x'+n.repeat(64),address=n=>'0x'+n.repeat(40);
 function fixture(t) {
  // Synthetic reports exist ONLY in a temporary unit-test directory. They are never release evidence.
- const root=fs.mkdtempSync(path.join(os.tmpdir(),'agi-gate-test-'));
+ const root=fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(),'agi-gate-test-')));
  t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
  const write=(file,data)=>{fs.mkdirSync(path.dirname(path.join(root,file)),{recursive:true});fs.writeFileSync(path.join(root,file),typeof data==='string'?data:JSON.stringify(data));};
  const read=file=>JSON.parse(fs.readFileSync(path.join(root,file),'utf8'));
