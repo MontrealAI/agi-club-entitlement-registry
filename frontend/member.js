@@ -3,7 +3,7 @@ import {createEthersIO} from './shared/ethers-adapter.mjs';
 import {MEMBER_ABI} from './contract-abi.mjs';
 import {PrivateMemory} from './private-memory.mjs';
 const $=id=>document.getElementById(id), cfg=window.AGI_CONFIG||{}, memory=new PrivateMemory();
-let provider=null,signer=null,contract=null,account='',member=null,demo=false,busy=false,timer=null;
+let provider=null,signer=null,contract=null,account='',member=null,demo=false,busy=false,timer=null,sessionEpoch=0,membershipEpoch=0,walletPromptEpoch=null,txProvider=null;
 const claimStates=['Disponible','En pause','Nom non admissible','Avantage inconnu','En préparation','Fermé','Archivé','Pas encore ouvert','Terminé','Déjà réclamé','Révoqué','Membership absent','Autre détenteur','Droit expiré','Contingent complet'];
 const status=(text,bad=false)=>{$('status').textContent=text;$('status').classList.toggle('error',bad);};
 const message=text=>{$('requestStatus').textContent=text;};
@@ -15,16 +15,31 @@ function invalidate(clearInputs=false) {
 function clearPrivate() { invalidate(true); clearTimeout(timer); }
 function touch(){clearTimeout(timer);timer=setTimeout(()=>{clearPrivate();message('Les coordonnées ont été effacées après 10 minutes d’inactivité. Aucun billet n’a été envoyé par cette page.');},600000);}
 function lockContact(enabled){$('contactInputs').disabled=!enabled;$('prepareRequest').disabled=!enabled;}
-function disconnect(){clearPrivate();provider=null;signer=null;contract=null;account='';member=null;demo=false;lockContact(false);$('claim').disabled=true;status('Reconnectez le wallet puis vérifiez votre membership.');}
+function disconnect(){
+  sessionEpoch++;membershipEpoch++;walletPromptEpoch=null;
+  clearPrivate();
+  // The active transaction owns its provider until confirmation tracking settles.
+  if(provider!==txProvider)provider?.destroy?.();
+  provider=null;signer=null;contract=null;account='';member=null;demo=false;
+  lockContact(false);$('claim').disabled=true;$('connection').textContent='';$('authority').textContent='Non connecté';
+  $('modeNotice').textContent='Connectez le wallet pour vérifier le réseau et le contrat.';
+  $('eligibility').textContent='Vérifiez votre membership après la connexion.';
+  status('Reconnectez le wallet puis vérifiez votre membership.');
+}
 function label(){const s=$('memberLabel').value.trim().toLowerCase().replace(/\.club\.agi\.eth$/,'');if(!/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(s))throw Error('INVALID_MEMBERSHIP');return s;}
 function benefitId(){const v=$('benefitSelect').value;return v.startsWith('0x')?v:ethers.id(v);}
 function policy(){return {origin:cfg.expectedOrigin,chainId:1,registry:String(cfg.registryAddress).toLowerCase(),registryCodeHash:cfg.registryCodeHash,version:REGISTRY_VERSION,entitlements:(cfg.allowedEntitlements||[]).map(x=>x.startsWith('0x')?x:ethers.id(x))};}
-async function assertSession(){
-  if(demo||!provider||!signer||!contract)throw Error('CONNECT_FIRST');
+async function assertWallet(expectedAccount){
   if(location.origin!==cfg.expectedOrigin||!cfg.expectedOrigin?.startsWith('https://'))throw Error('WRONG_ORIGIN');
   if(BigInt(await window.ethereum.request({method:'eth_chainId'}))!==1n)throw Error('WRONG_CHAIN');
-  const a=await window.ethereum.request({method:'eth_accounts'});
-  if(!a[0]||a[0].toLowerCase()!==account.toLowerCase())throw Error('WALLET_CHANGED');
+  const accounts=await window.ethereum.request({method:'eth_accounts'});
+  if(!accounts?.[0]||accounts[0].toLowerCase()!==expectedAccount.toLowerCase())throw Error('WALLET_CHANGED');
+}
+async function assertSession(){
+  const epoch=sessionEpoch;
+  if(demo||!provider||!signer||!contract)throw Error('CONNECT_FIRST');
+  await assertWallet(account);
+  if(epoch!==sessionEpoch||demo||!contract)throw Error('WALLET_CHANGED');
 }
 const errors={
  INVALID_MEMBERSHIP:'Saisissez un seul label AGI Club (lettres, chiffres, tirets internes).',
@@ -47,37 +62,77 @@ const errors={
 function publicError(e){const code=errors[e?.code]?e.code:errors[e?.message]?e.message:'UNKNOWN';status(errors[code],true);}
 function on(id,fn){$(id).addEventListener('click',async()=>{if(busy)return;busy=true;$(id).setAttribute('aria-busy','true');try{await fn();}catch(e){publicError(e);}finally{busy=false;$(id).removeAttribute('aria-busy');}});}
 async function connect(){
-  disconnect();if(!window.ethers)throw Error('LIBRARY_MISSING');
-  if(!ethers.isAddress(cfg.registryAddress||'')||!/^0x[0-9a-f]{64}$/.test(cfg.registryCodeHash||'')||!cfg.expectedOrigin)throw Error('NOT_CONFIGURED');
-  if(!window.ethereum?.request)throw Error('WALLET_MISSING');
-  if(location.origin!==cfg.expectedOrigin||!cfg.expectedOrigin.startsWith('https://'))throw Error('WRONG_ORIGIN');
-  await window.ethereum.request({method:'eth_requestAccounts'});
-  if(BigInt(await window.ethereum.request({method:'eth_chainId'}))!==1n)await window.ethereum.request({method:'wallet_switchEthereumChain',params:[{chainId:'0x1'}]});
-  provider=new ethers.BrowserProvider(window.ethereum);signer=await provider.getSigner();account=await signer.getAddress();
-  contract=new ethers.Contract(cfg.registryAddress,MEMBER_ABI,signer);await assertSession();
-  const [version,ens,wrapper,root,code]=await Promise.all([contract.VERSION(),contract.CANONICAL_ENS(),contract.CANONICAL_WRAPPER(),contract.CLUB_AGI_ETH_NODE(),provider.getCode(cfg.registryAddress)]);
-  if(version!==REGISTRY_VERSION||ens.toLowerCase()!==ENS||wrapper.toLowerCase()!==WRAPPER||root!==ROOT||ethers.keccak256(code)!==cfg.registryCodeHash)throw Error('NOT_CONFIGURED');
-  $('connection').textContent='Wallet : '+account+' · Ethereum mainnet';$('authority').textContent='Wallet connecté';
-  const options=cfg.allowedEntitlements||[];$('benefitSelect').replaceChildren();
-  for(const name of options){const id=name.startsWith('0x')?name:ethers.id(name),o=document.createElement('option');o.value=id;try{o.textContent=(await contract.titleFR(id))||name;}catch{o.textContent=name;}$('benefitSelect').append(o);}
-  $('modeNotice').textContent='Mode réel. Les preuves de claim sont publiques. Vos coordonnées ne sont jamais envoyées par le site.';
-  status('Wallet connecté. Vérifiez votre membership.');
+  disconnect();
+  const epoch=sessionEpoch;
+  let candidateProvider=null;
+  try{
+    if(!window.ethers)throw Error('LIBRARY_MISSING');
+    if(!ethers.isAddress(cfg.registryAddress||'')||cfg.registryAddress===ethers.ZeroAddress||!/^0x[0-9a-f]{64}$/.test(cfg.registryCodeHash||'')||!cfg.expectedOrigin)throw Error('NOT_CONFIGURED');
+    if(!window.ethereum?.request)throw Error('WALLET_MISSING');
+    if(location.origin!==cfg.expectedOrigin||!cfg.expectedOrigin.startsWith('https://'))throw Error('WRONG_ORIGIN');
+    // Permission and network prompts can emit events before verification starts.
+    walletPromptEpoch=epoch;
+    await window.ethereum.request({method:'eth_requestAccounts'});
+    if(epoch!==sessionEpoch)return;
+    if(BigInt(await window.ethereum.request({method:'eth_chainId'}))!==1n)await window.ethereum.request({method:'wallet_switchEthereumChain',params:[{chainId:'0x1'}]});
+    if(epoch!==sessionEpoch)return;
+    candidateProvider=new ethers.BrowserProvider(window.ethereum);
+    const candidateSigner=await candidateProvider.getSigner();
+    const candidateAccount=await candidateSigner.getAddress();
+    if(epoch!==sessionEpoch)return;
+    walletPromptEpoch=null;
+    const candidateContract=new ethers.Contract(cfg.registryAddress,MEMBER_ABI,candidateSigner);
+    await assertWallet(candidateAccount);
+    const [version,ens,wrapper,root,code]=await Promise.all([candidateContract.VERSION(),candidateContract.CANONICAL_ENS(),candidateContract.CANONICAL_WRAPPER(),candidateContract.CLUB_AGI_ETH_NODE(),candidateProvider.getCode(cfg.registryAddress)]);
+    if(code==='0x'||version!==REGISTRY_VERSION||ens.toLowerCase()!==ENS||wrapper.toLowerCase()!==WRAPPER||root!==ROOT||ethers.keccak256(code)!==cfg.registryCodeHash)throw Error('NOT_CONFIGURED');
+    const options=[];
+    for(const name of cfg.allowedEntitlements||[]){
+      const id=name.startsWith('0x')?name:ethers.id(name),option=document.createElement('option');option.value=id;
+      try{option.textContent=(await candidateContract.titleFR(id))||name;}catch{option.textContent=name;}
+      options.push(option);
+    }
+    await assertWallet(candidateAccount);
+    if(epoch!==sessionEpoch)return;
+    provider=candidateProvider;candidateProvider=null;signer=candidateSigner;account=candidateAccount;contract=candidateContract;
+    $('connection').textContent='Wallet : '+account+' · Ethereum mainnet';$('authority').textContent='Wallet connecté';
+    $('benefitSelect').replaceChildren(...options);
+    $('modeNotice').textContent='Mode réel. Les preuves de claim sont publiques. Vos coordonnées ne sont jamais envoyées par le site.';
+    status('Wallet connecté. Vérifiez votre membership.');
+  }catch(error){if(epoch===sessionEpoch)throw error;}
+  finally{candidateProvider?.destroy?.();if(walletPromptEpoch===epoch)walletPromptEpoch=null;}
 }
 async function inspectMember(){
-  const l=label();invalidate();lockContact(false);
+  member=null;$('claim').disabled=true;invalidate();lockContact(false);
+  const l=label(),epoch=sessionEpoch,selection=membershipEpoch;
   if(demo){member={label:l,id:'DEMO_ONLY',claimed:true};$('eligibility').textContent='DÉMONSTRATION — droit fictif. Aucune vérification Ethereum.';$('claim').disabled=true;lockContact(true);return;}
-  await assertSession();const id=benefitId(),node=ethers.namehash(l+'.club.agi.eth');
-  const [r,c]=await Promise.all([contract.claimability(id,account,l),contract.claimRecord(id,node)]);
+  await assertSession();
+  const registry=contract,id=benefitId(),node=ethers.namehash(l+'.club.agi.eth');
+  const [r,c]=await Promise.all([registry.claimability(id,account,l),registry.claimRecord(id,node)]);
+  if(epoch!==sessionEpoch||selection!==membershipEpoch||registry!==contract)return;
   const claimed=Number(c[5])===1&&c[0].toLowerCase()===account.toLowerCase();member={label:l,id,node,claimed,revision:Number(c[4])};
   $('eligibility').textContent=(claimed?'Droit actif pour ce wallet':claimStates[Number(r[0])])+' — '+l+'.club.agi.eth';
   $('claim').disabled=Number(r[0])!==0;lockContact(claimed);status(claimed?'Le claim existe déjà. Préparez seulement la demande de billet.':'Vérification terminée.');
 }
 async function claim(){
-  if(demo)throw Error('CONNECT_FIRST');await assertSession();if(!member)throw Error('INVALID_MEMBERSHIP');
-  if(!confirm('Réclamer une fois cet avantage sur Ethereum ? Votre wallet, votre membership et ce claim seront publics. Aucun nom/courriel n’est inclus. Frais réseau applicables.'))return;
-  const {id,label:l}=member;await contract.claim.staticCall(id,l);const gas=await contract.claim.estimateGas(id,l);
-  const tx=await contract.claim(id,l,{gasLimit:gas*120n/100n});status('Transaction soumise. Ne créez pas de doublon : '+tx.hash);
-  await tx.wait(2);await inspectMember();status('Transaction confirmée ; la vérification du reçu attendra aussi la finalité Ethereum.');
+  txProvider=provider;
+  try{
+    const epoch=sessionEpoch,selection=membershipEpoch,claimMember=member;
+    const current=()=>epoch===sessionEpoch&&selection===membershipEpoch;
+    const assertClaim=async()=>{
+      await assertSession();
+      if(!current()||!claimMember||member!==claimMember)throw Error('EDITED');
+    };
+    await assertClaim();
+    if(!confirm('Réclamer une fois cet avantage sur Ethereum ? Votre wallet, votre membership et ce claim seront publics. Aucun nom/courriel n’est inclus. Frais réseau applicables.'))return;
+    const registry=contract,{id,label:l}=claimMember;
+    await registry.claim.staticCall(id,l);
+    const gas=await registry.claim.estimateGas(id,l);
+    await assertClaim();
+    const tx=await registry.claim(id,l,{gasLimit:gas*120n/100n});
+    if(current())status('Transaction soumise. Ne créez pas de doublon : '+tx.hash);
+    await tx.wait(2);
+    if(current()){await inspectMember();if(current())status('Transaction confirmée ; la vérification du reçu attendra aussi la finalité Ethereum.');}
+  }finally{if(txProvider!==provider)txProvider?.destroy?.();txProvider=null;}
 }
 async function prepare(){
   if(!$('consent').checked)throw Error('CONSENT');
@@ -112,11 +167,14 @@ $('clearPrivate').addEventListener('click',()=>{clearPrivate();status('Coordonn�
 on('demo',()=>{disconnect();demo=true;$('authority').textContent='Démonstration';$('modeNotice').textContent='DÉMONSTRATION — sans wallet, sans transaction et sans envoi. Utilisez des données fictives.';$('memberLabel').value='exemple';status('Cliquez sur Vérifier pour explorer un droit fictif.');});
 for(const f of ['ticketName','ticketEmail'])$(f).addEventListener('input',()=>{invalidate();touch();});
 $('consent').addEventListener('change',()=>invalidate());
-for(const f of ['memberLabel','benefitSelect'])$(f).addEventListener('input',()=>{clearPrivate();member=null;lockContact(false);$('claim').disabled=true;});
+for(const f of ['memberLabel','benefitSelect'])$(f).addEventListener('input',()=>{membershipEpoch++;clearPrivate();member=null;lockContact(false);$('claim').disabled=true;$('eligibility').textContent='Vérifiez de nouveau le membership et l’avantage sélectionnés.';});
 for(const e of ['pointerdown','keydown'])document.addEventListener(e,touch,{passive:true});
 window.addEventListener('pagehide',clearPrivate);
 window.addEventListener('pageshow',()=>{clearPrivate();});
 window.addEventListener('beforeunload',clearPrivate);
-if(window.ethereum?.on)for(const e of ['accountsChanged','chainChanged','disconnect'])window.ethereum.on(e,disconnect);
+if(window.ethereum?.on)for(const event of ['accountsChanged','chainChanged','disconnect'])window.ethereum.on(event,()=>{
+  if(event!=='disconnect'&&walletPromptEpoch===sessionEpoch)return;
+  disconnect();
+});
 lockContact(false);clearPrivate();
 $('modeNotice').textContent=cfg.registryAddress?'Contrat configuré. Vérifiez l’adresse officielle avant de connecter le wallet.':'NON DÉPLOYÉ / NON CONFIGURÉ. La démonstration n’émet aucun droit.';

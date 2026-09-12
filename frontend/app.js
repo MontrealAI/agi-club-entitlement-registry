@@ -20,7 +20,7 @@ const ABI=[
 'error AdminUnavailable()','error NotClubAdmin(address,address)','error ClaimRejected(uint8)','error CapacityFull(bytes32)','error CapacityBelowActiveClaims(uint64,uint64)',
 'error EntitlementAlreadyExists(bytes32)','error InvalidDescriptor()','error InvalidBatchSize()','error InvalidTimeWindow(uint64,uint64)','error EnforcedPause()'
 ];
-let provider, signer, contract, account='', root='', demo=false, selected='', entries=[], auditRows=[], signedPacket=null, txPlan=null, catalogQueue=Promise.resolve(), connected=false, currentMember=null, requestEpoch=0, txInFlight=false;
+let provider, signer, contract, account='', root='', demo=false, selected='', entries=[], auditRows=[], signedPacket=null, txPlan=null, catalogQueue=Promise.resolve(), connected=false, currentMember=null, requestEpoch=0, walletPromptEpoch=null, txInFlight=false, txProvider=null;
 const logEntries=[];const states=['Inconnu','Brouillon','Ouvert','Fermé','Archivé'];
 const claimStates=['Disponible','Registre en pause','Nom non admissible','Avantage inconnu','En brouillon','Fermé','Archivé','Pas encore ouvert','Période terminée','Déjà réclamé','Révoqué','Membership non trouvé','Le wallet n’est pas le détenteur','Membership expiré','Contingent complet'];
 function status(s,bad=false){if($('status')){$('status').textContent=s;$('status').style.color=bad?'var(--red)':'var(--green)';}}
@@ -41,9 +41,71 @@ function members(){let x=vals('labels').split(/[\n,]/).map(x=>x.trim()).filter(B
 function oneMember(){let l=members();if(l.length!==1)throw Error('Cette correction exige exactement un membership.');return l[0];}
 function hashReason(){if(!vals('reason'))throw Error('Indiquez une référence de correction sans renseignement personnel.');return demo?'DEMO:REASON':ethers.id(vals('reason'));}
 function recipient(){needEthers();if(!ethers.isAddress(vals('recipient'))||vals('recipient')===ethers.ZeroAddress)throw Error('Wallet destinataire non valide.');return ethers.getAddress(vals('recipient'));}
-async function assertLive(){needEthers();if(!CFG.expectedOrigin||!CFG.expectedOrigin.startsWith('https://')||location.origin!==CFG.expectedOrigin)throw Error('Origine officielle HTTPS absente ou différente. Aucune transaction autorisée par cette interface.');if(demo||!provider||!contract||!signer)throw Error('Connectez le wallet en mode réel.');if(Number(BigInt(await window.ethereum.request({method:'eth_chainId'})))!==1)throw Error('Ethereum mainnet requis.');const a=await window.ethereum.request({method:'eth_accounts'});if(!a?.[0]||a[0].toLowerCase()!==account.toLowerCase())throw Error('Le wallet a changé : reconnectez-vous.');}
-async function connect(){requestEpoch++;catalogQueue=Promise.resolve();needEthers();if(!ethers.isAddress(CFG.registryAddress||'')||CFG.registryAddress===ethers.ZeroAddress)throw Error('Le contrat n’est pas configuré. Aucun déploiement n’est fourni. Utilisez la démonstration ou renseignez config.js après déploiement.');if(!window.ethereum?.request)throw Error('Ouvrez la page dans un navigateur avec wallet Ethereum. Sur mobile, utilisez le navigateur de votre wallet.');await window.ethereum.request({method:'eth_requestAccounts'});if(BigInt(await window.ethereum.request({method:'eth_chainId'}))!==1n){await window.ethereum.request({method:'wallet_switchEthereumChain',params:[{chainId:'0x1'}]});}provider=new ethers.BrowserProvider(window.ethereum);signer=await provider.getSigner();account=await signer.getAddress();contract=new ethers.Contract(CFG.registryAddress,ABI,signer);demo=false;await assertLive();const deployedCode=await provider.getCode(CFG.registryAddress);if(deployedCode==='0x')throw Error('Aucun contrat à cette adresse.');if(!/^0x[0-9a-f]{64}$/.test(CFG.registryCodeHash||'')||ethers.keccak256(deployedCode)!==CFG.registryCodeHash)throw Error('Empreinte du contrat absente ou différente du code approuvé. Ne signez pas.');const[ver,ens,wrap,ce,cw,rn]=await Promise.all([contract.VERSION(),contract.ensRegistry(),contract.adminNameWrapper(),contract.CANONICAL_ENS(),contract.CANONICAL_WRAPPER(),contract.CLUB_AGI_ETH_NODE()]);if(ver!=='2.1.1'||ens.toLowerCase()!==ENS.toLowerCase()||ce.toLowerCase()!==ENS.toLowerCase()||wrap.toLowerCase()!==WRAPPER.toLowerCase()||cw.toLowerCase()!==WRAPPER.toLowerCase()||rn!==ethers.namehash('club.agi.eth'))throw Error('Contrat ou sources d’autorité inattendus. Ne signez pas.');connected=true;entries=[];signedPacket=null;currentMember=null;await refresh();log('Configuration de production et chaîne vérifiées. Cela ne constitue pas un audit du bytecode.');}
-function renderAuthority(){if(!$('authority'))return;$('authority').textContent=demo?'DÉMONSTRATION — aucun droit réel':root&&root.toLowerCase()===account.toLowerCase()?'ADMIN · club.agi.eth':'LECTURE SEULE';$('authority').className='tag '+(demo?'warn':root&&root.toLowerCase()===account.toLowerCase()?'good':'');if($('connection'))$('connection').textContent=demo?'Simulation locale · aucun wallet · aucune transaction':`Wallet : ${account}\nAdmin actuel : ${root}\nContrat : ${CFG.registryAddress}`;}
+function clearTransaction(){
+  txPlan=null;
+  if($('confirm')?.open)$('confirm').close();
+  for(const id of ['confirmText','confirmData'])if($(id))$(id).textContent='';
+}
+function resetSession(){
+  requestEpoch++;walletPromptEpoch=null;catalogQueue=Promise.resolve();
+  connected=false;demo=false;contract=null;signer=null;
+  // The active transaction owns its provider until confirmation tracking settles.
+  if(provider!==txProvider)provider?.destroy?.();
+  provider=null;account='';root='';
+  selected='';entries=[];window.totalCount=0;signedPacket=null;currentMember=null;
+  if($('modeNotice'))$('modeNotice').textContent='Connectez le wallet pour vérifier le réseau, le contrat et les sources d’autorité.';
+  clearTransaction();renderAuthority();renderCatalog();
+}
+async function assertWallet(expectedAccount){
+  needEthers();
+  if(!CFG.expectedOrigin||!CFG.expectedOrigin.startsWith('https://')||location.origin!==CFG.expectedOrigin)throw Error('Origine officielle HTTPS absente ou différente. Aucune transaction autorisée par cette interface.');
+  if(BigInt(await window.ethereum.request({method:'eth_chainId'}))!==1n)throw Error('Ethereum mainnet requis.');
+  const accounts=await window.ethereum.request({method:'eth_accounts'});
+  if(!accounts?.[0]||accounts[0].toLowerCase()!==expectedAccount.toLowerCase())throw Error('Le wallet a changé : reconnectez-vous.');
+}
+async function assertLive(){
+  const epoch=requestEpoch;
+  if(!connected||demo||!provider||!contract||!signer)throw Error('Connectez le wallet en mode réel.');
+  await assertWallet(account);
+  if(epoch!==requestEpoch||!connected)throw Error('Le wallet a changé : reconnectez-vous.');
+}
+async function connect(){
+  resetSession();
+  const epoch=requestEpoch;
+  let candidateProvider=null;
+  try{
+    needEthers();
+    if(!ethers.isAddress(CFG.registryAddress||'')||CFG.registryAddress===ethers.ZeroAddress)throw Error('Le contrat n’est pas configuré. Aucun déploiement n’est fourni. Utilisez la démonstration ou renseignez config.js après déploiement.');
+    if(!window.ethereum?.request)throw Error('Ouvrez la page dans un navigateur avec wallet Ethereum. Sur mobile, utilisez le navigateur de votre wallet.');
+    // Permission and network prompts can emit events before verification starts.
+    walletPromptEpoch=epoch;
+    await window.ethereum.request({method:'eth_requestAccounts'});
+    if(epoch!==requestEpoch)return;
+    if(BigInt(await window.ethereum.request({method:'eth_chainId'}))!==1n)await window.ethereum.request({method:'wallet_switchEthereumChain',params:[{chainId:'0x1'}]});
+    if(epoch!==requestEpoch)return;
+    candidateProvider=new ethers.BrowserProvider(window.ethereum);
+    const candidateSigner=await candidateProvider.getSigner();
+    const candidateAccount=await candidateSigner.getAddress();
+    if(epoch!==requestEpoch)return;
+    walletPromptEpoch=null;
+    const candidateContract=new ethers.Contract(CFG.registryAddress,ABI,candidateSigner);
+    await assertWallet(candidateAccount);
+    const deployedCode=await candidateProvider.getCode(CFG.registryAddress);
+    if(deployedCode==='0x')throw Error('Aucun contrat à cette adresse.');
+    if(!/^0x[0-9a-f]{64}$/.test(CFG.registryCodeHash||'')||ethers.keccak256(deployedCode)!==CFG.registryCodeHash)throw Error('Empreinte du contrat absente ou différente du code approuvé. Ne signez pas.');
+    const[ver,ens,wrap,ce,cw,rn]=await Promise.all([candidateContract.VERSION(),candidateContract.ensRegistry(),candidateContract.adminNameWrapper(),candidateContract.CANONICAL_ENS(),candidateContract.CANONICAL_WRAPPER(),candidateContract.CLUB_AGI_ETH_NODE()]);
+    if(ver!=='2.1.1'||ens.toLowerCase()!==ENS.toLowerCase()||ce.toLowerCase()!==ENS.toLowerCase()||wrap.toLowerCase()!==WRAPPER.toLowerCase()||cw.toLowerCase()!==WRAPPER.toLowerCase()||rn!==ethers.namehash('club.agi.eth'))throw Error('Contrat ou sources d’autorité inattendus. Ne signez pas.');
+    await assertWallet(candidateAccount);
+    if(epoch!==requestEpoch)return;
+    provider=candidateProvider;candidateProvider=null;
+    signer=candidateSigner;account=candidateAccount;contract=candidateContract;connected=true;
+    if($('modeNotice'))$('modeNotice').textContent='Mode réel. Réseau, contrat et sources d’autorité vérifiés pour cette session.';
+    await refresh();
+    if(epoch===requestEpoch)log('Configuration de production et chaîne vérifiées. Cela ne constitue pas un audit du bytecode.');
+  }catch(error){if(epoch===requestEpoch)throw error;}
+  finally{candidateProvider?.destroy?.();if(walletPromptEpoch===epoch)walletPromptEpoch=null;}
+}
+function renderAuthority(){if(!$('authority'))return;$('authority').textContent=demo?'DÉMONSTRATION — aucun droit réel':!connected?'Non connecté':root&&root.toLowerCase()===account.toLowerCase()?'ADMIN · club.agi.eth':'LECTURE SEULE';$('authority').className='tag '+(demo?'warn':root&&root.toLowerCase()===account.toLowerCase()?'good':'');if($('connection'))$('connection').textContent=demo?'Simulation locale · aucun wallet · aucune transaction':connected?`Wallet : ${account}\nAdmin actuel : ${root}\nContrat : ${CFG.registryAddress}`:'';}
 function renderCatalog(){if(!$('catalog'))return;$('catalog').replaceChildren();for(const e of entries){const box=document.createElement('article');box.className='benefit';let d=document.createElement('div'),h=document.createElement('h3'),t=document.createElement('p'),code=document.createElement('code'),btn=document.createElement('button');h.textContent=e.fr||e.id; t.className='small muted';t.textContent=states[e.state]+' · '+e.active+' réclamations actives · '+(e.cap?e.cap+' places':'sans plafond');code.textContent=e.id;btn.textContent='Gérer';btn.onclick=()=>select(e);d.append(h,t,code);box.append(d,btn);$('catalog').append(box);}if($('count'))$('count').textContent=String(entries.length)+(entries.length<Number(window.totalCount||entries.length)?'+':'');}
 function select(e){selected=e.id;$('selected').textContent='Identifiant : '+e.id;$('canonical').value=e.name||e.id;$('category').value=demo&&e.category?.startsWith('DEMO:')?e.category.slice(5):e.category||'EVENT';$('state').value=String(e.state);$('capacity').value=String(e.cap);$('opens').value=iso(e.opens);$('closes').value=iso(e.closes);$('titleFR').value=e.fr||'';$('titleEN').value=e.en||'';$('metadataURI').value=e.uri||'';$('metadataHash').value=e.hash==='0x'+'0'.repeat(64)?'':e.hash||'';$('stateStat').textContent=states[e.state];$('claimsStat').textContent=String(e.active);$('remainingStat').textContent=e.cap?String(Math.max(0,e.cap-e.active)):'∞';$('create').disabled=true;}
 // Serialize catalog reads and commit a complete result only while the wallet
@@ -89,15 +151,58 @@ async function refresh(){
   if(PAGE==='member'&&$('benefitSelect')){const ids=await contract.entitlementIdsPage(0,100);$('benefitSelect').replaceChildren();for(const id of ids){const en=await contract.entitlement(id);if(!en[8]||Number(en[7])===1||Number(en[7])===4)continue;const op=document.createElement('option');op.value=id;op.textContent=(await contract.titleFR(id))||id;$('benefitSelect').append(op);}if($('benefitSelect').options.length){$('canonical').value=$('benefitSelect').value;}else{$('canonical').value=CFG.defaultEntitlement||'IA101_2026_09_22';}}
   if(PAGE==='admin')await updateCatalog();
 }
-function startDemo(){requestEpoch++;demo=true;connected=false;contract=null;provider=null;signer=null;account='DEMO-ADMIN';root='DEMO-ADMIN';selected='';entries=[{id:'DEMO:IA101_2026_09_22',name:'IA101_2026_09_22',category:'EVENT',fr:'IA 101 — Admission membre offerte',en:'AI 101 — Complimentary member admission',state:1,cap:50,active:0,unique:0,opens:0,closes:0,hash:'',uri:''}];signedPacket=null;currentMember=null;renderAuthority();renderCatalog();if($('modeNotice'))$('modeNotice').textContent='DÉMONSTRATION LOCALE. Données fictives ; aucun droit réel, aucune preuve blockchain, aucun courriel envoyé. Actualiser la page remet la démonstration à zéro.';status('Explorez les commandes sans signature et sans frais.');if(PAGE==='admin')select(entries[0]);log('Mode démonstration activé.');}
-async function preview(method,args,summary){if(demo){if(!confirm('DÉMONSTRATION uniquement\n'+summary+'\nSimuler cette action ?'))return;demoMutation(method,args);return;}await assertLive();root=await contract.admin();if(root===ethers.ZeroAddress)throw Error('Autorité indisponible : vérifiez la détention ENS et son échéance.');const data=contract.interface.encodeFunctionData(method,args);const isSelf=method==='claim';if(!isSelf&&root.toLowerCase()!==account.toLowerCase()){if((await provider.getCode(root))==='0x')throw Error('Lecture seule : le wallet connecté ne détient pas club.agi.eth.');txPlan={method,args,data,summary,safe:true,from:root};}else txPlan={method,args,data,summary,safe:false,from:account};$('confirmText').textContent=summary+(txPlan.safe?'\nL’admin est un contrat : exportez et exécutez la transaction depuis ce wallet, pas depuis votre EOA.':'');$('confirmData').textContent=JSON.stringify({chainId:1,contract:CFG.registryAddress,from:txPlan.from,method,args},(_,v)=>typeof v==='bigint'?v.toString():v,2);$('approveConfirm').disabled=txPlan.safe;$('exportConfirm').hidden=isSelf;$('confirm').showModal();}
-async function approve(){if(txInFlight)throw Error('Une transaction est déjà en cours. Attendez sa confirmation.');txInFlight=true;try{const plan=txPlan;$('confirm').close();if(!plan)return;await assertLive();if(plan.method!=='claim'&&(await contract.admin()).toLowerCase()!==account.toLowerCase())throw Error('L’administrateur a changé. Transaction refusée.');status('Simulation de la transaction…');await contract[plan.method].staticCall(...plan.args);const gas=await contract[plan.method].estimateGas(...plan.args);status('Confirmez la transaction dans votre wallet.');const sent=await contract[plan.method](...plan.args,{gasLimit:gas*120n/100n});log('Transaction soumise : '+sent.hash);status('Transaction en attente. Ne soumettez pas de doublon.\n'+sent.hash);await sent.wait(2);log('Deux confirmations : '+sent.hash);status('Transaction confirmée.');if(PAGE==='admin')await refresh();}finally{txInFlight=false;}}
+function startDemo(){resetSession();demo=true;connected=false;contract=null;provider=null;signer=null;account='DEMO-ADMIN';root='DEMO-ADMIN';selected='';entries=[{id:'DEMO:IA101_2026_09_22',name:'IA101_2026_09_22',category:'EVENT',fr:'IA 101 — Admission membre offerte',en:'AI 101 — Complimentary member admission',state:1,cap:50,active:0,unique:0,opens:0,closes:0,hash:'',uri:''}];signedPacket=null;currentMember=null;renderAuthority();renderCatalog();if($('modeNotice'))$('modeNotice').textContent='DÉMONSTRATION LOCALE. Données fictives ; aucun droit réel, aucune preuve blockchain, aucun courriel envoyé. Actualiser la page remet la démonstration à zéro.';status('Explorez les commandes sans signature et sans frais.');if(PAGE==='admin')select(entries[0]);log('Mode démonstration activé.');}
+async function preview(method,args,summary){
+  clearTransaction();
+  if(demo){if(!confirm('DÉMONSTRATION uniquement\n'+summary+'\nSimuler cette action ?'))return;demoMutation(method,args);return;}
+  const epoch=requestEpoch;
+  await assertLive();
+  const registry=contract;
+  const admin=await registry.admin();
+  if(admin===ethers.ZeroAddress)throw Error('Autorité indisponible : vérifiez la détention ENS et son échéance.');
+  const data=registry.interface.encodeFunctionData(method,args),isSelf=method==='claim';
+  let plan;
+  if(!isSelf&&admin.toLowerCase()!==account.toLowerCase()){
+    if((await provider.getCode(admin))==='0x')throw Error('Lecture seule : le wallet connecté ne détient pas club.agi.eth.');
+    plan={method,args,data,summary,safe:true,from:admin,epoch};
+  }else plan={method,args,data,summary,safe:false,from:account,epoch};
+  await assertLive();
+  if(epoch!==requestEpoch||registry!==contract)throw Error('Le wallet a changé : préparez une nouvelle transaction.');
+  root=admin;renderAuthority();txPlan=plan;
+  $('confirmText').textContent=summary+(plan.safe?'\nL’administrateur est un contrat : exportez et exécutez la transaction depuis ce wallet.':'');
+  $('confirmData').textContent=JSON.stringify({chainId:1,contract:CFG.registryAddress,from:plan.from,method,args},(_,v)=>typeof v==='bigint'?v.toString():v,2);
+  $('approveConfirm').disabled=plan.safe;$('exportConfirm').hidden=isSelf;$('confirm').showModal();
+}
+async function approve(){
+  if(txInFlight)throw Error('Une transaction est déjà en cours. Attendez sa confirmation.');
+  const plan=txPlan;clearTransaction();if(!plan)return;
+  txInFlight=true;txProvider=provider;
+  try{
+    const registry=contract;
+    const assertPlan=async()=>{
+      await assertLive();
+      if(plan.safe||plan.epoch!==requestEpoch||registry!==contract||plan.from.toLowerCase()!==account.toLowerCase())throw Error('Le wallet a changé : préparez une nouvelle transaction.');
+    };
+    await assertPlan();
+    if(plan.method!=='claim'&&(await registry.admin()).toLowerCase()!==account.toLowerCase())throw Error('L’administrateur a changé. Transaction refusée.');
+    status('Simulation de la transaction…');
+    await registry[plan.method].staticCall(...plan.args);
+    const gas=await registry[plan.method].estimateGas(...plan.args);
+    await assertPlan();
+    status('Confirmez la transaction dans votre wallet.');
+    const sent=await registry[plan.method](...plan.args,{gasLimit:gas*120n/100n});
+    log('Transaction soumise : '+sent.hash);
+    if(plan.epoch===requestEpoch)status('Transaction en attente. Ne soumettez pas de doublon.\n'+sent.hash);
+    await sent.wait(2);log('Deux confirmations : '+sent.hash);
+    if(plan.epoch===requestEpoch){status('Transaction confirmée.');if(PAGE==='admin')await refresh();}
+  }finally{if(txProvider!==provider)txProvider?.destroy?.();txProvider=null;txInFlight=false;}
+}
 function demoMutation(method,a){let e=entries.find(e=>e.id===a[0]);if(method==='createEntitlement'){if(entries.some(x=>x.id===a[0]))throw Error('Identifiant déjà utilisé.');entries.push({id:a[0],name:a[0].slice(5),fr:a[0].slice(5),en:'',category:a[1],cap:Number(a[2]),active:0,unique:0,opens:a[3],closes:a[4],state:1,hash:'',uri:''});e=entries.at(-1);}
 else if(method==='duplicateEntitlement'){if(!e)throw Error('Avantage absent.');if(entries.some(x=>x.id===a[1]))throw Error('Identifiant déjà utilisé.');entries.push({...e,id:a[1],name:a[1].slice(5),fr:'Copie à configurer',en:'',state:1,active:0,unique:0,opens:0,closes:0,hash:'',uri:''});e=entries.at(-1);}
 else if(method==='setEntitlementState')e.state=Number(a[1]);else if(method==='setCapacity'){if(Number(a[1])&&Number(a[1])<e.active)throw Error('Quota inférieur aux réclamations actives.');e.cap=Number(a[1]);}else if(method==='setWindow'){e.opens=a[1];e.closes=a[2];}else if(method==='setCategory')e.category=a[1];else if(method==='setDescriptor'){[e.fr,e.en,e.uri,e.hash]=a.slice(1);}else if(method==='adminGrantBatchToCurrentOwners'){if(e.cap&&e.active+a[1].length>e.cap)throw Error('Contingent complet.');e.active+=a[1].length;e.unique+=a[1].length;}else if(method==='claim'){currentMember={label:label(vals('memberLabel')),id:a[0],claimed:true};$('eligibility').textContent='DÉMO : réclamation fictive enregistrée.';$('claim').disabled=true;$('request').disabled=false;}else{status('Action simulée : '+method+'. Consultez les tests EVM pour les garanties réelles.');}log('DÉMO : '+method);renderCatalog();if(e&&PAGE==='admin')select(e);}
 async function audit(){if(demo){auditRows=[{simulation:true,note:'Relevé fictif uniquement',entitlement:selected,active:entries.find(x=>x.id===selected)?.active||0}];$('auditData').textContent=JSON.stringify(auditRows,null,2);return;}await assertLive();const id=idRequired();let n=Number(await contract.claimNodeCount(id));auditRows=[];for(let o=0;o<n;o+=100){for(const node of await contract.claimNodesPage(id,o,100)){const r=await contract.claimRecord(id,node);auditRows.push({entitlementId:id,membershipNode:node,claimant:r[0],status:Number(r[5])===1?'ACTIVE':'REVOKED',revision:Number(r[4]),firstClaimedAt:iso(r[1]),lastActivatedAt:iso(r[2]),revokedAt:iso(r[3])});}}$('auditData').textContent=JSON.stringify(auditRows,null,2);}
 bind('connect',connect);bind('demo',startDemo);bind('refresh',refresh);bind('lang',()=>window.open('index.html','_blank','noopener'));if($('lang'))$('lang').textContent='Accueil';
-bind('cancelConfirm',()=>$('confirm').close());bind('approveConfirm',approve);bind('exportConfirm',()=>{if(!txPlan)throw Error('Aucune transaction préparée.');download('AGI_CLUB_UNSIGNED_TRANSACTION.json',{chainId:1,to:CFG.registryAddress,value:'0',from:txPlan.from,data:txPlan.data,description:txPlan.summary});});
+bind('cancelConfirm',clearTransaction);bind('approveConfirm',approve);bind('exportConfirm',async()=>{await assertLive();if(txPlan?.epoch!==requestEpoch)throw Error('Préparez une nouvelle transaction.');if(!txPlan)throw Error('Aucune transaction préparée.');download('AGI_CLUB_UNSIGNED_TRANSACTION.json',{chainId:1,to:CFG.registryAddress,value:'0',from:txPlan.from,data:txPlan.data,description:txPlan.summary});});
 bind('showCreate',()=>{selected='';$('selected').textContent='Nouvel avantage · Identifiant immuable';$('canonical').value='';for(const f of ['titleFR','titleEN','metadataURI','metadataHash','opens','closes'])if($(f))$(f).value='';$('stateStat').textContent='Nouveau';$('claimsStat').textContent='0';$('remainingStat').textContent='—';$('create').disabled=false;});
 bind('loadMore',async()=>{if(demo)return;if(!contract)throw Error('Connectez le wallet.');await updateCatalog(true);});
 bind('create',()=>{const d=dates();return preview('createEntitlement',[key(vals('canonical')),key(vals('category')),integer('capacity'),...d,1,demo?'DEMO:ZERO':ethers.ZeroHash],'Créer un avantage en brouillon, sans aucune réclamation. Vous l’ouvrirez après vérification.');});
@@ -118,5 +223,10 @@ bind('wrapperPolicy',()=>{if(demo)return preview('setSupportedNameWrapper',['DEM
 bind('audit',audit);bind('exportAudit',()=>download('AGI_CLUB_CLAIMS.json',auditRows));
 bind('sendEmail',()=>{if(!signedPacket)throw Error('Préparez la demande signée.');const body='Bonjour Vincent,\n\nVoici ma demande de billet AGI Club signée. Merci de vérifier le reçu avant émission.\n\n'+JSON.stringify(signedPacket);location.href='mailto:president@montreal.ai?subject='+encodeURIComponent('AGI CLUB — IA 101 — demande signée à vérifier')+'&body='+encodeURIComponent(body);$('requestStatus').textContent='Votre client courriel a été sollicité. Vérifiez le message et envoyez-le vous-même. Si son contenu est tronqué, joignez le reçu JSON. Envoi non confirmé par cette page.';});
 if($('modeNotice'))$('modeNotice').textContent=CFG.registryAddress?'Configuration présente. Connectez le wallet pour vérifier le réseau, le contrat et les sources d’autorité.':'NON DÉPLOYÉ / NON CONFIGURÉ. La démonstration fonctionne sans wallet. Aucun avantage réel ne peut être réclamé avant déploiement et qualification.';
-if(window.ethereum?.on){for(const event of ['accountsChanged','chainChanged'])window.ethereum.on(event,()=>{requestEpoch++;for(const id of ['downloadRequest','sendEmail','relayRequest'])if($(id))$(id).disabled=true;connected=false;demo=false;contract=null;signer=null;currentMember=null;signedPacket=null;if($('claim'))$('claim').disabled=true;if($('request'))$('request').disabled=true;status('Wallet ou réseau modifié. Reconnectez-vous avant de poursuivre.',true);});}
+if(window.ethereum?.on)for(const event of ['accountsChanged','chainChanged','disconnect'])window.ethereum.on(event,()=>{
+  if(event!=='disconnect'&&walletPromptEpoch===requestEpoch)return;
+  resetSession();
+  for(const id of ['downloadRequest','sendEmail','relayRequest','claim','request'])if($(id))$(id).disabled=true;
+  status('Wallet ou réseau modifié. Reconnectez-vous avant de poursuivre.',true);
+});
 })();
