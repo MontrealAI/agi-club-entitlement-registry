@@ -1,0 +1,279 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {runInNewContext} from 'node:vm';
+import {ENS, WRAPPER, ROOT, REGISTRY_VERSION} from '../shared/ticket-request.mjs';
+import {MEMBER_ABI} from '../frontend/contract-abi.mjs';
+import {PrivateMemory} from '../frontend/private-memory.mjs';
+
+// Actual UI handlers with simulated wallet, contract, and DOM boundaries.
+// These fixtures never send a transaction or verify real Ethereum bytecode.
+class Element {
+  constructor(tag = '') { this.tagName = tag.toUpperCase(); }
+  children = [];
+  listeners = new Map();
+  attributes = new Map();
+  dataset = {};
+  style = {};
+  classList = {toggle() {}};
+  textContent = '';
+  _value = '';
+  disabled = false;
+  checked = false;
+  open = false;
+  get value() { return this._value || (this.tagName === 'SELECT' ? this.children[0]?.value || '' : ''); }
+  set value(value) { this._value = String(value); }
+  append(...children) { this.children.push(...children); }
+  replaceChildren(...children) { this.children = children; if (this.tagName === 'SELECT') this._value = ''; }
+  addEventListener(name, handler) { this.listeners.set(name, [...(this.listeners.get(name) || []), handler]); }
+  setAttribute(name, value) { this.attributes.set(name, value); }
+  removeAttribute(name) { this.attributes.delete(name); }
+  async emit(name) { for (const handler of this.listeners.get(name) || []) await handler(); }
+  async click() { if (!this.disabled) { await this.onclick?.(); await this.emit('click'); } }
+  showModal() { this.open = true; }
+  close() { this.open = false; }
+}
+
+function fixture(page) {
+  const html = readFileSync(new URL(`../frontend/${page}.html`, import.meta.url), 'utf8');
+  const filename = page === 'admin' ? 'app.js' : 'member.js';
+  const source = readFileSync(new URL(`../frontend/${filename}`, import.meta.url), 'utf8');
+  const elements = new Map();
+  for (const [tag, name, id] of html.matchAll(/<(\w+)\b[^>]*\bid="([^"]+)"[^>]*>/g)) {
+    const element = new Element(name);
+    element.value = tag.match(/\bvalue="([^"]*)"/)?.[1] || '';
+    element.disabled = /\sdisabled(?:\s|>)/.test(tag);
+    elements.set(id, element);
+  }
+  if (page === 'member') elements.get('benefitSelect').value = 'IA101_2026_09_22';
+  const hash = n => '0x' + BigInt(n).toString(16).padStart(64, '0');
+  const account = '0x' + '11'.repeat(20);
+  const state = {code: '0x6000', codeHash: hash(88), version: REGISTRY_VERSION, ens: ENS, wrapper: WRAPPER, root: ROOT, chain: '0x1', permissionEvent: false};
+  const calls = [], sent = [], providers = [], waits = new Map(), walletListeners = new Map();
+  async function call(name, result) {
+    calls.push(name);
+    const wait = waits.get(name);
+    if (wait) { waits.delete(name); wait.started.resolve(); await wait.pending.promise; }
+    return result;
+  }
+  const transaction = name => Object.assign(
+    async (...args) => { sent.push({name, args}); return {hash: hash(42), wait: async () => call(`${name}.wait`)}; },
+    {staticCall: async () => call(`${name}.staticCall`), estimateGas: async () => call(`${name}.estimateGas`, 21000n)},
+  );
+  const registry = {
+    VERSION: async () => call('VERSION', state.version),
+    CANONICAL_ENS: async () => state.ens, ensRegistry: async () => state.ens,
+    CANONICAL_WRAPPER: async () => state.wrapper, adminNameWrapper: async () => state.wrapper,
+    CLUB_AGI_ETH_NODE: async () => state.root, admin: async () => account,
+    entitlementCount: async () => 0n, entitlementIdsPage: async () => [],
+    paused: async () => false, titleFR: async () => 'Fictitious benefit',
+    claimability: async () => call('claimability', [0]),
+    claimRecord: async () => [account, 0n, 0n, 0n, 0n, 0n],
+    interface: {encodeFunctionData: () => '0x12345678'},
+    pause: transaction('pause'), claim: transaction('claim'),
+  };
+  const ethers = {
+    ZeroAddress: '0x' + '00'.repeat(20), ZeroHash: hash(0),
+    isAddress: value => /^0x[0-9a-fA-F]{40}$/.test(value),
+    namehash: name => name === 'club.agi.eth' ? ROOT : hash(77),
+    keccak256: () => state.codeHash, id: () => hash(99),
+    BrowserProvider: class {
+      constructor() { providers.push(this); }
+      async getSigner() { return {getAddress: async () => account}; }
+      async getCode() { return call('getCode', state.code); }
+      destroy() { this.destroyed = true; }
+    },
+    Contract: class { constructor() { return registry; } },
+  };
+  const window = {
+    ethers, addEventListener() {},
+    AGI_CONFIG: {registryAddress: '0x' + '22'.repeat(20), registryCodeHash: hash(88), expectedOrigin: 'https://claims.example.org', allowedEntitlements: ['IA101_2026_09_22']},
+    ethereum: {
+      request: async ({method}) => {
+        if (method === 'eth_chainId') return state.chain;
+        if (method === 'eth_requestAccounts' && state.permissionEvent) walletListeners.get('accountsChanged')?.([account]);
+        if (method === 'wallet_switchEthereumChain') {
+          state.chain = '0x1';
+          walletListeners.get('chainChanged')?.(state.chain);
+          return null;
+        }
+        return [account];
+      },
+      on: (event, handler) => walletListeners.set(event, handler),
+    },
+  };
+  // Import declarations are supplied below; the member handler body is unchanged.
+  runInNewContext(source.replace(/^import .*;\r?\n/gm, ''), {
+    window, ethers, ENS, WRAPPER, ROOT, REGISTRY_VERSION, MEMBER_ABI, PrivateMemory,
+    location: {origin: window.AGI_CONFIG.expectedOrigin},
+    document: {
+      body: {dataset: {page}}, addEventListener() {},
+      getElementById: id => elements.get(id) || null,
+      createElement: tag => new Element(tag),
+    },
+    confirm: () => true, setTimeout: () => 1, clearTimeout() {},
+  }, {filename: `frontend/${filename}`});
+  return {
+    state, calls, sent, providers,
+    el: id => elements.get(id), click: id => elements.get(id).click(),
+    walletEvent: event => walletListeners.get(event)?.([]),
+    pause: name => {
+      const started = Promise.withResolvers(), pending = Promise.withResolvers();
+      waits.set(name, {started, pending});
+      return {started: started.promise, release: pending.resolve};
+    },
+  };
+}
+
+async function attemptTransaction(ui, page) {
+  if (page === 'admin') { await ui.click('pause'); await ui.click('approveConfirm'); }
+  else { ui.el('memberLabel').value = 'alice'; await ui.click('verify'); await ui.click('claim'); }
+}
+
+for (const page of ['admin', 'member']) {
+  test(`${page}: a verified connection still supports a transaction`, async () => {
+    const ui = fixture(page);
+    await ui.click('connect');
+    await attemptTransaction(ui, page);
+    assert.equal(ui.sent.length, 1);
+  });
+
+  for (const prompt of ['account permission', 'network switch']) {
+    test(`${page}: ${prompt} events allow initial verification to complete`, async () => {
+      const ui = fixture(page);
+      if (prompt === 'account permission') ui.state.permissionEvent = true;
+      else ui.state.chain = '0x7a69';
+      await ui.click('connect');
+      await attemptTransaction(ui, page);
+      assert.equal(ui.sent.length, 1);
+    });
+  }
+
+  test(`${page}: a failed reconnect cannot reuse the previous verified session`, async () => {
+    const ui = fixture(page);
+    await ui.click('connect');
+    ui.state.version = '0.0.0';
+    await ui.click('connect');
+    await attemptTransaction(ui, page);
+    assert.equal(ui.sent.length, 0);
+    assert.ok(ui.providers.every(provider => provider.destroyed));
+  });
+
+  test(`${page}: a disconnected provider stays alive until an already-submitted transaction settles`, async () => {
+    const ui = fixture(page);
+    await ui.click('connect');
+    const confirmation = ui.pause(page === 'admin' ? 'pause.wait' : 'claim.wait');
+    const action = attemptTransaction(ui, page);
+    await confirmation.started;
+    assert.equal(ui.sent.length, 1);
+    ui.walletEvent('disconnect');
+    const status = ui.el('status').textContent;
+    assert.notEqual(ui.providers[0].destroyed, true);
+    confirmation.release();
+    await action;
+    assert.equal(ui.providers[0].destroyed, true);
+    assert.equal(ui.el('status').textContent, status);
+    assert.equal(ui.sent.length, 1);
+  });
+
+  for (const [field, value] of [['code', '0x'], ['codeHash', '0x' + 'ff'.repeat(32)], ['version', '0.0.0'], ['ens', '0x' + 'aa'.repeat(20)], ['wrapper', '0x' + 'bb'.repeat(20)], ['root', '0x' + 'cc'.repeat(32)]]) {
+    test(`${page}: failed ${field} verification leaves no transaction-capable session`, async () => {
+      const ui = fixture(page);
+      ui.state[field] = value;
+      await ui.click('connect');
+      await attemptTransaction(ui, page);
+      assert.equal(ui.sent.length, 0, 'a rejected connection must never submit a transaction');
+      assert.equal(ui.providers[0].destroyed, true, 'release the rejected provider');
+      if (page === 'member') assert.equal(ui.el('contactInputs').disabled, true);
+    });
+  }
+
+  test(`${page}: disconnect during verification cannot restore a connected UI`, async () => {
+    const ui = fixture(page), validation = ui.pause('VERSION');
+    const connecting = ui.click('connect');
+    await validation.started;
+    ui.walletEvent('disconnect');
+    const status = ui.el('status').textContent;
+    validation.release();
+    await connecting;
+    assert.equal(ui.el('status').textContent, status);
+    assert.equal(ui.el('connection').textContent, '');
+    assert.equal(ui.providers[0].destroyed, true);
+    await attemptTransaction(ui, page);
+    assert.equal(ui.sent.length, 0);
+  });
+}
+
+test('admin: demo activation cancels an outstanding connection attempt', async () => {
+  const ui = fixture('admin'), validation = ui.pause('getCode');
+  const connecting = ui.click('connect');
+  await validation.started;
+  await ui.click('demo');
+  const status = ui.el('status').textContent;
+  validation.release();
+  await connecting;
+  assert.equal(ui.el('status').textContent, status);
+  assert.match(ui.el('authority').textContent, /DÉMONSTRATION/);
+  assert.equal(ui.providers[0].destroyed, true);
+});
+
+for (const event of ['accountsChanged', 'chainChanged', 'disconnect']) {
+  test(`admin: ${event} discards a prepared transaction before reconnecting`, async () => {
+    const ui = fixture('admin');
+    await ui.click('connect');
+    await ui.click('pause');
+    assert.equal(ui.el('confirm').open, true);
+    ui.walletEvent(event);
+    assert.equal(ui.el('confirm').open, false);
+    assert.equal(ui.el('confirmData').textContent, '');
+    await ui.click('connect');
+    await ui.click('approveConfirm');
+    assert.equal(ui.sent.length, 0);
+  });
+}
+
+test('admin: reconnecting during gas estimation cannot submit the old transaction', async () => {
+  const ui = fixture('admin');
+  await ui.click('connect');
+  await ui.click('pause');
+  const estimation = ui.pause('pause.estimateGas');
+  const approving = ui.click('approveConfirm');
+  await estimation.started;
+  ui.walletEvent('accountsChanged');
+  await ui.click('connect');
+  estimation.release();
+  await approving;
+  assert.equal(ui.sent.length, 0);
+});
+
+test('member: editing the membership during inspection discards the old eligibility', async () => {
+  const ui = fixture('member');
+  await ui.click('connect');
+  ui.el('memberLabel').value = 'alice';
+  const inspection = ui.pause('claimability');
+  const inspecting = ui.click('verify');
+  await inspection.started;
+  ui.el('memberLabel').value = 'bob';
+  await ui.el('memberLabel').emit('input');
+  inspection.release();
+  await inspecting;
+  assert.equal(ui.el('claim').disabled, true);
+  assert.equal(ui.el('contactInputs').disabled, true);
+  await ui.click('claim');
+  assert.equal(ui.sent.length, 0);
+});
+
+test('member: editing the membership during gas estimation cancels the old claim', async () => {
+  const ui = fixture('member');
+  await ui.click('connect');
+  ui.el('memberLabel').value = 'alice';
+  await ui.click('verify');
+  const estimation = ui.pause('claim.estimateGas');
+  const claiming = ui.click('claim');
+  await estimation.started;
+  ui.el('memberLabel').value = 'bob';
+  await ui.el('memberLabel').emit('input');
+  estimation.release();
+  await claiming;
+  assert.equal(ui.sent.length, 0);
+});
