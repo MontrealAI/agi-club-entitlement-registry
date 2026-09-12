@@ -5,12 +5,12 @@ const python=process.env.PYTHON||(process.platform==='win32'?'python':'python3')
 test('Each interactive HTML entrypoint loads its owned code as a module',()=>{for(const [f,js]of [['admin','app'],['member','member'],['verify','verify'],['deployment','deployment']])assert.match(fs.readFileSync(`frontend/${f}.html`,'utf8'),new RegExp('<script[^>]*type="module"[^>]*src="'+js+'.js"'));});
 test('Browser verifier source byte-identical to canonical source',()=>{for(const f of ['ticket-request.mjs','ethers-adapter.mjs','request-email.mjs'])assert.equal(fs.readFileSync('shared/'+f,'utf8'),fs.readFileSync('frontend/shared/'+f,'utf8'));});
 test('Member, operator and CLI use the same canonical protocol and production adapter',()=>{for(const f of ['frontend/member.js','frontend/verify.js','tools/verify_ticket_request.mjs']){const src=fs.readFileSync(f,'utf8');assert.match(src,/import[^\n]*verifyTicketRequest[^\n]*ticket-request\.mjs/);assert.match(src,/import[^\n]*createEthersIO[^\n]*ethers-adapter\.mjs/);}});
-test('Configurator writes only trusted public settings, no request endpoint',()=>{const dir=fs.mkdtempSync(path.join(os.tmpdir(),'agi-config-'));try{const out=path.join(dir,'config.js');const r=spawnSync(python,['scripts/configure.py','--contract','0x'+'11'.repeat(20),'--runtime-code-hash','0x'+'22'.repeat(32),'--origin','https://claims.example.org','--entitlement','IA101_2026_09_22','--output',out],{encoding:'utf8'});assert.equal(r.status,0,r.stderr);const ctx={window:{}};vm.runInNewContext(fs.readFileSync(out,'utf8'),ctx);const c=ctx.window.AGI_CONFIG;assert.equal(c.registryCodeHash,'0x'+'22'.repeat(32));assert.equal(c.chainId,1);assert.equal(c.expectedOrigin,'https://claims.example.org');assert(!Object.hasOwn(c,'requestEndpoint'));}finally{fs.rmSync(dir,{recursive:true,force:true});}});
-test('Configurator rejects incomplete, insecure or backend-enabled configuration',()=>{const args=['scripts/configure.py','--contract','0x'+'11'.repeat(20),'--entitlement','IA101_2026_09_22'];for(const more of [['--origin','https://claims.example.org'],['--runtime-code-hash','0x'+'22'.repeat(32),'--origin','http://claims.example.org'],['--runtime-code-hash','0x'+'22'.repeat(32),'--origin','https://claims.example.org/path'],['--runtime-code-hash','0x'+'22'.repeat(32),'--origin','https://claims.example.org','--request-endpoint','https://relay.example.org/request']])assert.notEqual(spawnSync(python,[...args,...more],{encoding:'utf8'}).status,0);});
+test('Configurator writes only trusted public settings, no request endpoint',()=>{const dir=fs.mkdtempSync(path.join(os.tmpdir(),'agi-config-'));try{const out=path.join(dir,'config.js');const r=spawnSync(python,['scripts/configure.py','--contract','0x'+'11'.repeat(20),'--runtime-code-hash','0x'+'22'.repeat(32),'--origin','https://claims.example.org','--entitlement','FICTITIOUS_TEST_BENEFIT','--output',out],{encoding:'utf8'});assert.equal(r.status,0,r.stderr);const ctx={window:{}};vm.runInNewContext(fs.readFileSync(out,'utf8'),ctx);const c=ctx.window.AGI_CONFIG;assert.equal(c.registryCodeHash,'0x'+'22'.repeat(32));assert.equal(c.chainId,1);assert.equal(c.expectedOrigin,'https://claims.example.org');assert(!Object.hasOwn(c,'requestEndpoint'));}finally{fs.rmSync(dir,{recursive:true,force:true});}});
+test('Configurator rejects incomplete, insecure or backend-enabled configuration',()=>{const args=['scripts/configure.py','--contract','0x'+'11'.repeat(20),'--entitlement','FICTITIOUS_TEST_BENEFIT'];for(const more of [['--origin','https://claims.example.org'],['--runtime-code-hash','0x'+'22'.repeat(32),'--origin','http://claims.example.org'],['--runtime-code-hash','0x'+'22'.repeat(32),'--origin','https://claims.example.org/path'],['--runtime-code-hash','0x'+'22'.repeat(32),'--origin','https://claims.example.org','--request-endpoint','https://relay.example.org/request']])assert.notEqual(spawnSync(python,[...args,...more],{encoding:'utf8'}).status,0);});
 
 test('Public build copies only named shared/vendor assets, never whole directories',()=>{const s=fs.readFileSync('scripts/package.mjs','utf8');assert(!s.includes('cpSync'));assert(s.includes("['ticket-request.mjs','ethers-adapter.mjs','deployment-policy.mjs','request-email.mjs']"));assert(s.includes("['ethers.umd.min.js','ETHERS_LICENSE.md']"));});
 
-function configure(t,origin,entitlements=['IA101_2026_09_22']) {
+function configure(t,origin,entitlements=['FICTITIOUS_TEST_BENEFIT']) {
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'agi-config-'));
  t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
  const output=path.join(dir,'config.js'),previous='// Existing reviewed configuration.\n';
@@ -30,6 +30,26 @@ test('Configurator without event arguments follows the empty admin-managed regis
  const result=configure(t,'https://claims.example.org',[]);assert.equal(result.status,0,result.stderr);
  const config=configuredPolicy(result.source);assert.equal(config.entitlementMode,'registry');assert.deepEqual(config.allowedEntitlements,[]);assert(!Object.hasOwn(config,'defaultEntitlement'));
 });
+for(const [name,entitlements,mutate,valid] of [
+ ['configured empty registry',[],null,true],
+ ['explicit configured allowlist',['FICTITIOUS_TEST_BENEFIT'],null,true],
+ ['partial configuration',[],c=>{c.registryCodeHash='';},false],
+ ['insecure origin',[],c=>{c.expectedOrigin='http://claims.example.org';},false],
+ ['unexpected private setting',[],c=>{c.apiKey='FICTITIOUS_SECRET';},false],
+])test('Post-configuration qualification handles '+name,t=>{
+ const result=configure(t,'https://claims.example.org',entitlements);assert.equal(result.status,0,result.stderr);
+ const config=configuredPolicy(result.source);if(mutate)mutate(config);
+ const root=fs.mkdtempSync(path.join(os.tmpdir(),'agi-configured-check-'));t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
+ fs.mkdirSync(path.join(root,'frontend'));
+ for(const file of fs.readdirSync('frontend',{withFileTypes:true}).filter(entry=>entry.isFile()))fs.copyFileSync(path.join('frontend',file.name),path.join(root,'frontend',file.name));
+ fs.copyFileSync('.env.example',path.join(root,'.env.example'));
+ fs.writeFileSync(path.join(root,'frontend/config.js'),'window.AGI_CONFIG = Object.freeze('+JSON.stringify(config)+');\n');
+ // Start an independent Node test runner; the inherited worker marker otherwise skips every child test.
+ const env={...process.env};delete env.NODE_TEST_CONTEXT;
+ const check=spawnSync(process.execPath,['--test','--test-name-pattern=configuration and explorer creation fields',path.resolve('test/catalog-email.test.mjs')],{cwd:root,env,encoding:'utf8',timeout:15000});
+ assert.match(check.stdout,/Subtest: Public configuration and explorer creation fields/);
+ assert.equal(check.error,undefined);assert.equal(check.signal,null);assert.equal(check.status,valid?0:1,check.stdout+check.stderr);
+});
 for(const origin of ['https://claims.example.org','https://claims.example.org:8443','https://127.0.0.1:8443','https://[2001:db8::1]:8443','https://xn--bcher-kva.example']) {
  test('Configurator emits a usable receipt policy for '+origin,t=>{
   const result=configure(t,origin);
@@ -41,7 +61,7 @@ for(const origin of ['https://claims.example.org','https://claims.example.org:84
  });
 }
 test('Configurator normalizes hexadecimal entitlement IDs without changing canonical keys',t=>{
- const ids=['0x'+'aB'.repeat(32),'IA101_2026_09_22','0x'+'CD'.repeat(32)];
+ const ids=['0x'+'aB'.repeat(32),'FICTITIOUS_TEST_BENEFIT','0x'+'CD'.repeat(32)];
  const result=configure(t,'https://claims.example.org',ids);
  assert.equal(result.status,0,result.stderr);
  const config=configuredPolicy(result.source);

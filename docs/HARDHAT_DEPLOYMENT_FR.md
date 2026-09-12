@@ -2,6 +2,8 @@
 
 [English](HARDHAT_DEPLOYMENT.md) · [Guide de l’organisateur](OPERATOR_GUIDE_FR.md) · [Etherscan FR / EN](ETHERSCAN_GUIDE.md)
 
+**Vous utilisez Ubuntu ?** Commencez par le [parcours de déploiement Ubuntu](UBUNTU_MAINNET_FR.md). Le registre est déployé vide ; vous pouvez choisir le premier événement plus tard.
+
 Commencez par un aperçu local : aucun portefeuille financé, compte RPC, secret de déploiement ou renseignement de membre n’est nécessaire. Le contrat destiné à Ethereum mainnet est **`AGIClubEntitlementRegistryMainnet`**. Les répétitions locales utilisent volontairement des contrats de test.
 
 | Votre objectif | Parcours | Résultat attendu |

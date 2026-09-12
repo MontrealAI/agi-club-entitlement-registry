@@ -51,7 +51,7 @@ function fixture(page) {
     element.disabled = /\sdisabled(?:\s|>)/.test(tag);
     elements.set(id, element);
   }
-  if (page === 'member') elements.get('benefitSelect').value = 'IA101_2026_09_22';
+  if (page === 'member') elements.get('benefitSelect').value = 'FICTITIOUS_TEST_BENEFIT';
   const hash = n => '0x' + BigInt(n).toString(16).padStart(64, '0');
   const account = '0x' + '11'.repeat(20);
   const state = {code: '0x6000', codeHash: hash(88), version: REGISTRY_VERSION, ens: ENS, wrapper: WRAPPER, root: ROOT, chain: '0x1', permissionEvent: false,catalogCount:0};
@@ -94,7 +94,7 @@ function fixture(page) {
   };
   const window = {
     ethers, addEventListener: (event, handler) => pageListeners.set(event, handler),
-    AGI_CONFIG: {registryAddress: '0x' + '22'.repeat(20), registryCodeHash: hash(88), expectedOrigin: 'https://claims.example.org', allowedEntitlements: ['IA101_2026_09_22']},
+    AGI_CONFIG: {registryAddress: '0x' + '22'.repeat(20), registryCodeHash: hash(88), expectedOrigin: 'https://claims.example.org', allowedEntitlements: ['FICTITIOUS_TEST_BENEFIT']},
     ethereum: {
       request: async ({method}) => {
         if (method === 'eth_chainId') return state.chain;

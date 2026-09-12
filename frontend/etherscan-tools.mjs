@@ -58,6 +58,7 @@ export function defaultValue(field, method) {
   if (field.name === 'category' || field.name === 'newCategory') return '';
   if (['initialState', 'newState'].includes(field.name)) return '1';
   if (['capacity', 'newCapacity'].includes(field.name)) return '';
+  if (['opensAt', 'closesAt'].includes(field.name)) return '';
   if (field.name === 'limit') return '25';
   if (field.type.startsWith('uint')) return '0';
   if (field.type === 'bool') return 'false';

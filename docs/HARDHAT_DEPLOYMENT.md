@@ -2,6 +2,8 @@
 
 [Français](HARDHAT_DEPLOYMENT_FR.md) · [English operator guide](OPERATOR_GUIDE_EN.md)
 
+**Using Ubuntu?** Start with the [Ubuntu deployment checklist](UBUNTU_MAINNET_EN.md). The registry deploys empty; the first event can be chosen later.
+
 Start with a local preview. You need no funded wallet, RPC account, deployment key or member contact data for it. The contract intended for Ethereum mainnet is **`AGIClubEntitlementRegistryMainnet`**; the local rehearsal deliberately uses test contracts.
 
 | Your goal | Follow | Expected result |
