@@ -79,7 +79,8 @@ try{
  await check('Zero writes to cookie/local/session stores',async()=>assert(await evaluate('localStorage.length===0&&sessionStorage.length===0&&document.cookie===""')));
  await check('No private request copied without explicit acknowledgement',async()=>{await click('copyRequest');assert.equal(await evaluate('window.__clipboard.length'),0);});
  await check('Withdrawing and renewing acknowledgement discards an outstanding private signature',async()=>{
-  await evaluate(fill+"window.__signatureGate=new Promise(resolve=>{window.__completeSignature=resolve;});");
+  // Return immediately: CDP otherwise awaits the newly assigned pending promise.
+  await evaluate(fill+"window.__signatureGate=new Promise(resolve=>{window.__completeSignature=resolve;});true;");
   const signatures=await evaluate("window.__calls.filter(x=>x.method==='personal_sign').length");
   await evaluate("document.getElementById('prepareRequest').click()");
   await waitFor("window.__calls.filter(x=>x.method==='personal_sign').length>"+signatures,'pending private signature');
