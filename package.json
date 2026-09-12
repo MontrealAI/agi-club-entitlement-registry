@@ -21,6 +21,9 @@
     "@nomicfoundation/hardhat-verify": "3.1.0",
     "solc": "0.8.37"
   },
+  "overrides": {
+  "tmp": "0.2.7"
+  },
   "scripts": {
     "bootstrap:lock": "node scripts/bootstrap-lock.mjs",
     "check:lock": "node scripts/check-lock.mjs",
