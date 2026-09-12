@@ -4,6 +4,7 @@ import {network,artifacts} from 'hardhat';import {ethers} from 'ethers';
 import {ENS,WRAPPER,ROOT,PROD,deploy,receipt,save} from './runtime.mjs';import {sourceDigest} from './source-digest.mjs';
 import {SCHEMA,REGISTRY_VERSION,requestMessage,preparePacket,verifyTicketRequest} from '../shared/ticket-request.mjs';
 import {createEthersIO} from '../shared/ethers-adapter.mjs';
+import {revertData} from '../test/revert-data.mjs';
 const r={status:'NOT_EXECUTED',scope:'ISOLATED EVM MODEL, genuine ethers signatures/adapter, WebCrypto salted recipient binding, no mail backend; NO real ENS, wallets, provider email or Eventbrite',results:[]};let connection,provider;
 try {
  connection=await network.create();assert.equal(connection.networkName,'isolatedMainnetModel');
@@ -40,6 +41,27 @@ try {
   await receipt(w.connect(member).setSignaturesEnabled(false));await assert.rejects(()=>verifyTicketRequest(pk,policy,io),e=>e.code==='INVALID_SIGNATURE');
  });
  await check('Actual claim revocation blocks already signed packet',async()=>{await receipt(c.connect(admin).revokeClaim(id,'demo',ethers.id('LOCAL_TEST')));await assert.rejects(()=>verifyTicketRequest(packet,policy,io),e=>e.code==='CLAIM_NOT_CURRENT');});
+ await check('Production constructor gives the designated ENS holder all administration and the disposable deployer none',async()=>{
+  // This address is the operator's expected initial admin. Only the LOCAL ENS model is modified here.
+  // This proves contract behavior, not live ENS ownership or real wallet control.
+  const expected='0xa9eD0539c2fbc5C6BC15a2E168bd9BCd07c01201';
+  await receipt(ens.setOwner(ROOT,expected));
+  const registry=await deploy(artifacts,deployer,PROD),deployerAddress=await deployer.getAddress();
+  assert.notEqual(deployerAddress,expected);assert.equal(await registry.admin(),expected);
+  assert.equal(await registry.isAdmin(expected),true);assert.equal(await registry.isAdmin(deployerAddress),false);
+  const observed=(await registry.deploymentTransaction().wait()).logs.map(log=>{try{return registry.interface.parseLog(log);}catch{return null;}}).find(log=>log?.name==='AdminAuthorityObserved');
+  assert.equal(observed?.args[0],expected);
+  await assert.rejects(()=>registry.connect(deployer).pause.staticCall(),error=>registry.interface.parseError(revertData(error))?.name==='NotClubAdmin');
+  await raw.request({method:'hardhat_impersonateAccount',params:[expected]});
+  try {
+   await raw.request({method:'hardhat_setBalance',params:[expected,ethers.toQuantity(ethers.parseEther('1'))]});
+   const holder=new ethers.JsonRpcSigner(provider,expected);await receipt(registry.connect(holder).pause());assert.equal(await registry.paused(),true);
+   await receipt(ens.setOwner(ROOT,await admin.getAddress()));
+   await assert.rejects(()=>registry.connect(holder).unpause.staticCall(),error=>registry.interface.parseError(revertData(error))?.name==='NotClubAdmin');
+   await receipt(registry.connect(admin).unpause());assert.equal(await registry.paused(),false);
+   assert.equal(await registry.isAdmin(deployerAddress),false);
+  } finally {await raw.request({method:'hardhat_stopImpersonatingAccount',params:[expected]});}
+ });
  r.status='PASS';r.passed=r.results.length;r.sourceSha256=sourceDigest().sourceSha256;r.ticketIssued=false;r.externalEmailSent=false;
 } catch(e){r.status='FAIL_OR_BLOCKED';r.error=e.shortMessage||e.message;process.exitCode=1;}
 finally{save('qualification/local-journey.json',r);console.log(JSON.stringify(r,null,2));provider?.destroy();if(connection)await connection.close();}

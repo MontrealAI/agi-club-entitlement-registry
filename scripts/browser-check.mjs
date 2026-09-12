@@ -18,10 +18,11 @@ try{
  await command('Runtime.enable');await command('Page.enable');
  const evaluate=async expression=>{const r=await command('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});if(r.exceptionDetails)throw Error(r.exceptionDetails.text);return r.result.value;};
  const waitFor=async(expression,label)=>{const deadline=Date.now()+15000;while(Date.now()<deadline){try{if(await evaluate(expression))return;}catch(e){if(!/context.*(destroyed|not found)|Cannot find context/i.test(e.message))throw e;}await sleep(50);}throw Error('Browser readiness timeout: '+label);};
- for(const page of ['index','member','admin','verify','privacy']){
+ for(const page of ['index','member','admin','verify','privacy','deployment']){
   const url=base+'/'+page+'.html',nav=await command('Page.navigate',{url});assert(!nav.errorText,'Navigation failed: '+nav.errorText);
   await waitFor('location.href==='+JSON.stringify(url)+'&&document.readyState==="complete"',page+' page and modules');
-  if(['member','admin','verify'].includes(page))assert.equal(await evaluate('window.ethers?.version'),expectedEthersVersion,'Genuine ethers asset did not load at the declared version');
+  if(['member','admin','verify','deployment'].includes(page))assert.equal(await evaluate('window.ethers?.version'),expectedEthersVersion,'Genuine ethers asset did not load at the declared version');
+  if(page==='deployment')assert(await evaluate('document.getElementById("sign").disabled && !document.getElementById("consent").checked'),'Deployment approval must require a reviewed plan and fresh consent');
   if(await evaluate('!!document.getElementById("demo")')){await evaluate('document.getElementById("demo").click()');await waitFor('document.getElementById("demo").getAttribute("aria-busy")!=="true"',page+' demo action');assert(await evaluate('document.body.innerText.toLowerCase().includes("démo") || document.body.innerText.toLowerCase().includes("fictif")'));}
   for(const width of [1280,390]){await command('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:false});await evaluate('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(true))))');assert(await evaluate('document.documentElement.scrollWidth <= innerWidth+2'),'Horizontal overflow: '+page+' '+width);report.checks.push({page,width,status:'PASS'});}
  }

@@ -143,13 +143,19 @@ Use a local text editor and verify the filename is exactly `.env`, not `.env.txt
 ```text
 MAINNET_FORK_RPC_URL=YOUR_PRIVATE_READ_ONLY_MAINNET_RPC
 MAINNET_FORK_BLOCK=A_PINNED_FINALIZED_BLOCK_NUMBER
-EXPECTED_ADMIN=THE_ACTUAL_CLUB_AGI_ETH_HOLDER
+EXPECTED_ADMIN=0xa9eD0539c2fbc5C6BC15a2E168bd9BCd07c01201
 MEMBER_LABELS=REAL_ASCII_LABEL_1,REAL_ASCII_LABEL_2
 ```
 
 The labels must be actual representative memberships—not the fictitious test fixtures. Confirm the true `club.agi.eth` holder and relevant wrapping/fuse states independently. Do not change ENS registrations or burn fuses just to make a test pass.
 
+**Which wallet counts as the member?** The registry checks the current effective owner of a direct `<label>.club.agi.eth` name through `membershipInfo(label)`. Unwrapped names use the ENS registry owner; supported wrapped names use wrapper ownership and fuse/expiry rules. A resolver address, token approval or operator approval alone does not grant an entitlement. Connect the owning wallet itself, including the Safe account when the Safe owns the name.
+
+The [preliminary AGIJobManager example](https://montrealai.github.io/agijobmanagerv0.html) is useful for the connect → enter label → verify interaction. Its `verifySubdomain` function also accepts delegated token/operator and resolver-address authorization. Those permissions are broader than this registry's direct-owner policy. Its separate alpha-name paths and saved browser sessions are not part of the entitlement registry. Keep the member's name/email only in the current page's memory and out of ENS records, transactions, local storage and reports.
+
 `EXPECTED_ADMIN` is the **effective owning wallet** of the ENS name, including the canonical wrapper's ownership rules. It is not the name's address-resolution record. If the holder is a Safe, use the Safe address, not one of its individual signers. RPC credentials stay in `.env`; never copy them into `frontend/config.js` or the public site.
+
+The address above is the operator-supplied expected initial administrator. It must match independently checked canonical ENS ownership at the pinned fork block and at deployment. It is a deployment check, not an alternative authority source. The production constructor takes no owner argument: it observes the existing `club.agi.eth` holder immediately. There is no temporary deployer administration or ownership-handover transaction. Every privileged call continues to follow the effective ENS owner after legitimate transfers.
 
 macOS/Linux:
 
@@ -181,7 +187,9 @@ npm run fingerprint
 npm run release:gate
 ```
 
-This gate checks report presence and hashes. It does not independently determine whether someone else's statement is true. It never itself authorizes deployment.
+The gate requires all eight successful qualification stages and their nonempty logs, the matching production compiler report, and a pinned mainnet-fork report with successful distinct member checks. The fork's creation-code hash must match the qualified build. It binds the reports and every qualification log into the evidence fingerprint; editing a log after signing invalidates that approval. Evidence must be regular files in their expected directories; symlinked evidence is rejected. Keep the complete `qualification/` bundle when moving evidence from CI to the deployment checkout, including `compiler-status.json` and the logs. Older fork reports without a creation-code hash must be regenerated.
+
+The gate checks completeness and hashes. It does not independently determine whether someone else's statement is true. It never itself authorizes deployment. Do not edit a failed report to say `PASS`: complete the missing check and regenerate its evidence.
 
 ## G. Prepare an unsigned limited-canary plan
 
@@ -195,13 +203,17 @@ Review `.local/deployment-plan.json`: chain 1, production contract name, source/
 
 **Success:** the command prints `UNSIGNED CANARY PLAN — no transaction sent`. The plan lasts 30 minutes. If it expires or the deployer's nonce changes, prepare and review a new plan, then obtain a new signature. Never edit the JSON to extend its expiry or change its fee ceiling.
 
-The deployer can be a separate account with only the reviewed deployment budget. Do not export the root Ledger/Safe seed or private key. The deployer gains no special registry privileges.
+The planner also compares the actual build artifact with the qualified creation code and compares the live root holder with the fork evidence. If either differs, repeat the affected qualification and review before preparing a fresh plan. A previously generated report does not qualify replacement build artifacts.
+
+Use a **separate disposable deployer** with only the reviewed deployment budget. The plan rejects using the root administrator as the deployer. Do not export the root Ledger/Safe seed or private key. The disposable wallet pays deployment gas and gains no registry administration, ownership or recovery privileges. Keep its transaction record until deployment is finalized and independently verified before retiring the wallet.
 
 ## H. Root-holder approval and explicit broadcast
 
 Open the built `deployment.html` from a trusted local server or approved HTTPS origin. Load the plan and review every field before signing with the actual holder of `club.agi.eth`. Save the approval as `.local/deployment-approval.json`; it must remain private. Contract-wallet signing requires its real signing workflow and acceptance tests.
 
 For the local approval page, keep `npm run serve` running and open **`http://127.0.0.1:8080/deployment.html`**. Choose `.local/deployment-plan.json`, review the displayed fields, acknowledge them and sign. Move the downloaded `deployment-approval.json` from your browser's Downloads folder to `.local/deployment-approval.json` in this checkout. This is a deployment approval, not a member receipt. Its download is separate from the member/organizer pages, which provide no receipt-file export.
+
+The page signs the exact reviewed plan. Changing the file, wallet or network, leaving/restoring the page, or withdrawing consent cancels that attempt in the page. Reject any open wallet prompt, then review again. Only one signing attempt can run at a time; the account and current root holder are checked again before download. Unchecking the box cannot revoke a signed approval you have already shared: treat that file as active until its signed expiry or another deployment gate invalidates it.
 
 The supplied broadcaster uses a locally encrypted **deployer** JSON keystore. Configure `DEPLOYER_KEYSTORE`. Provide its password locally for this one execution—never in GitHub, a command committed to source or shared logs. The environment-variable method is visible to processes with sufficient local privileges; use an isolated machine and clear it afterward.
 
@@ -234,6 +246,8 @@ try {
 The process environment is not a hardware vault, and these cleanup commands do not guarantee RAM erasure. Use your trusted wallet tooling to create/export an **encrypted Ethereum JSON keystore for the separate deployer**. An unencrypted raw private-key export is not the expected input. Never use the root Ledger/Safe key for this step.
 
 The broadcaster refuses CI, requires the exact acknowledgement and signed plan, rechecks hashes/admin/nonce/fee bounds and records the transaction hash. **If interrupted after broadcast, inspect that transaction—do not rerun blindly.** A local plan or two confirmations are not proof of finality.
+
+For a contract wallet, ERC-1271 approval is checked at finalized and latest state both before unlocking the deployer keystore and again after the deployment preflight. Plan expiry and evidence are checked after those final reads. These are checks at the observed chain state; they cannot guarantee that ownership or contract-wallet policy will remain unchanged before the transaction is mined. See [ERC-1271](https://eips.ethereum.org/EIPS/eip-1271) for state-dependent signature validity.
 
 ## I. Verify before member access
 

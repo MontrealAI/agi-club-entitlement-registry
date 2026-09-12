@@ -32,7 +32,9 @@ try{
  await run('Deployer is not administrator; root hash agrees with ethers',async()=>{assert.equal(await c.admin(),aa);assert.equal(await c.isAdmin(da),false);assert.equal(await c.CLUB_AGI_ETH_NODE(),root);});
  await run('Every administrative entry point rejects non-holder with decoded NotClubAdmin',async()=>{
   const ops=[['createEntitlement',[ethers.id('NO'),cat,50,0,0,1,ethers.ZeroHash]],['duplicateEntitlement',[id,ethers.id('COPY')]],['setEntitlementState',[id,1]],['setCapacity',[id,50]],['setWindow',[id,0,0]],['setCategory',[id,cat]],['setMetadataHash',[id,ethers.ZeroHash]],['setDescriptor',[id,'FR','EN','',ethers.ZeroHash]],['adminGrantClaimToCurrentOwner',[id,'bob']],['adminGrantBatchToCurrentOwners',[id,['bob']]],['adminGrantClaimOverride',[id,'bob',ma,ethers.id('AUDIT')]],['revokeClaim',[id,'alice',ethers.id('AUDIT')]],['revokeBatch',[id,['alice'],ethers.id('AUDIT')]],['reinstateClaim',[id,'alice']],['reassignRevokedClaim',[id,'alice',ma]],['setSupportedNameWrapper',[await wrapper.getAddress(),true]],['pause',[]],['unpause',[]]];
-  for(const[m,a]of ops)await bad(m,a,'NotClubAdmin');
+  const adminMethods=artifact('AGIClubEntitlementRegistry').abi.filter(x=>x.type==='function'&&['nonpayable','payable'].includes(x.stateMutability)&&x.name!=='claim').map(x=>x.name).sort();
+  assert.deepEqual(ops.map(([method])=>method).sort(),adminMethods,'Every privileged ABI entry point must be exercised');
+  for(const[m,a]of ops)for(const caller of [member,deployer])await bad(m,a,'NotClubAdmin',caller);
  });
  await run('Authority-source setters and stored-owner-transfer functions absent',async()=>{for(const n of ['setENSRegistry','transferOwnership','renounceOwnership'])assert(!artifact('AGIClubEntitlementRegistry').abi.some(x=>x.name===n));});
  await run('Admin creates first entitlement',()=>tx(c.connect(admin).createEntitlement(id,cat,50,0,0,2,ethers.ZeroHash)));
