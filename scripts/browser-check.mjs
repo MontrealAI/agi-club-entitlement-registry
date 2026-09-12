@@ -24,14 +24,14 @@ try{
   if(['member','admin','verify','deployment','etherscan'].includes(page))assert.equal(await evaluate('window.ethers?.version'),expectedEthersVersion,'Genuine ethers asset did not load at the declared version');
   if(page==='etherscan'){
    await waitFor('document.querySelectorAll("#operation option").length===52','all explorer functions');
-   await evaluate(`document.getElementById('registry').value='0x'+'11'.repeat(20);document.getElementById('prepare').click();`);
-   assert(await evaluate(`!document.getElementById('result').hidden&&document.querySelector('#values output').textContent===ethers.id('IA101_2026_09_22')`),'Explorer prepares genuine Keccak values');
+   await evaluate(`document.getElementById('registry').value='0x'+'11'.repeat(20);document.getElementById('parameter-0').value='FICTITIOUS_BENEFIT';document.getElementById('parameter-1').value='PERK';document.getElementById('parameter-2').value='3';document.getElementById('prepare').click();`);
+   assert(await evaluate(`!document.getElementById('result').hidden&&document.querySelector('#values output').textContent===ethers.id('FICTITIOUS_BENEFIT')`),'Explorer prepares genuine Keccak values');
    assert.equal(await evaluate(`document.getElementById('openExplorer').href`),'https://etherscan.io/address/0x'+'11'.repeat(20)+'#writeContract');
    await evaluate(`document.getElementById('parameter-2').dispatchEvent(new Event('input'));`);
    assert(await evaluate(`document.getElementById('result').hidden&&!document.getElementById('openExplorer').hasAttribute('href')`),'Editing invalidates prepared explorer values');
    await evaluate(`document.getElementById('language').click();`);
    assert(await evaluate(`document.documentElement.lang==='en'&&document.getElementById('prepare').textContent==='Prepare values'&&document.querySelectorAll('#operation option').length===52`),'English explorer parity');
-   await evaluate(`document.getElementById('operation').value='claim';document.getElementById('operation').dispatchEvent(new Event('change'));document.getElementById('parameter-1').value='alice';document.getElementById('prepare').click();`);
+   await evaluate(`document.getElementById('operation').value='claim';document.getElementById('operation').dispatchEvent(new Event('change'));document.getElementById('parameter-0').value='FICTITIOUS_BENEFIT';document.getElementById('parameter-1').value='alice';document.getElementById('prepare').click();`);
    assert(await evaluate(`!document.getElementById('result').hidden&&document.querySelectorAll('#values output')[1].textContent==='alice'`),'Member claim parameters prepared');
    await evaluate(`window.dispatchEvent(new Event('pagehide'));`);
    assert(await evaluate(`document.getElementById('registry').value===''&&document.getElementById('result').hidden&&localStorage.length===0&&sessionStorage.length===0`),'Explorer session cleared without persistence');

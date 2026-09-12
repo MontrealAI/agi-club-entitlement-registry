@@ -25,6 +25,8 @@ jobs:
         run: |
           npm run check:repo
           npm run check:lock
+      - name: Offline suite before installing any npm packages
+        run: npm run test:offline
       - name: Clean install — no package lifecycle scripts
         run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Dependency advisory gate
@@ -71,6 +73,8 @@ jobs:
           node-version: '22'
           package-manager-cache: false
       - run: npm run check:lock
+      - name: Offline suite before installing any npm packages
+        run: npm run test:offline
       - run: npm ci --ignore-scripts --no-audit --no-fund
       - run: npm run check:repo
       - run: npm test

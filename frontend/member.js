@@ -2,8 +2,11 @@ import {SCHEMA,REGISTRY_VERSION,ENS,WRAPPER,ROOT,DEFAULT_TTL_SECONDS,randomHex,p
 import {createEthersIO} from './shared/ethers-adapter.mjs';
 import {MEMBER_ABI} from './contract-abi.mjs';
 import {PrivateMemory} from './private-memory.mjs';
+import {formatRequestEmail} from './shared/request-email.mjs';
+import {readCatalogPage,requestPolicy} from './member-catalog.mjs';
 const $=id=>document.getElementById(id), cfg=window.AGI_CONFIG||{}, memory=new PrivateMemory();
 let provider=null,signer=null,contract=null,account='',member=null,demo=false,busy=false,timer=null,sessionEpoch=0,membershipEpoch=0,usageEpoch=0,walletPromptEpoch=null,txProvider=null;
+let catalog=[],catalogTotal=0;
 const claimStates=['Disponible','En pause','Nom non admissible','Avantage inconnu','En préparation','Fermé','Archivé','Pas encore ouvert','Terminé','Déjà réclamé','Révoqué','Membership absent','Autre détenteur','Droit expiré','Contingent complet'];
 const status=(text,bad=false)=>{$('status').textContent=text;$('status').classList.toggle('error',bad);};
 const message=text=>{$('requestStatus').textContent=text;};
@@ -22,14 +25,40 @@ function disconnect(){
   // The active transaction owns its provider until confirmation tracking settles.
   if(provider!==txProvider)provider?.destroy?.();
   provider=null;signer=null;contract=null;account='';member=null;demo=false;
+  catalog=[];catalogTotal=0;renderCatalog();
   lockContact(false);$('claim').disabled=true;$('connection').textContent='';$('authority').textContent='Non connecté';
   $('modeNotice').textContent='Connectez le wallet pour vérifier le réseau et le contrat.';
   $('eligibility').textContent='Vérifiez votre membership après la connexion.';
   status('Reconnectez le wallet puis vérifiez votre membership.');
 }
 function label(){const s=$('memberLabel').value.trim().toLowerCase().replace(/\.club\.agi\.eth$/,'');if(!/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(s))throw Error('INVALID_MEMBERSHIP');return s;}
-function benefitId(){const v=$('benefitSelect').value;return v.startsWith('0x')?v:ethers.id(v);}
-function policy(){return {origin:cfg.expectedOrigin,chainId:1,registry:String(cfg.registryAddress).toLowerCase(),registryCodeHash:cfg.registryCodeHash,version:REGISTRY_VERSION,entitlements:(cfg.allowedEntitlements||[]).map(x=>x.startsWith('0x')?x:ethers.id(x))};}
+function benefitId(){const v=$('benefitSelect').value;if(!catalog.some(e=>e.id===v))throw Error('CHOOSE_BENEFIT');return v;}
+function policy(){return requestPolicy(cfg,ethers,REGISTRY_VERSION);}
+function renderCatalog(previous=''){
+  const option=document.createElement('option');option.value='';option.textContent=catalog.length?'Choisissez votre avantage…':'Aucun avantage chargé';
+  const options=catalog.map(e=>{const o=document.createElement('option');o.value=e.id;o.textContent=(e.title||e.id)+' — '+['','Brouillon','Ouvert','Fermé','Archivé'][e.state];return o;});
+  $('benefitSelect').replaceChildren(option,...options);$('benefitSelect').value=catalog.some(e=>e.id===previous)?previous:'';
+  $('benefitSelect').disabled=!catalog.length;$('verify').disabled=!demo&&!$('benefitSelect').value;
+  $('loadBenefits').disabled=!contract||catalog.length>=catalogTotal;$('refreshBenefits').disabled=!contract;
+  $('catalogStatus').textContent=catalog.length?catalog.length+' avantage(s) chargé(s) sur '+catalogTotal+'. Le statut sera vérifié avant toute transaction.':contract?'Le registre est vide. Aucun événement ou avantage n’a été créé. Revenez après la publication par l’administrateur.':'Connectez le wallet pour lire le catalogue officiel. Aucun événement n’est préconfiguré.';
+}
+async function loadBenefits(append=false){
+  await assertSession();const epoch=sessionEpoch,registry=contract;
+  const offset=append?catalog.length:0,target=append?offset+25:Math.max(catalog.length,25);
+  if(!append){membershipEpoch++;clearPrivate();member=null;lockContact(false);$('claim').disabled=true;}
+  try{
+    const next=append?[...catalog]:[];let page;
+    do{
+      page=await readCatalogPage(registry,cfg,ethers,next.length);
+      if(epoch!==sessionEpoch||registry!==contract)return;
+      next.push(...page.rows);
+    }while(next.length<Math.min(target,page.total));
+    await assertWallet(account);if(epoch!==sessionEpoch||registry!==contract)return;
+    if(new Set(next.map(e=>e.id)).size!==next.length)throw Error('CATALOG_UNAVAILABLE');
+    catalog=next;catalogTotal=page.total;renderCatalog($('benefitSelect').value);
+    status(catalog.length?'Choisissez un avantage puis vérifiez votre membership.':'Aucun avantage publié. Vous pouvez actualiser le catalogue plus tard.');
+  }catch(error){if(epoch===sessionEpoch&&registry===contract)throw error;}
+}
 async function assertWallet(expectedAccount){
   if(location.origin!==cfg.expectedOrigin||!cfg.expectedOrigin?.startsWith('https://'))throw Error('WRONG_ORIGIN');
   if(BigInt(await window.ethereum.request({method:'eth_chainId'}))!==1n)throw Error('WRONG_CHAIN');
@@ -60,6 +89,8 @@ const errors={
  COPY_CONSENT:'Confirmez que la copie place vos coordonnées dans le presse-papiers de votre appareil.',
  COPY_UNAVAILABLE:'Copie automatique indisponible. Sélectionnez la demande dans le cadre, copiez-la vous-même puis effacez les données.',
  NO_PACKET:'Préparez d’abord la demande signée.',UNKNOWN:'Opération non confirmée. Vérifiez votre wallet et réessayez. Aucune demande de billet n’a été envoyée.'
+ ,CHOOSE_BENEFIT:'Choisissez un avantage du catalogue avant de vérifier votre membership.',
+ CATALOG_UNAVAILABLE:'Catalogue indisponible ou incomplet. Actualisez pour réessayer ; aucune transaction n’a été envoyée.'
 };
 function publicError(e){const code=errors[e?.code]?e.code:errors[e?.message]?e.message:'UNKNOWN';status(errors[code],true);}
 function on(id,fn){$(id).addEventListener('click',async()=>{if(busy)return;busy=true;$(id).setAttribute('aria-busy','true');try{await fn();}catch(e){publicError(e);}finally{busy=false;$(id).removeAttribute('aria-busy');}});}
@@ -87,19 +118,14 @@ async function connect(){
     await assertWallet(candidateAccount);
     const [version,ens,wrapper,root,code]=await Promise.all([candidateContract.VERSION(),candidateContract.CANONICAL_ENS(),candidateContract.CANONICAL_WRAPPER(),candidateContract.CLUB_AGI_ETH_NODE(),candidateProvider.getCode(cfg.registryAddress)]);
     if(code==='0x'||version!==REGISTRY_VERSION||ens.toLowerCase()!==ENS||wrapper.toLowerCase()!==WRAPPER||root!==ROOT||ethers.keccak256(code)!==cfg.registryCodeHash)throw Error('NOT_CONFIGURED');
-    const options=[];
-    for(const name of cfg.allowedEntitlements||[]){
-      const id=name.startsWith('0x')?name:ethers.id(name),option=document.createElement('option');option.value=id;
-      try{option.textContent=(await candidateContract.titleFR(id))||name;}catch{option.textContent=name;}
-      options.push(option);
-    }
+    const page=await readCatalogPage(candidateContract,cfg,ethers);
     await assertWallet(candidateAccount);
     if(epoch!==sessionEpoch)return;
     provider=candidateProvider;candidateProvider=null;signer=candidateSigner;account=candidateAccount;contract=candidateContract;
     $('connection').textContent='Wallet : '+account+' · Ethereum mainnet';$('authority').textContent='Wallet connecté';
-    $('benefitSelect').replaceChildren(...options);
+    catalog=page.rows;catalogTotal=page.total;renderCatalog();
     $('modeNotice').textContent='Mode réel. Les preuves de claim sont publiques. Vos coordonnées ne sont jamais envoyées par le site.';
-    status('Wallet connecté. Vérifiez votre membership.');
+    status(catalog.length?'Wallet connecté. Choisissez un avantage puis vérifiez votre membership.':'Wallet connecté. Aucun avantage publié pour le moment.');
   }catch(error){if(epoch===sessionEpoch)throw error;}
   finally{candidateProvider?.destroy?.();if(walletPromptEpoch===epoch)walletPromptEpoch=null;}
 }
@@ -158,24 +184,25 @@ async function prepare(){
   await verifyTicketRequest(packet,policy(),createEthersIO(ethers,provider,cfg.registryAddress));
   assertUsage();
   if(!memory.set(packet,epoch))throw Error('EDITED');
-  $('requestPreview').value=JSON.stringify(packet,null,2);$('copyRequest').disabled=false;
+  $('requestPreview').value=formatRequestEmail(packet);$('copyRequest').disabled=false;
   message('Demande vérifiée, uniquement dans cette page. Copiez-la vous-même dans un courriel à president@montreal.ai. Le site ne l’envoie pas.');
   status('Prête à copier. Ce reçu contient vos coordonnées en clair : gardez-le privé.');touch();
 }
 async function copy(){
   if(!$('copyConsent').checked)throw Error('COPY_CONSENT');const packet=memory.packet;if(!packet)throw Error('NO_PACKET');
   if(!navigator.clipboard?.writeText)throw Error('COPY_UNAVAILABLE');
-  try{await navigator.clipboard.writeText(JSON.stringify(packet,null,2));}catch{throw Error('COPY_UNAVAILABLE');}
+  try{await navigator.clipboard.writeText(formatRequestEmail(packet));}catch{throw Error('COPY_UNAVAILABLE');}
   clearPrivate();message('Copiée dans le presse-papiers. Les champs et références de la page ont été effacés. Collez la demande dans votre messagerie puis envoyez-la à president@montreal.ai. Envoi non confirmé par le site.');
   status('Presse-papiers sous votre contrôle. Évitez un appareil partagé ; effacez-le après l’envoi.');
 }
 on('connect',connect);on('verify',inspectMember);on('claim',claim);on('prepareRequest',prepare);on('copyRequest',copy);
+on('refreshBenefits',()=>loadBenefits());on('loadBenefits',()=>loadBenefits(true));
 $('clearPrivate').addEventListener('click',()=>{clearPrivate();status('Coordonnées effacées de la page. Le presse-papiers et votre messagerie ne sont pas effacés par cette action.');});
-on('demo',()=>{disconnect();demo=true;$('authority').textContent='Démonstration';$('modeNotice').textContent='DÉMONSTRATION — sans wallet, sans transaction et sans envoi. Utilisez des données fictives.';$('memberLabel').value='exemple';status('Cliquez sur Vérifier pour explorer un droit fictif.');});
+on('demo',()=>{disconnect();demo=true;$('verify').disabled=false;$('authority').textContent='Démonstration';$('modeNotice').textContent='DÉMONSTRATION — sans événement, sans wallet, sans transaction et sans envoi. Utilisez des données fictives.';$('memberLabel').value='exemple';status('Cliquez sur Vérifier pour explorer la confidentialité avec un droit fictif. Aucun événement n’est créé.');});
 for(const f of ['ticketName','ticketEmail'])$(f).addEventListener('input',()=>{invalidate();touch();});
 $('consent').addEventListener('change',()=>invalidate());
 $('usageConsent').addEventListener('change',()=>{usageEpoch++;invalidate(true);touch();});
-for(const f of ['memberLabel','benefitSelect'])$(f).addEventListener('input',()=>{membershipEpoch++;clearPrivate();member=null;lockContact(false);$('claim').disabled=true;$('eligibility').textContent='Vérifiez de nouveau le membership et l’avantage sélectionnés.';});
+for(const f of ['memberLabel','benefitSelect'])$(f).addEventListener('input',()=>{membershipEpoch++;clearPrivate();member=null;lockContact(false);$('claim').disabled=true;$('verify').disabled=!demo&&!$('benefitSelect').value;$('eligibility').textContent='Vérifiez de nouveau le membership et l’avantage sélectionnés.';});
 for(const e of ['pointerdown','keydown'])document.addEventListener(e,touch,{passive:true});
 window.addEventListener('pagehide',clearPrivate);
 window.addEventListener('pageshow',()=>{clearPrivate();});
@@ -184,5 +211,5 @@ if(window.ethereum?.on)for(const event of ['accountsChanged','chainChanged','dis
   if(event!=='disconnect'&&walletPromptEpoch===sessionEpoch)return;
   disconnect();
 });
-lockContact(false);clearPrivate();
+lockContact(false);clearPrivate();renderCatalog();
 $('modeNotice').textContent=cfg.registryAddress?'Contrat configuré. Vérifiez l’adresse officielle avant de connecter le wallet.':'NON DÉPLOYÉ / NON CONFIGURÉ. La démonstration n’émet aucun droit.';

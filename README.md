@@ -3,7 +3,11 @@
 
 **VERIFY MEMBERSHIP → CLAIM ENTITLEMENT → PROVE CLAIM**
 
-Reusable AGI Club benefits administered by the **current effective holder of `club.agi.eth` on Ethereum mainnet**. IA 101 is the first configured example, not a one-event contract.
+Reusable AGI Club benefits administered by the **current effective holder of `club.agi.eth` on Ethereum mainnet**. Deployment, creation forms and the admin demo start with **no preconfigured event or benefit**.
+
+After the one-time approved contract/origin configuration, the member catalogue follows benefits created and modified through Etherscan. Members refresh the catalogue; no per-event website edit is needed. Optional explicit allowlists remain supported. The admin controls public titles, metadata, categories, quotas, dates, states, claim corrections, member-wrapper support and pausing. Permanent IDs, historical records, canonical ENS authority and deployed bytecode retain their contract-defined protections.
+
+The copy-ready email to **president@montreal.ai** visibly includes the full **`subname.club.agi.eth`** and the signed receipt. The organizer verifier displays that identity from the verified signed label. The email link contains no member data; sending remains an explicit action in the member’s own mail application.
 
 > **Member names and email addresses are not persisted by the webpage or written on-chain by its claim flow. The application has no email relay, contact database, analytics, or automatic request transmission.**
 >

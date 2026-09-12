@@ -56,7 +56,7 @@ function fields() {
   for (const [i,p] of f.inputs.entries()) {
     const label = document.createElement('label'); label.htmlFor = 'parameter-' + i; label.textContent = (p.name || 'entitlementId') + ' (' + p.type + ')';
     const input = document.createElement(p.type === 'string[]' ? 'textarea' : p.type === 'bool' || ['initialState','newState'].includes(p.name) ? 'select' : 'input'); input.id = label.htmlFor; input.autocomplete = 'off'; input.spellcheck = false;
-    if (input.tagName === 'SELECT') for (const v of p.type === 'bool' ? ['false','true'] : ['1','2','3','4']) { const option = document.createElement('option'); option.value = v; option.textContent = v; input.append(option); }
+    if (input.tagName === 'SELECT') for (const v of p.type === 'bool' ? ['false','true'] : ['1','2','3','4']) { const option = document.createElement('option'); option.value = v; option.textContent = p.type==='bool'?v:v+' — '+tr(['','Brouillon','Ouvert','Fermé','Archivé'][Number(v)],['','Draft','Open','Closed','Archived'][Number(v)]); input.append(option); }
     input.value = defaultValue(p, f.name); input.addEventListener('input', invalidate);
     const help = document.createElement('p'); help.id = 'hint-' + i; help.className = 'small muted'; help.textContent = hint(p); input.setAttribute('aria-describedby', help.id);
     $('parameters').append(label, input, help);
@@ -100,8 +100,10 @@ $('operation').addEventListener('change', fields); $('registry').addEventListene
 function clear() { invalidate(); $('registry').value = ''; for (const el of $('parameters').querySelectorAll('input,textarea,select')) el.value = ''; }
 $('clear').addEventListener('click', clear); window.addEventListener('pagehide', clear); window.addEventListener('pageshow', event => { if (event.persisted) clear(); });
 $('language').addEventListener('click', () => {
+  const inputs=iface.getFunction($('operation').value).inputs.map((_,i)=>$('parameter-'+i).value);
   language = language === 'fr' ? 'en' : 'fr'; document.documentElement.lang = language; $('language').textContent = language === 'fr' ? 'English' : 'Français';
   for (const el of document.querySelectorAll('[data-i18n]')) el.textContent = (language === 'fr' ? french : english)[el.dataset.i18n];
   populate();
+  inputs.forEach((value,i)=>{$('parameter-'+i).value=value;});
 });
 $('registry').value = window.AGI_CONFIG?.registryAddress || ''; populate();

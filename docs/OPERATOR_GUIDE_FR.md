@@ -9,8 +9,8 @@ Le membre doit posséder un claim actif. La signature de sa demande lie le desti
 ## Émettre un billet
 
 1. Recevez le courriel dans `president@montreal.ai`. Ne publiez pas son contenu ni sa pièce jointe.
-2. Ouvrez **le vérificateur de votre origine officielle**, jamais un lien fourni comme “outil de vérification” par l’expéditeur. Collez le reçu JSON. Il reste en mémoire dans cette page.
-3. Cliquez **Vérifier via mon wallet**. Le résultat doit être `VERIFIED_REQUEST_NOT_A_TICKET`, avec le nom/courriel attendus. Attente de finalité, signature invalide ou droit révoqué = aucun billet à émettre.
+2. Ouvrez **le vérificateur de votre origine officielle**, jamais un lien fourni comme “outil de vérification” par l’expéditeur. Collez le texte complet préparé pour le courriel, avec son en-tête d’identité et son reçu JSON, ou le JSON original. Il reste en mémoire dans cette page.
+3. Cliquez **Vérifier via mon wallet**. Le résultat doit être `VERIFIED_REQUEST_NOT_A_TICKET`, avec le sous-nom complet `membership: exemple.club.agi.eth` et le nom/courriel attendus. Le sous-nom est dérivé du label signé ; un en-tête de courriel contradictoire est rejeté. Attente de finalité, signature invalide ou droit révoqué = aucun billet à émettre.
 4. Recherchez la **claimKey** dans votre registre privé d’émission et dans vos commandes Eventbrite. La clé ne change pas avec le courriel, le nonce ou une nouvelle signature. Une révision n’est pas une seconde admission.
 5. Si le droit n’a jamais été matérialisé, créez manuellement une admission AGI Club gratuite dans Eventbrite pour le nom et le courriel **vérifiés dans le reçu**, et utilisez l’option d’envoi de confirmation appropriée.
 6. Notez hors du dépôt la claimKey, la révision, le statut et le numéro de commande. Confirmez la réception pour le canary. Effacez le reçu de l’interface après usage.
@@ -39,7 +39,7 @@ Le registre privé peut être votre outil administratif habituel ; il ne doit ja
 
 ## Administration
 
-Créer IA 101 en brouillon, capacité 50, puis régler titres FR/EN et dates en UTC. Exemple de début de l’événement prévu : `2026-09-22T23:00:00Z` correspond au 19 h de Montréal annoncé ; les fenêtres de claim sont des décisions distinctes à définir, pas une promesse automatique.
+Le déploiement et la démonstration administrative démarrent **sans aucun événement**. Choisissez vous-même l’identifiant permanent, la catégorie et le quota du premier avantage, uniquement quand vous décidez de le créer. Créez un brouillon, réglez titres FR/EN et dates UTC, relisez puis ouvrez explicitement. Les mêmes opérations sont disponibles dans Etherscan. En mode catalogue du registre, les membres actualisent le catalogue pour voir les nouveaux avantages et les titres modifiés ; aucune liste d’événements n’est préremplie dans le site.
 
 Ne pas écrire de données personnelles dans titres, références publiques ou motifs d’audit. Une révocation libère un quota on-chain, **sans annuler une commande Eventbrite**. Rapprocher les deux avant réattribution.
 

@@ -1,6 +1,6 @@
 # Test scopes
 
-`npm run test:offline`: no package downloads required; uses test-only Ethereum crypto/chain fixtures and actual WebCrypto SHA-256. Tests binding and source/PII-storage boundaries, not physical wallets or EVM bytecode.
+`npm run test:offline`: no installed npm packages or package downloads required; uses test-only Ethereum crypto/chain fixtures and actual WebCrypto SHA-256. Tests binding and source/PII-storage boundaries, not physical wallets or EVM bytecode.
 
 The admin regressions execute the actual `frontend/app.js` with a minimal DOM and simulated read-only wallet/registry. They cover category selection and transaction previews, multi-page refreshes, failed and overlapping reads, and wallet/demo changes during pending reads. They do not validate browser rendering, Ethereum cryptography or live transactions.
 
@@ -12,7 +12,9 @@ Public-tooling regressions run the Python configurator from outside the reposito
 
 Organizer-verifier regressions execute the actual handler body with simulated DOM, clock and wallet boundaries. They check retention deadlines during delayed operations, input invalidation, lifecycle clearing, provider cleanup and fixed error messages. Browser privacy qualification now executes both member and organizer flows, traps persistent-storage/file/logging APIs, inspects stores and network/wallet calls, and checks clear and real reload behavior. The EVM journey decodes a real claim transaction and checks its logs for contact bytes; receipt verification must not mine another transaction. These tests use fictitious contacts only.
 
-`npm run test:evm`: real Hardhat EVM, compiled contracts and local ENS/wrapper mocks.
+`npm run test:etherscan`: installed, pinned ethers/solc are required for ABI encoding and compiler-export regression tests. This suite is deliberately excluded from the dependency-free offline command.
+
+`npm run test:evm`: runs `test:etherscan`, then real Hardhat EVM checks with compiled contracts and local ENS/wrapper mocks, followed by the stateful campaign.
 
 `npm run test:journey`: isolated chain-ID-1 model, actual ethers adapter, real WebCrypto recipient binding. No real ENS ownership, finality, mail or Eventbrite.
 

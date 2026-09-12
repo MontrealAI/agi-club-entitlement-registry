@@ -75,7 +75,11 @@ Before every administrative session, read these values. / Avant chaque session a
 
 **Wallet de contrat / Contract wallet.** If the effective holder is a Safe or another contract wallet, that wallet must execute the call. Connecting one of its individual signers to Etherscan is insufficient. Use that wallet’s supported execution workflow, with the target address, ABI parameters or public calldata from the helper. / Si le détenteur est un wallet de contrat, il doit lui-même exécuter l’appel via son processus prévu. Un signataire individuel connecté ne suffit pas.
 
-## 3. Premier avantage / First benefit
+## 3. Votre premier avantage, quand vous le décidez / Your first benefit, when you choose
+
+**FR.** Le contrat déployé contient zéro avantage. Aucun événement, identifiant, catégorie ou quota n’est préconfiguré dans les formulaires. Le mode démonstration administratif est vide lui aussi. Créer un événement est une décision distincte du déploiement.
+
+**EN.** The deployed contract contains zero benefits. No event, ID, category or quota is preconfigured in the forms. The admin demo also starts empty. Creating an event is a separate decision from deployment.
 
 **FR.** Dans l’assistant du site, indiquez l’adresse approuvée et choisissez **Créer un avantage — createEntitlement**. L’identifiant lisible et la catégorie sont convertis localement en Keccak-256 ; vérifiez puis copiez les valeurs préparées. Les exemples ci-dessous sont des paramètres publics, pas une autorisation de publication. Chaque écriture constitue une transaction distincte ; attendez son succès et relisez le résultat avant la suivante.
 
@@ -83,20 +87,20 @@ Before every administrative session, read these values. / Avant chaque session a
 
 | `createEntitlement` field | Enter in helper / Saisir dans l’assistant | Meaning / Sens |
 |---|---|---|
-| `entitlementId` | `IA101_2026_09_22` | Case-sensitive permanent benefit identifier; helper shows its bytes32 hash. |
-| `category` | `EVENT` | Public category, also hashed. |
-| `capacity` | `50` | Maximum active claims; `0` means unlimited. |
+| `entitlementId` | Choose your permanent ID / Choisissez votre identifiant permanent | Case-sensitive benefit identifier; helper shows its bytes32 hash. |
+| `category` | Choose your category / Choisissez votre catégorie | Public category, also hashed. |
+| `capacity` | Choose explicitly / Choisissez explicitement | Maximum active claims; `0` means unlimited. No quota is prefilled. |
 | `opensAt` | empty / vide | `0`: no lower claim-time bound. |
 | `closesAt` | empty / vide | `0`: no upper claim-time bound. Set the approved claim deadline before opening. |
 | `initialState` | `1` | Draft / Brouillon. |
 | `metadataHash` | empty / vide | Zero bytes32: no integrity anchor specified. |
 
 1. **Create draft / Créer le brouillon.** On Etherscan **Write Contract**, connect the actual root-holder wallet, select `createEntitlement`, paste each prepared value into the matching field and review the wallet request. All registry writes use **0 ETH value**; only network gas is payable.
-2. **Read back / Relire.** In **Read Contract → entitlement**, use the same bytes32 ID. Check `exists = true`, state `1`, capacity `50`, active/unique counts `0`.
+2. **Read back / Relire.** In **Read Contract → entitlement**, use the same bytes32 ID. Check `exists = true`, state `1`, the capacity you chose and active/unique counts `0`.
 3. **Add presentation / Ajouter la présentation.** Use `setDescriptor(id, fr, en, uri, digest)`. Titles describe the benefit publicly. FR is required; EN can be empty, but provide both for members. Each title is limited to **160 UTF-8 bytes**, not characters. URI is empty or public HTTPS/IPFS, maximum 512 bytes. `digest` is the Keccak-256 of the exact public metadata file, or zero. Never hash a private receipt or member contact data into this field.
 4. **Set claim dates / Régler les dates.** Use `setWindow`. The helper accepts strict UTC such as `2026-09-22T16:00:00Z` or integer Unix seconds. Etherscan itself receives **seconds**, not milliseconds or a date string. The opening and closing seconds are inclusive; zero removes that bound. If both are set, closing must be greater than opening. These are claim windows, not necessarily event start/end times.
 5. **Open / Ouvrir.** Use `setEntitlementState(id, 2)` only after checking the intended public setup. Read back `entitlement` and `remainingCapacity`.
-6. **Website offer list / Catalogue du site.** Etherscan can operate every existing entitlement. To offer a newly created ID through the private-request webpage, update its reviewed `allowedEntitlements` configuration and rebuild/publish the site as described in the Hardhat guide. This explicit website allowlist is separate from the on-chain catalog.
+6. **Website offer list / Catalogue du site.** The default configured website uses `entitlementMode: "registry"` and an empty `allowedEntitlements` array. Members connect to the verified registry and refresh its catalogue; new IDs and changed public titles appear without a website edit. Requests still require an active authenticated claim, exact bytecode/origin binding and finalized/latest checks. / Le catalogue vient du registre vérifié : les nouveaux avantages et les titres modifiés apparaissent après actualisation. Le reçu reste soumis à toutes les vérifications du droit actif. Explicit legacy allowlists remain restricted; adding an ID there requires a reviewed configuration change and rebuild.
 
 **Sans assistant / Without the helper:** use Etherscan **Read Contract → entitlementId(canonicalName)** to calculate a readable identifier’s hash. `membershipNode(label)` calculates a membership node. Public category/reference hashes can also be calculated from their public text with `entitlementId`; its 128-byte input bound applies. Copy the returned bytes32 exactly. Do not enter readable text into a bytes32 write field. Empty metadata hashes must be represented as **`0x` followed by 64 zeros**, not an empty Etherscan bytes32 field.
 

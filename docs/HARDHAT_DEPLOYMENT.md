@@ -92,7 +92,7 @@ Terminal 2, opened in the same repository folder:
 npm run deploy:local
 ```
 
-This deploys mocks and the test core to chain 31337, assigns a fictitious root/member and exercises a claim. Output is `.local/local-rehearsal.json`.
+This deploys mocks and an empty test core to chain 31337 and assigns a fictitious root/member. No benefit or claim is created by deployment. Output is `.local/local-rehearsal.json`. Use `npm test` for isolated claim and correction simulations with explicit test fixtures.
 
 **Success:** the report contains `chainId: 31337`, `claimed: true` and `scope: LOCAL_TEST_ONLY_NOT_A_MEMBERSHIP_OR_TICKET`. Keep Terminal 1 open until the rehearsal finishes. Restarting the node creates fresh local state; its addresses are not production configuration.
 
@@ -299,11 +299,13 @@ For manual website verification, run `npm run export:etherscan` or download the 
 `npm run inspect:mainnet` uses the approved `runtimeCodeHash` from `.local/deployment-plan.json`. If recovering an existing reviewed deployment without that plan, set `EXPECTED_RUNTIME_HASH` in `.env` from your independent approved record. A hash copied from an unknown contract is not approval. Inspection pins finalized and latest blocks, checks runtime, registry getters and canonical ENS authority at both, then checks the block hashes again. It rejects an unfinalized owner change, missing finalized code or an inconsistent/reorganized block view. A successful inspection writes `.local/post-deployment.json`, including both block anchors, the checked `address` and `runtimeCodeHash` to use below. Replace both example placeholders with those reviewed values.
 
 ```bash
-python3 scripts/configure.py --contract 0xYOUR_DEPLOYED_CONTRACT --runtime-code-hash 0xAPPROVED_RUNTIME_HASH --origin https://claims.example.org --entitlement IA101_2026_09_22
+python3 scripts/configure.py --contract 0xYOUR_DEPLOYED_CONTRACT --runtime-code-hash 0xAPPROVED_RUNTIME_HASH --origin https://claims.example.org
 npm run build:site
 ```
 
-On Windows replace `python3` with your installed `python` command. Keep the required Node.js 22 toolchain on `PATH`; the configurator uses the canonical receipt protocol to validate the origin offline. The origin is an example: replace it with the **exact real dedicated HTTPS origin**, no path/trailing slash. Use the browser's canonical form: lowercase hostname, an ASCII punycode hostname for an internationalized domain, and no explicit default `:443` port. Non-default HTTPS ports are supported. Invalid settings leave the existing configuration untouched. Only allowlisted entitlements can produce a request; repeat `--entitlement` when adding future benefits. Hexadecimal entitlement IDs are normalized to lowercase; canonical entitlement names keep their uppercase spelling.
+On Windows replace `python3` with your installed `python` command. Keep the required Node.js 22 toolchain on `PATH`; the configurator uses the canonical receipt protocol to validate the origin offline. The origin is an example: replace it with the **exact real dedicated HTTPS origin**, no path/trailing slash. Use the browser's canonical form: lowercase hostname, an ASCII punycode hostname for an internationalized domain, and no explicit default `:443` port. Non-default HTTPS ports are supported. Invalid settings leave the existing configuration untouched.
+
+Omitting `--entitlement` writes explicit registry-catalogue mode with no preconfigured event. After verifying the registry identity, the member page reads the admin-created catalogue in bounded pages. New or modified Etherscan benefits appear after refreshing; no per-event site rebuild is needed. Receipt verification still requires the exact approved registry bytecode and an active claim with the signed claimant/revision at both finalized and latest blocks. To deliberately restrict the website to an allowlist, repeat `--entitlement`; future changes to that list require a reviewed rebuild. Hexadecimal IDs are normalized to lowercase; canonical names keep their spelling.
 
 The new public contract/origin configuration changes the source/configuration fingerprint. Review the configuration diff and the new asset manifest; rerun build/privacy checks and bind real canary evidence to that exact published configuration. Do not reuse a pre-configuration browser approval as proof of the final site.
 
@@ -313,7 +315,7 @@ Upload **only `dist/site`** to a suitable static host. Apply `_headers` or equiv
 
 ## J. One real canary, then a separate launch decision
 
-From the root admin console, create IA 101 in **Draft**, set its 50 reserved places, UTC window and public descriptors, then open for an explicitly approved limited test. No Eventbrite account is integrated into the contract.
+The production constructor creates **zero benefits**. No first event, quota, category or claim window is supplied by the app. When the root owner separately approves a real benefit or limited canary, choose its permanent ID and public parameters, create it in **Draft** using the admin console or Etherscan, review its descriptors and then explicitly open it. Do not run a sample creation as part of deployment. No ticketing account is integrated into the contract.
 
 Run one genuine member through claim → finality → private request → explicit clipboard/email handoff → receipt verification → duplicate check → one manually issued ticket → participant confirms receipt/access. A new signature or email must never produce a second ticket for the same claim key.
 

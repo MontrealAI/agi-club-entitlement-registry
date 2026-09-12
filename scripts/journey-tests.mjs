@@ -5,6 +5,8 @@ import {ENS,WRAPPER,ROOT,PROD,deploy,receipt,save,checkProduction} from './runti
 import {SCHEMA,REGISTRY_VERSION,requestMessage,preparePacket,verifyTicketRequest} from '../shared/ticket-request.mjs';
 import {createEthersIO} from '../shared/ethers-adapter.mjs';
 import {revertData} from '../test/revert-data.mjs';
+import {formatRequestEmail,parseRequestEmail,membershipName} from '../shared/request-email.mjs';
+import {readCatalogPage} from '../frontend/member-catalog.mjs';
 const r={status:'NOT_EXECUTED',scope:'ISOLATED EVM MODEL, genuine ethers signatures/adapter, WebCrypto salted recipient binding, no mail backend; NO real ENS, wallets, provider email or Eventbrite',results:[]};let connection,provider;
 try {
  connection=await network.create();assert.equal(connection.networkName,'isolatedMainnetModel');
@@ -23,6 +25,16 @@ try {
  const prepared=await preparePacket(payload,{name:'Membre Fictif',email:'member@example.org'}),message=prepared.message,packet={...prepared,signature:await member.signMessage(message)},io=createEthersIO(ethers,provider,policy.registry);
  async function check(name,fn){await fn();r.results.push({name,status:'PASS'});}
  await check('Full local claim and real ethers receipt verification without a new transaction',async()=>{const block=await provider.getBlockNumber();assert.equal((await verifyTicketRequest(packet,policy,io)).status,'VERIFIED_REQUEST_NOT_A_TICKET');assert.equal(await provider.getBlockNumber(),block);});
+ await check('Registry catalogue and full-subname email verify with genuine ethers without per-event site configuration',async()=>{
+  const config={entitlementMode:'registry',allowedEntitlements:[]},page=await readCatalogPage(c,config,ethers);
+  assert.deepEqual(page.rows.map(row=>row.id),[id]);
+  const body=formatRequestEmail(packet);assert(body.includes('demo.club.agi.eth'));
+  const verified=await verifyTicketRequest(parseRequestEmail(body),{...policy,entitlementMode:'registry',entitlements:[]},io);
+  assert.equal(membershipName(verified.payload.membershipLabel),'demo.club.agi.eth');
+  const secondId=ethers.id('SECOND_LOCAL_JOURNEY_ONLY');await receipt(c.connect(admin).createEntitlement(secondId,ethers.id('PERK'),1,0,0,1,ethers.ZeroHash));
+  await receipt(c.connect(admin).setDescriptor(secondId,'Titre modifié','Changed title','',ethers.ZeroHash));
+  const updated=await readCatalogPage(c,config,ethers);assert.equal(updated.rows[1].id,secondId);assert.equal(updated.rows[1].title,'Titre modifié');
+ });
  await check('Actual claim calldata and logs contain public entitlement evidence, never recipient fields',async()=>{
   const tx=await provider.getTransaction(claimTx.hash),decoded=c.interface.parseTransaction(tx);
   assert.equal(decoded.signature,'claim(bytes32,string)');assert.deepEqual(Array.from(decoded.args),[id,'demo']);
@@ -48,6 +60,8 @@ try {
   await receipt(ens.setOwner(ROOT,expected));
   const registry=await deploy(artifacts,deployer,PROD),deployerAddress=await deployer.getAddress();
   assert.notEqual(deployerAddress,expected);assert.equal(await registry.admin(),expected);
+  assert.equal(await registry.entitlementCount(),0n,'Production deployment must create zero benefits');
+  assert.deepEqual(Array.from(await registry.entitlementIdsPage(0,25)),[]);
   assert.equal(await registry.isAdmin(expected),true);assert.equal(await registry.isAdmin(deployerAddress),false);
   const observed=(await registry.deploymentTransaction().wait()).logs.map(log=>{try{return registry.interface.parseLog(log);}catch{return null;}}).find(log=>log?.name==='AdminAuthorityObserved');
   assert.equal(observed?.args[0],expected);

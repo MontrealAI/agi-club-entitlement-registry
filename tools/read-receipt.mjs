@@ -1,4 +1,5 @@
-import {MAX_PACKET_BYTES,RequestError} from '../shared/ticket-request.mjs';
+import {RequestError} from '../shared/ticket-request.mjs';
+import {MAX_EMAIL_BYTES,parseRequestEmail} from '../shared/request-email.mjs';
 
 // Decode incrementally without replacing malformed bytes or retaining a file.
 export async function readReceipt(input) {
@@ -11,10 +12,9 @@ export async function readReceipt(input) {
   for await(const part of input) {
     const bytes=typeof part==='string'?Buffer.from(part,'utf8'):part;
     size+=bytes.byteLength;
-    if(size>MAX_PACKET_BYTES)throw new RequestError('BODY_TOO_LARGE');
+    if(size>MAX_EMAIL_BYTES)throw new RequestError('BODY_TOO_LARGE');
     raw+=decode(bytes,true);
   }
   raw+=decode(undefined,false);
-  try{return JSON.parse(raw);}
-  catch{throw new RequestError('INVALID_JSON');}
+  return parseRequestEmail(raw);
 }

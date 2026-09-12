@@ -4,6 +4,7 @@ export const MEMBER_ABI = [
  'function CANONICAL_WRAPPER() view returns(address)',
  'function CLUB_AGI_ETH_NODE() view returns(bytes32)',
  'function admin() view returns(address)',
+ 'function entitlementCount() view returns(uint256)',
  'function entitlementIdsPage(uint256,uint256) view returns(bytes32[])',
  'function entitlement(bytes32) view returns(bytes32,bytes32,uint64,uint64,uint64,uint64,uint64,uint8,bool)',
  'function titleFR(bytes32) view returns(string)',

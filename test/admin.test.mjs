@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {runInNewContext} from 'node:vm';
+import {uint,utcSeconds} from '../frontend/etherscan-tools.mjs';
 
 // Run the actual admin script with a minimal DOM and read-only wallet/registry
 // fixtures. This checks UI state, not Ethereum cryptography or browser security.
@@ -105,7 +106,7 @@ function adminFixture(count = 2) {
       on: (event, listener) => walletListeners.set(event, listener),
     },
   };
-  runInNewContext(source, {
+  runInNewContext(source.replace(/^import .*;\r?\n/gm,''), {uint,utcSeconds,
     window, ethers, location: {origin: window.AGI_CONFIG.expectedOrigin},
     document: {
       body: {dataset: {page: 'admin'}},
@@ -223,6 +224,9 @@ for (const change of ['demo', 'wallet']) {
 test('demo categories remain editable after selection and repeated updates', async () => {
   const ui = adminFixture();
   await ui.click('demo');
+  assert.equal(ui.ids().length,0);
+  ui.el('canonical').value='FICTITIOUS_BENEFIT';ui.el('category').value='EVENT';ui.el('capacity').value='2';
+  await ui.click('create');
   assert.equal(ui.el('category').value, 'EVENT');
   ui.el('category').value = 'BRIEFING';
   await ui.click('updateCategory');
@@ -232,4 +236,24 @@ test('demo categories remain editable after selection and repeated updates', asy
   await ui.click('updateCategory');
   assert.equal(ui.el('category').value, 'BRIEFING');
   assert.doesNotMatch(ui.el('log').textContent, /ERREUR/);
+});
+
+test('New benefit and demo start empty without inheriting a selected event or approval',async()=>{
+ const ui=adminFixture();await ui.click('connect');await ui.select(0);await ui.click('updateCategory');
+ assert.equal(ui.el('canonical').readOnly,true);await ui.click('showCreate');
+ for(const field of ['canonical','category','capacity','titleFR','titleEN','metadataURI','metadataHash','opens','closes'])assert.equal(ui.el(field).value,'',field);
+ assert.equal(ui.el('state').value,'1');assert.equal(ui.el('canonical').readOnly,false);assert.equal(ui.el('confirm').open,false);
+ await ui.click('demo');assert.deepEqual(ui.ids(),[]);assert.equal(ui.el('capacity').value,'');
+ await ui.click('create');assert.deepEqual(ui.ids(),[],'Blank defaults cannot create a benefit');
+});
+test('Administrator can preserve and modify quotas beyond Number precision without rounding',async()=>{
+ const ui=adminFixture();await ui.click('demo');ui.el('canonical').value='FICTITIOUS_LARGE';ui.el('category').value='PERK';ui.el('capacity').value='18446744073709551615';await ui.click('create');
+ assert.equal(ui.el('capacity').value,'18446744073709551615');assert.equal(ui.el('remainingStat').textContent,'18446744073709551615');
+ ui.el('capacity').value='9007199254740993';await ui.click('updateCap');assert.equal(ui.el('capacity').value,'9007199254740993');
+ ui.el('capacity').value='18446744073709551616';await ui.click('updateCap');await ui.select(0);assert.equal(ui.el('capacity').value,'9007199254740993');
+});
+test('Invalid calendar dates cannot silently roll into another month',async()=>{
+ const ui=adminFixture();await ui.click('demo');ui.el('canonical').value='FICTITIOUS_DATES';ui.el('category').value='PERK';ui.el('capacity').value='1';ui.el('opens').value='2027-02-30T12:00:00Z';await ui.click('create');
+ assert.deepEqual(ui.ids(),[]);assert.match(ui.el('status').textContent,/date UTC réelle/);
+ ui.el('opens').value='18446744073709551615';await ui.click('create');assert.equal(ui.el('opens').value,'18446744073709551615');
 });
