@@ -143,7 +143,7 @@ Use a local text editor and verify the filename is exactly `.env`, not `.env.txt
 ```text
 MAINNET_FORK_RPC_URL=YOUR_PRIVATE_READ_ONLY_MAINNET_RPC
 MAINNET_FORK_BLOCK=A_PINNED_FINALIZED_BLOCK_NUMBER
-EXPECTED_ADMIN=THE_ACTUAL_CLUB_AGI_ETH_HOLDER
+EXPECTED_ADMIN=0xa9eD0539c2fbc5C6BC15a2E168bd9BCd07c01201
 MEMBER_LABELS=REAL_ASCII_LABEL_1,REAL_ASCII_LABEL_2
 ```
 
@@ -154,6 +154,8 @@ The labels must be actual representative memberships—not the fictitious test f
 The [preliminary AGIJobManager example](https://montrealai.github.io/agijobmanagerv0.html) is useful for the connect → enter label → verify interaction. Its `verifySubdomain` function also accepts delegated token/operator and resolver-address authorization. Those permissions are broader than this registry's direct-owner policy. Its separate alpha-name paths and saved browser sessions are not part of the entitlement registry. Keep the member's name/email only in the current page's memory and out of ENS records, transactions, local storage and reports.
 
 `EXPECTED_ADMIN` is the **effective owning wallet** of the ENS name, including the canonical wrapper's ownership rules. It is not the name's address-resolution record. If the holder is a Safe, use the Safe address, not one of its individual signers. RPC credentials stay in `.env`; never copy them into `frontend/config.js` or the public site.
+
+The address above is the operator-supplied expected initial administrator. It must match independently checked canonical ENS ownership at the pinned fork block and at deployment. It is a deployment check, not an alternative authority source. The production constructor takes no owner argument: it observes the existing `club.agi.eth` holder immediately. There is no temporary deployer administration or ownership-handover transaction. Every privileged call continues to follow the effective ENS owner after legitimate transfers.
 
 macOS/Linux:
 
@@ -203,7 +205,7 @@ Review `.local/deployment-plan.json`: chain 1, production contract name, source/
 
 The planner also compares the actual build artifact with the qualified creation code and compares the live root holder with the fork evidence. If either differs, repeat the affected qualification and review before preparing a fresh plan. A previously generated report does not qualify replacement build artifacts.
 
-The deployer can be a separate account with only the reviewed deployment budget. Do not export the root Ledger/Safe seed or private key. The deployer gains no special registry privileges.
+Use a **separate disposable deployer** with only the reviewed deployment budget. The plan rejects using the root administrator as the deployer. Do not export the root Ledger/Safe seed or private key. The disposable wallet pays deployment gas and gains no registry administration, ownership or recovery privileges. Keep its transaction record until deployment is finalized and independently verified before retiring the wallet.
 
 ## H. Root-holder approval and explicit broadcast
 

@@ -22,11 +22,12 @@ try {
  const identity=await checkProduction(provider,await c.getAddress(),realAdmin);report.identity=identity;report.sourceSha256=sourceDigest().sourceSha256;report.forkBlock={number:pinned,hash:block.hash};report.creationCodeHash=ethers.keccak256((await artifacts.readArtifact(PROD)).bytecode);
  const raw=connection.provider;
  await raw.request({method:'hardhat_impersonateAccount',params:[realAdmin]});await raw.request({method:'hardhat_setBalance',params:[realAdmin,ethers.toQuantity(ethers.parseEther('5'))]});
- const admin=await provider.getSigner(realAdmin),id=ethers.id('FORK_TEST_ONLY_'+block.hash);
+ // Impersonated local accounts are not wallet accounts returned by eth_accounts.
+ const admin=new ethers.JsonRpcSigner(provider,realAdmin),id=ethers.id('FORK_TEST_ONLY_'+block.hash);
  await receipt(c.connect(admin).createEntitlement(id,ethers.id('TEST'),labels.length,0,0,2,ethers.ZeroHash));
  for(const label of labels){const info=await c.membershipInfo(label),owner=info[1];assert.notEqual(owner,ethers.ZeroAddress,'No live ownership for '+label);
   await raw.request({method:'hardhat_impersonateAccount',params:[owner]});await raw.request({method:'hardhat_setBalance',params:[owner,ethers.toQuantity(ethers.parseEther('5'))]});
-  const member=await provider.getSigner(owner);await receipt(c.connect(member).claim(id,label));assert.equal(await c.claimantOf(id,info[0]),owner);
+  const member=new ethers.JsonRpcSigner(provider,owner);await receipt(c.connect(member).claim(id,label));assert.equal(await c.claimantOf(id,info[0]),owner);
   let rejected;try{await c.connect(member).claim.staticCall(id,label);}catch(e){rejected=e;}
   assert(rejected);assert.equal(c.interface.parseError(revertData(rejected))?.name,'ClaimRejected');
   report.results.push({label,node:info[0],owner,wrapped:info[3],status:'PASS'});

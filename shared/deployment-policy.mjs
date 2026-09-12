@@ -6,6 +6,7 @@ export function validatePlan(plan, now=Math.floor(Date.now()/1000)) {
  if(plan.schema!=='AGIClubDeploymentPlan/1'||plan.chainId!==1||plan.contract!=='contracts/AGIClubEntitlementRegistryMainnet.sol:AGIClubEntitlementRegistryMainnet')throw Error('Wrong production scope');
  if(!sha.test(plan.sourceSha256)||!sha.test(plan.evidenceSha256)||!h32.test(plan.creationCodeHash)||!h32.test(plan.runtimeCodeHash))throw Error('Invalid hash');
  for(const k of ['deployer','admin','predictedAddress'])if(!address.test(plan[k])||/^0x0{40}$/.test(plan[k]))throw Error('Invalid '+k);
+ if(plan.deployer===plan.admin)throw Error('Disposable deployer must differ from root administrator');
  for(const k of ['nonce','gasLimit','maxFeePerGas','maxPriorityFeePerGas','maxCostWei'])if(typeof plan[k]!=='string'||!dec.test(plan[k])||plan[k].length>78)throw Error('Invalid '+k);
  for(const k of ['nonce','gasLimit','maxFeePerGas','maxPriorityFeePerGas','maxCostWei'])if(BigInt(plan[k])>=(1n<<256n))throw Error('Integer overflow: '+k);
  if(BigInt(plan.nonce)>BigInt(Number.MAX_SAFE_INTEGER))throw Error('Nonce exceeds safe conversion range');

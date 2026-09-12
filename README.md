@@ -51,6 +51,8 @@ president@montreal.ai → local receipt verification → manual Eventbrite ticke
 
 The production subclass fixes the canonical ENS Registry and NameWrapper. Every privileged call resolves the holder of `club.agi.eth`; the deployer has no separate authority. Ownership is not the ENS address-resolution record. A Safe must execute the administrative transaction itself; an individual signer is not automatically the contract administrator.
 
+Deploy from a separate disposable wallet. The expected initial root holder supplied by the operator is `0xa9eD0539c2fbc5C6BC15a2E168bd9BCd07c01201`, prefilled as `EXPECTED_ADMIN` in `.env.example`. Deployment checks must confirm that address against canonical ENS. The production constructor needs no owner argument or post-deployment handover; ENS ownership determines administration from the beginning and after transfers. The deployment plan rejects using the root administrator as the disposable deployer.
+
 The admin can create/duplicate benefits, change windows/categories/capacities/descriptors, open/close/archive, grant in bounded batches, make explicit exceptions, revoke/reinstate/reassign and pause self-claims. History is not erased. The key is **entitlement + membership node**, not wallet. A transfer does not create a second self-claim.
 
 Full privileges means the management operations exposed by this immutable code—not a proxy upgrade, arbitrary future protocol compatibility, member-asset custody, or automatic Eventbrite cancellation. Expiry/parent control or loss of the root name can affect administration. No hidden recovery admin is provided.
